@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<!--
+  ═══════════════════════════════════════════════════════════════════════════
+  THE AI-NATIVE ENGINEER — Live Room Synthesis  ·  AIE SF workshop board
+  ───────────────────────────────────────────────────────────────────────────
+  The board visualizes live, opt-in developer-workflow data.
+  Horizontal axis = workflow automation / leverage:
+      0   = all manual toil
+      100 = fully automated with agents / hooks / schedules
+  Attendees walk in on the LEFT (toil). By the close they migrate RIGHT,
+  having built hooks, skills, and scheduled tasks. The marquee number is the
+  total engineering-hours/week the room is about to reclaim.
+
+  OFFLINE / FLAKY-VENUE NOTES:
+    1. Fonts — pure system stacks, NO /fonts/ path, NO CDN. Nothing fetched.
+    2. D3 — served locally from /d3.min.js (already vendored).
+  Data: board polls GET /api/board (origin-relative) every 2500ms.
+    ?api=<url>  overrides the endpoint.
+    ?sim        forces the built-in simulator (full beautiful board offline).
+  A dead API also falls through to the simulator, and once we've shown real
+  data we KEEP the last good board on a failed poll (flaky Wi-Fi resilience).
+  ═══════════════════════════════════════════════════════════════════════════
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The AI-Native Engineer — The Room, Right Now</title>
+<style>
+/* No @import, no /fonts/, no CDN — pure system stacks (offline-safe). */
+
+:root{
+  /* refined dark "terminal" palette — high-contrast on a projector */
+  --bg-0:#07090c;            /* stage letterbox */
+  --bg-1:#0d1117;            /* board base */
+  --bg-2:#11161f;
+  --panel:#141b26;           /* cards / tooltips */
+  --panel-2:#1b2433;
+  --line:#243044;            /* hairlines */
+  --line-soft:#1c2532;
+
+  --ink:#e8edf4;             /* primary text */
+  --ink-soft:#a8b4c4;        /* secondary text */
+  --ink-dim:#65748a;         /* tertiary text */
+
+  /* leverage / automation accent — reserved for the "fire" of automation.
+     Function colors deliberately avoid this hue. */
+  --acc-300:#7ee0c2; --acc-400:#36d6a6; --acc-500:#16c391; --acc-600:#0f9e74;
+
+  --font-serif:Georgia,'Times New Roman',serif;
+  --font-sans:system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-mono:ui-monospace,'SF Mono',Menlo,monospace;
+
+  /* live-tunable via Tweaks */
+  --acc:#16c391;
+  --grain:0.35;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--bg-0); color:var(--ink);
+  font-family:var(--font-sans);
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility;
+}
+
+/* ── letterbox stage ─────────────────────────────────────────────── */
+#stage{position:fixed;inset:0;overflow:hidden;background:var(--bg-0)}
+#board{
+  position:absolute;top:50%;left:50%;
+  width:1920px;height:1080px;
+  transform-origin:center center;
+  transform:translate(-50%,-50%) scale(0.5);
+  background:
+    radial-gradient(150% 130% at 16% -10%, #121a26 0%, var(--bg-1) 48%, #090d13 100%);
+  overflow:hidden;
+  display:flex;flex-direction:column;
+  padding:46px 72px 36px;
+}
+/* fine terminal grain / scanline tint */
+#board::after{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:60;
+  opacity:var(--grain);mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+/* accent glow that breathes with the migration to automation */
+#board::before{
+  content:"";position:absolute;inset:0;pointer-events:none;z-index:1;
+  background:radial-gradient(120% 90% at 82% 120%, rgba(22,195,145,var(--glow,0)) 0%, transparent 55%);
+  transition:--glow 1.2s ease;
+}
+
+.eyebrow{
+  font-family:var(--font-mono);font-size:19px;font-weight:500;
+  letter-spacing:.28em;text-transform:uppercase;color:var(--acc-400);
+}
+
+/* ── masthead ────────────────────────────────────────────────────── */
+#masthead{display:flex;justify-content:space-between;align-items:flex-start;gap:48px;position:relative;z-index:10}
+.mast-left{flex:1 1 auto;min-width:0;padding-top:2px}
+.mast-left .eyebrow{margin-bottom:14px}
+#headline{
+  font-family:var(--font-serif);font-weight:700;
+  font-size:90px;line-height:.96;letter-spacing:-.02em;color:var(--ink);
+  max-width:17ch;
+}
+#headline .hl-faded{color:var(--ink-dim)}
+#phase-line{
+  display:flex;align-items:center;gap:12px;margin-top:22px;
+  font-family:var(--font-mono);font-size:17px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-soft);
+}
+#phase-line .dot{width:9px;height:9px;border-radius:50%;background:var(--ink-dim)}
+#phase-line.is-now .dot{background:var(--acc);box-shadow:0 0 0 4px rgba(22,195,145,.20)}
+
+.mast-right{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:24px}
+
+/* presenter controls */
+#controls{display:flex;gap:10px;align-items:center}
+.ctl{
+  font-family:var(--font-mono);font-size:16px;font-weight:500;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-soft);
+  background:var(--panel);border:1.5px solid var(--line);
+  border-radius:999px;padding:13px 22px;cursor:pointer;
+  display:flex;align-items:center;gap:9px;line-height:1;
+  transition:all .18s ease;white-space:nowrap;user-select:none;
+}
+.ctl:hover{border-color:var(--ink-dim);color:var(--ink)}
+.ctl.active{background:var(--acc);border-color:var(--acc);color:#04130d;box-shadow:0 6px 22px -6px rgba(22,195,145,.7)}
+.ctl .glyph{font-size:13px;opacity:.8}
+.ctl.active .glyph{opacity:1}
+
+/* MARQUEE: hours reclaimed — the emotional payload */
+.right-data{display:flex;align-items:flex-start;gap:40px}
+#marquee{display:flex;flex-direction:column;align-items:flex-end;min-width:300px}
+#marquee .m-label{font-family:var(--font-mono);font-size:14px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-dim)}
+#marquee .m-num{
+  font-family:var(--font-serif);font-weight:700;letter-spacing:-.03em;
+  font-size:138px;line-height:.82;color:var(--acc);
+  font-variant-numeric:tabular-nums;margin:6px 0 4px;
+  text-shadow:0 0 38px rgba(22,195,145,var(--num-glow,0));
+  transition:text-shadow 1s ease;
+}
+#marquee .m-num.pre{color:var(--ink-soft);text-shadow:none}
+#marquee .m-sub{font-family:var(--font-mono);font-size:18px;color:var(--ink-soft);letter-spacing:.02em;text-align:right;max-width:300px}
+#marquee .m-sub b{color:var(--ink);font-weight:700}
+
+#functions{display:flex;flex-direction:column;gap:0;min-width:470px}
+.fn-row{display:grid;grid-template-columns:200px 1fr 46px;align-items:center;gap:14px;height:38px}
+.fn-name{font-family:var(--font-sans);font-size:18px;font-weight:600;color:var(--ink-soft);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
+.fn-track{position:relative;height:100%}
+.fn-delta{font-family:var(--font-mono);font-size:18px;font-weight:700;color:var(--ink);text-align:right;font-variant-numeric:tabular-nums}
+
+/* ── hero ────────────────────────────────────────────────────────── */
+#hero{flex:1 1 auto;min-height:0;position:relative;margin:6px -16px 0}
+#hero-svg{width:100%;height:100%;display:block;overflow:visible}
+#hero-empty{
+  position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  text-align:center;z-index:5;
+}
+#hero-empty .he-title{font-family:var(--font-serif);font-style:italic;font-weight:400;font-size:46px;line-height:1.1;color:var(--ink-dim);white-space:nowrap}
+#hero-empty .he-sub{font-family:var(--font-mono);font-size:16px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-dim);white-space:nowrap}
+
+/* per-person drill-down card */
+#dot-tip{position:absolute;z-index:40;transform:translate(-50%,-100%);pointer-events:none;
+  width:320px;background:var(--panel);border:1px solid var(--line);
+  border-radius:14px;padding:15px 18px 16px;box-shadow:0 18px 44px rgba(0,0,0,.5);display:none}
+#dot-tip::after{content:"";position:absolute;left:50%;bottom:-7px;width:13px;height:13px;
+  background:var(--panel);border-right:1px solid var(--line);border-bottom:1px solid var(--line);
+  transform:translateX(-50%) rotate(45deg)}
+#dot-tip .dt-top{display:flex;align-items:center;gap:8px;white-space:nowrap;font-family:var(--font-mono);font-size:13.5px;
+  letter-spacing:.04em;text-transform:uppercase;color:var(--ink-soft)}
+#dot-tip .dt-chip{width:11px;height:11px;border-radius:50%;flex:0 0 auto}
+#dot-tip .dt-anon{color:var(--ink-dim);text-transform:none;letter-spacing:0;font-size:13px}
+#dot-tip .dt-move{font-family:var(--font-mono);font-size:18px;color:var(--ink);margin:11px 0 9px;font-variant-numeric:tabular-nums}
+#dot-tip .dt-move b{font-weight:700}
+#dot-tip .dt-of{color:var(--ink-dim)}
+#dot-tip .dt-delta{color:var(--acc);font-weight:700;margin-left:8px}
+#dot-tip .dt-q{font-family:var(--font-serif);font-style:italic;font-size:20px;line-height:1.32;color:var(--ink-soft);text-wrap:pretty}
+#dot-tip .dt-pin{margin-top:10px;font-family:var(--font-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-dim)}
+
+/* empty / low-data state */
+.is-empty #functions{opacity:0}
+.is-empty #lower{opacity:0;pointer-events:none}
+
+/* ── lower: constellation + spotlight + automations ──────────────── */
+#lower{flex:0 0 256px;display:grid;grid-template-columns:1fr 470px 440px;gap:44px;position:relative;z-index:10;align-items:start}
+.lo-eyebrow{font-family:var(--font-mono);font-size:15px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-dim);margin-bottom:6px}
+#constellation{position:relative}
+#constellation-svg{width:100%;height:212px;display:block;overflow:visible}
+
+#spotlight{
+  border-left:2px solid var(--line);padding-left:30px;min-height:212px;
+  display:flex;flex-direction:column;justify-content:center;
+}
+#spotlight .sp-q{font-family:var(--font-mono);font-size:15px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;margin-bottom:10px}
+#spotlight .sp-title{font-family:var(--font-serif);font-weight:700;font-size:32px;line-height:1.08;color:var(--ink);margin-bottom:14px;letter-spacing:-.01em}
+#spotlight .sp-quote{font-family:var(--font-serif);font-style:italic;font-weight:400;font-size:25px;line-height:1.34;color:var(--ink-soft);text-wrap:pretty}
+#spotlight .sp-quote::before{content:"\201C"}
+#spotlight .sp-quote::after{content:"\201D"}
+#spotlight .sp-legend{display:flex;gap:18px;margin-top:18px;flex-wrap:wrap}
+#spotlight .sp-legend span{display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:13px;color:var(--ink-soft);letter-spacing:.04em}
+#spotlight .sp-legend i{width:11px;height:11px;border-radius:50%}
+
+/* automations panel — ranked cards */
+#automations{border-left:2px solid var(--line);padding-left:30px;min-height:212px;display:flex;flex-direction:column}
+#auto-list{display:flex;flex-direction:column;gap:9px;margin-top:4px}
+.auto-card{display:grid;grid-template-columns:42px 1fr auto;align-items:center;gap:14px;
+  background:var(--panel);border:1px solid var(--line-soft);border-radius:11px;padding:11px 15px;
+  transition:opacity .4s ease;}
+.auto-icon{font-size:24px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;
+  background:var(--panel-2);border-radius:9px;border:1px solid var(--line)}
+.auto-body{min-width:0}
+.auto-title{font-family:var(--font-sans);font-size:18px;font-weight:600;color:var(--ink);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.15}
+.auto-meta{font-family:var(--font-mono);font-size:13px;color:var(--ink-dim);letter-spacing:.03em;margin-top:3px}
+.auto-meta .at{text-transform:uppercase;letter-spacing:.12em;color:var(--acc-400)}
+.auto-hours{font-family:var(--font-serif);font-weight:700;font-size:30px;color:var(--acc);
+  font-variant-numeric:tabular-nums;line-height:.9;text-align:right;white-space:nowrap}
+.auto-hours small{display:block;font-family:var(--font-mono);font-size:11px;font-weight:400;
+  color:var(--ink-dim);letter-spacing:.14em;text-transform:uppercase;margin-top:3px}
+
+/* ── footer status ───────────────────────────────────────────────── */
+#footer{position:absolute;left:72px;right:72px;bottom:14px;display:flex;justify-content:space-between;align-items:center;z-index:10;
+  font-family:var(--font-mono);font-size:14px;letter-spacing:.08em;color:var(--ink-dim)}
+#footer .live{display:flex;align-items:center;gap:9px;text-transform:uppercase;letter-spacing:.16em}
+#footer .live i{width:9px;height:9px;border-radius:50%;background:#34d399;box-shadow:0 0 0 0 rgba(52,211,153,.5);animation:pulse 2.4s infinite}
+#footer .live.sim i{background:var(--acc-400);box-shadow:0 0 0 0 rgba(54,214,166,.5)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(52,211,153,.45)}70%{box-shadow:0 0 0 9px rgba(52,211,153,0)}100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}}
+#footer .hint{color:var(--ink-dim)}
+
+/* spotlight transition */
+#spotlight.swap{animation:spfade .5s ease}
+@keyframes spfade{from{opacity:.5;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="board">
+
+    <header id="masthead">
+      <div class="mast-left">
+        <div class="eyebrow">The AI-Native Engineer · AIE SF · The room, right now</div>
+        <h1 id="headline">Reading the room…</h1>
+        <div id="phase-line"><span class="dot"></span><span id="phase-text">Walking in</span></div>
+      </div>
+
+      <div class="mast-right">
+        <div id="controls">
+          <div class="ctl" data-action="walking"><span class="glyph">◂</span>Walking in</div>
+          <div class="ctl" data-action="now">Now<span class="glyph">▸</span></div>
+          <div class="ctl" data-action="auto"><span class="glyph">▷</span>Auto</div>
+        </div>
+        <div class="right-data">
+          <div id="marquee">
+            <div class="m-label" id="m-label">Engineering-hours/week</div>
+            <div class="m-num pre" id="m-num">0</div>
+            <div class="m-sub" id="m-sub">—</div>
+          </div>
+          <div id="functions"></div>
+        </div>
+      </div>
+    </header>
+
+    <section id="hero">
+      <svg id="hero-svg"></svg>
+      <div id="hero-empty">
+        <div class="he-title">Waiting for the first developers</div>
+        <div class="he-sub" id="he-count">0 opted in</div>
+      </div>
+    </section>
+
+    <section id="lower">
+      <div id="constellation">
+        <div class="lo-eyebrow">What the room is automating — click a theme</div>
+        <svg id="constellation-svg"></svg>
+      </div>
+      <div id="spotlight">
+        <div class="sp-q" id="sp-q">Spotlight</div>
+        <div class="sp-title" id="sp-title">—</div>
+        <div class="sp-quote" id="sp-quote">A real attendee will appear here</div>
+        <div class="sp-legend" id="sp-legend"></div>
+      </div>
+      <div id="automations">
+        <div class="lo-eyebrow">Built in the room · by hours/week saved</div>
+        <div id="auto-list"></div>
+      </div>
+    </section>
+
+    <footer id="footer">
+      <div class="live sim" id="live"><i></i><span id="live-text">Simulated feed</span></div>
+      <div class="hint">← / → phase · Space toggles · A auto · E empty · F full room</div>
+    </footer>
+
+  </div>
+</div>
+
+<script src="/d3.min.js"></script>
+<script src="board.js"></script>
+</body>
+</html>

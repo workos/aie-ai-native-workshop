@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The AI-Native Engineer — Admin</title>
+<style>
+  /* refined dark "terminal" palette — matches the board */
+  :root { --bg:#0d1117; --panel:#141b26; --ink:#e8edf4; --dim:#65748a; --acc:#16c391; --line:#243044; }
+  * { box-sizing:border-box; }
+  body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(150% 130% at 16% -10%, #121a26, #090d13); color:var(--ink);
+    font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; }
+  .card { width:460px; max-width:92vw; background:var(--panel); border:1px solid var(--line); border-radius:18px;
+    padding:30px 32px; box-shadow:0 20px 60px -20px rgba(0,0,0,.7); }
+  h1 { font-family:Georgia,'Times New Roman',serif; font-size:26px; margin:0 0 4px; }
+  .eyebrow { font-family:ui-monospace,'SF Mono',Menlo,monospace; letter-spacing:.2em; text-transform:uppercase; font-size:12px; color:var(--acc); font-weight:600; }
+  label { display:block; font-size:13px; color:var(--dim); margin:18px 0 6px; }
+  input { width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:9px; font:inherit; background:#0b0f16; color:var(--ink); }
+  .row { display:flex; gap:10px; margin-top:18px; }
+  button { flex:1; padding:13px; border-radius:10px; border:1px solid var(--line); font:inherit; font-weight:600; cursor:pointer; transition:.15s; background:#0b0f16; color:var(--ink); }
+  button:hover { border-color:var(--acc); }
+  .seed { background:var(--acc); color:#04130d; border-color:var(--acc); }
+  .reset { background:#0b0f16; color:#ff9b8a; }
+  .open { background:#0b0f16; color:var(--ink); }
+  .status { margin-top:18px; font-family:ui-monospace,'SF Mono',Menlo,monospace; font-size:13px; color:var(--dim); min-height:20px; }
+  pre.result { margin-top:10px; padding:12px 14px; background:#080b11; border:1px solid var(--line); border-radius:9px;
+    font-family:ui-monospace,'SF Mono',Menlo,monospace; font-size:12px; color:#a8b4c4; white-space:pre-wrap; word-break:break-word;
+    max-height:200px; overflow:auto; display:none; }
+  .hint { margin-top:14px; font-size:12px; color:var(--dim); line-height:1.5; }
+  a { color:var(--acc); }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="eyebrow">The AI-Native Engineer · AIE SF</div>
+    <h1>Board admin</h1>
+    <label>Admin token</label>
+    <input id="tok" type="password" placeholder="aieadmin-…" autocomplete="off">
+    <div class="row">
+      <button class="seed" id="seed">Fill room (demo)</button>
+      <button class="reset" id="reset">Reset</button>
+    </div>
+    <div class="row">
+      <button class="open" onclick="location.href='/'">Open board ↗</button>
+      <button class="open" onclick="location.href='/?sim'">Open simulator ↗</button>
+    </div>
+    <div class="status" id="status"></div>
+    <pre class="result" id="result"></pre>
+    <div class="hint">
+      <b>Fill room</b> seeds a canned ~26-developer room instantly (no AI cost) for dry-runs.
+      <b>Reset</b> clears everything before the live session. The <b>simulator</b> needs no
+      backend at all — pure local demo. The token is remembered in this browser only.
+    </div>
+  </div>
+<script>
+  const tok = document.getElementById('tok');
+  tok.value = localStorage.getItem('aie_admin') || '';
+  const status = document.getElementById('status');
+  const result = document.getElementById('result');
+  function setStatus(t, ok){ status.textContent = t; status.style.color = ok===false ? '#ff9b8a' : ''; }
+  function showResult(j){
+    if (j == null) { result.style.display = 'none'; return; }
+    result.textContent = JSON.stringify(j, null, 2);
+    result.style.display = 'block';
+  }
+  async function call(path, label){
+    const t = tok.value.trim();
+    if(!t){ setStatus('Enter the admin token first.', false); showResult(null); return; }
+    localStorage.setItem('aie_admin', t);
+    setStatus(label + '…'); showResult(null);
+    try {
+      const r = await fetch(path, { method:'POST', headers:{ Authorization:'Bearer '+t } });
+      const j = await r.json().catch(()=>({}));
+      showResult(j);
+      if(!r.ok){ setStatus('Error '+r.status+' — check the token.', false); return; }
+      setStatus(j.seeded!=null ? ('Seeded '+j.seeded+' developers ✓') : 'Reset ✓ — room is empty.');
+    } catch(e){ setStatus('Network error.', false); }
+  }
+  document.getElementById('seed').onclick  = () => call('/api/admin/seed',  'Filling the room');
+  document.getElementById('reset').onclick = () => call('/api/admin/clear', 'Resetting');
+</script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "aie-board",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Live room board for The AI-Native Engineer workshop — Cloudflare Worker + D1 + AI Gateway.",
+  "scripts": {
+    "db:create": "npx wrangler d1 create aie-board",
+    "migrate:local": "npx wrangler d1 migrations apply aie-board --local",
+    "migrate:remote": "npx wrangler d1 migrations apply aie-board --remote",
+    "secrets": "echo 'Run: wrangler secret put SUBMIT_TOKEN | ADMIN_TOKEN | ANTHROPIC_API_KEY (optional AI_GATEWAY_URL)'",
+    "build": "mkdir -p public && cp board.html public/index.html && cp board.js public/board.js && cp admin.html public/admin.html && cp vendor/d3.min.js public/d3.min.js",
+    "dev": "npm run build && wrangler dev",
+    "predeploy": "npm run build",
+    "deploy": "npx wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.104.0"
+  }
+}

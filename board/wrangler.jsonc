@@ -1,0 +1,43 @@
+{
+  // aie-board — live room board for "The AI-Native Engineer" workshop (AIE SF).
+  //
+  // Deploys to the WorkOS Internal Cloudflare account. You are already logged in via
+  // `wrangler login` (OAuth, zack@workos.com) — no CLOUDFLARE_API_TOKEN juggling needed.
+  // Confirm with `npx wrangler whoami` (should show "WorkOS Internal").
+  //
+  // Secrets (set via `npm run secrets` / `wrangler secret put`, never here):
+  //   SUBMIT_TOKEN        — shared token the coach check-in skill sends on POST /api/response
+  //   ADMIN_TOKEN         — gates POST /api/admin/{clear,seed} (reset + projector seed)
+  //   ANTHROPIC_API_KEY   — provider key; AI enrichment/synthesis degrade gracefully if absent
+  //   AI_GATEWAY_URL      — optional; e.g. https://gateway.ai.cloudflare.com/v1/<acct>/<gw>/anthropic
+  //                         (if unset, calls go direct to api.anthropic.com)
+  "name": "aie-board",
+  "account_id": "7e7fcec4d315661895440b439328033d",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-06-01",
+  "observability": { "enabled": true },
+  // Serve the board frontend (public/index.html) at / via the ASSETS binding;
+  // the Worker handles /api/* explicitly. `npm run build` copies board.html -> public/.
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "aie-board",
+      "database_id": "5821db29-aebc-44a9-92aa-84d05f8f8b68"
+    }
+  ],
+  "vars": {
+    // Permissive CORS for the closed, one-time session (anonymous opt-in feedback,
+    // obscure URL). The board is served same-origin anyway; tighten to the deck
+    // origin if we later embed the board cross-origin.
+    "ALLOWED_ORIGIN": "*",
+    // Hard floor between Opus synthesis calls (ms). Bounds cost by construction.
+    "SYNTH_MIN_INTERVAL_MS": "12000",
+    // Models — Haiku for cheap per-response enrichment, Opus for the marquee synthesis.
+    "ENRICH_MODEL": "claude-haiku-4-5",
+    "SYNTH_MODEL": "claude-opus-4-8"
+  }
+}

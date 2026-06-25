@@ -1,0 +1,12 @@
+node_modules/
+board/public/
+board/.wrangler/
+.dev.vars
+
+# Coach check-in local state (per-attendee, never committed)
+.aie-coach-state.json
+.aie-coach-outbox/
+
+# OS / editor cruft
+.DS_Store
+*.log

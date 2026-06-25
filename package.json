@@ -1,0 +1,15 @@
+{
+  "name": "aie-workshop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The AI-Native Engineer — an interactive Claude Code workshop for AIE SF.",
+  "scripts": {
+    "test": "node --test \"skills/**/scripts/*.test.mjs\"",
+    "lint": "markdownlint-cli2 \"**/*.md\" \"#node_modules\" \"#board/public\"",
+    "board:dev": "npm --prefix board run dev",
+    "board:deploy": "npm --prefix board run deploy"
+  },
+  "devDependencies": {
+    "markdownlint-cli2": "^0.14.0"
+  }
+}

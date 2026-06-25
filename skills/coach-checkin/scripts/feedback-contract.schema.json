@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aie-workshop.local/feedback-contract.schema.json",
+  "title": "Coach Check-in Response Payload",
+  "description": "The body POSTed to the AIE board Worker. Anonymous: a random participantId + a free-text role (the backend classifies it into a function bucket), no name or email. The same participantId links the pre and post runs so the board can show before->after.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["participantId", "phase", "role", "answers"],
+  "properties": {
+    "participantId": { "type": "string" },
+    "phase": { "type": "string", "enum": ["pre", "post"] },
+    "role": { "type": "string" },
+    "answers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["questionKey", "answer"],
+        "properties": {
+          "questionKey": { "type": "string" },
+          "answer": { "type": "string" }
+        }
+      }
+    }
+  }
+}

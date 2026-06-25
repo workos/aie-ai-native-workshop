@@ -1,0 +1,22 @@
+{
+  "$comment": "Trusting this repo wires up the workshop automatically. Nick Nisi's `ideation` skill installs as a plugin from GitHub; the coach check-in + setup-handy skills live in skills/ and load from the repo.",
+  "extraKnownMarketplaces": {
+    "ideation": {
+      "source": {
+        "source": "github",
+        "repo": "nicknisi/ideation"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "ideation@ideation": true
+  },
+  "permissions": {
+    "allow": [
+      "Bash(node:*)",
+      "Bash(npm:*)",
+      "Bash(npx wrangler:*)",
+      "Bash(git:*)"
+    ]
+  }
+}
