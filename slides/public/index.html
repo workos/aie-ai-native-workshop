@@ -531,7 +531,10 @@
     position: absolute; right: var(--pad-x); top: 50%; transform: translateY(-50%);
     display: flex; flex-direction: column; align-items: center; gap: 18px; z-index: 2;
   }
+  /* Real QR: black-on-white code on a clean white card, readable on the dark deck. */
+  .qr-img { width: 128px; height: 128px; border-radius: 12px; background: #fff; padding: 9px; box-sizing: border-box; display: block; }
   .qr-close .qr-box { width: 320px; height: 320px; font-size: 22px; }
+  .qr-close .qr-img { width: 300px; height: 300px; }
   .qr-close span { font-family: var(--font-mono); font-size: 24px; color: var(--t-mute); }
 
   /* ---- Cron / calendar tick ---- */
@@ -555,10 +558,15 @@
   .board-meter .end.toil { color: var(--red); text-align: right; }
   .board-meter .end.lev { color: var(--teal); }
   .board-track { height: 56px; border-radius: 14px; border: 1px solid var(--line); background: var(--ink-700); overflow: hidden; position: relative; }
-  .board-fill { position: absolute; inset: 0; right: auto; width: 18%; border-radius: 14px;
+  .board-fill { position: absolute; inset: 0; right: auto; width: 82%; border-radius: 14px;
                 background: linear-gradient(90deg, var(--teal-deep), var(--teal-bri)); }
-  @keyframes board-grow { from { width: 78%; background: linear-gradient(90deg, #6b2e28, var(--red)); } to { width: 18%; } }
-  section[data-deck-active] .board-fill { animation: board-grow 2s cubic-bezier(0.16,1,0.3,1) .6s both; }
+  /* Toil → leverage: sweep from a small red nub (mostly manual) to a wide teal fill (automated). */
+  @keyframes board-grow {
+    from { width: 16%; background: linear-gradient(90deg, #6b2e28, var(--red)); }
+    60%  { background: linear-gradient(90deg, #6b2e28, var(--red)); }
+    to   { width: 82%; background: linear-gradient(90deg, var(--teal-deep), var(--teal-bri)); }
+  }
+  section[data-deck-active] .board-fill { animation: board-grow 2.2s cubic-bezier(0.16,1,0.3,1) .6s both; }
 
   /* ---- Big payoff number on close-ish slide ---- */
   .payoff-mega {
@@ -594,9 +602,8 @@
   <!-- ============ 01 COVER ============ -->
   <section data-label="01 Cover" class="grain cover">
     <div class="qr-corner">
-      <span>Live board + repo &middot; scan to join</span>
-      <!-- QR placeholder: drop public/img/qr-join.png and replace .qr-box with <img src="img/qr-join.png" alt="Join QR" class="qr-box"> -->
-      <div class="qr-box">QR<br/>join</div>
+      <span>The live board &middot; scan to join</span>
+      <img src="img/qr-board.png" alt="Live board QR" class="qr-img" />
     </div>
     <div class="stripe"></div>
     <div class="frame" style="padding-top: 230px; justify-content: flex-start; gap: 6px;">
@@ -694,8 +701,7 @@
   <section data-label="The board" class="grain">
     <div class="qr-corner">
       <span>The live board &middot; open it on your phone</span>
-      <!-- QR placeholder: replace with <img src="img/qr-board.png" alt="Live board QR" class="qr-box"> -->
-      <div class="qr-box">QR<br/>board</div>
+      <img src="img/qr-board.png" alt="Live board QR" class="qr-img" />
     </div>
     <div class="frame" style="justify-content: center;">
       <div class="eyebrow" style="margin-bottom: 28px;">The live board</div>
@@ -947,9 +953,8 @@
   <!-- ============ 20 CLOSE ============ -->
   <section data-label="Recap · Close" class="grain">
     <div class="qr-corner">
-      <span>Keep the repo &middot; scan to take it home</span>
-      <!-- QR placeholder: replace with <img src="img/qr-repo.png" alt="Repo QR" class="qr-box"> -->
-      <div class="qr-box">QR<br/>repo</div>
+      <span>Keep these slides &middot; scan to take them home</span>
+      <img src="img/qr-deck.png" alt="Slide deck QR" class="qr-img" />
     </div>
     <div class="frame">
       <div class="eyebrow" style="margin-bottom: 24px;">You're an operator now</div>
