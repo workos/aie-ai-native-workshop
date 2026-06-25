@@ -1,6 +1,6 @@
 # Block 2 — Loops & goals (let it run)
 
-**~25 min.** Now that they can drive by voice, teach the two ways to hand an agent a *multi-step* job and walk away: a **goal** with a checklist, and a **loop** that self-paces.
+**~15 min.** Now that they can drive by voice, teach the two ways to hand an agent a *multi-step* job and walk away: a **goal** with a checklist, and a **loop** that self-paces.
 
 ## The arc
 

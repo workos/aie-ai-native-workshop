@@ -1,161 +1,199 @@
 <div align="center">
 
-<h1>The AI-Native Engineer</h1>
+# 🎙️ The AI-Native Engineer
 
-<p><em>An interactive Claude Code workshop — stop typing, start operating.</em></p>
-
-<p>
-  <img alt="Event" src="https://img.shields.io/badge/AI_Engineer-SF-111827?style=for-the-badge" />
-  <img alt="Format" src="https://img.shields.io/badge/format-hands--on_·_~90_min-16C391?style=for-the-badge" />
-  <img alt="Status" src="https://img.shields.io/badge/status-in_preparation-F59E0B?style=for-the-badge" />
-</p>
+### Stop typing. Start operating.
 
 <p>
-  <img alt="Arc" src="https://img.shields.io/badge/arc-voice_→_loops_→_gates_→_schedules-8B5CF6?style=flat-square" />
-  <img alt="Live board" src="https://img.shields.io/badge/live_board-Cloudflare_·_D1_·_AI-F38020?style=flat-square&logo=cloudflare&logoColor=white" />
-  <img alt="Built with" src="https://img.shields.io/badge/built_with-Claude_Code-D97757?style=flat-square&logo=anthropic&logoColor=white" />
+  <img alt="Event" src="https://img.shields.io/badge/AI_Engineer-San_Francisco-111827?style=for-the-badge" />
+  <img alt="Format" src="https://img.shields.io/badge/hands--on-~1_hour-16C391?style=for-the-badge" />
+  <img alt="You'll need" src="https://img.shields.io/badge/bring-a_laptop_%2B_Claude_Code-D97757?style=for-the-badge&logo=anthropic&logoColor=white" />
 </p>
 
-<sub>Delivered by <strong>Zachary Proser</strong> · <strong>Nick Nisi</strong></sub>
+**Welcome!** 👋 In the next hour you'll go from *typing code* to *operating a fleet of agents* —
+by voice, on a schedule, with guardrails you trust. You'll build on this repo, and you'll
+leave with it **running by itself**.
+
+<sub>Your guides: <strong>Zack Proser</strong> · <strong>Nick Nisi</strong></sub>
 
 </div>
 
 ---
 
-## What this is
+> 🚧 **In preparation.** This is the attendee guide for the live workshop. The hands-on
+> [`exercises/`](exercises/) app (the repo you'll fix bugs in and work checklist issues on)
+> is still being finalized — the steps below describe the flow you'll follow on the day.
+> Everything else (voice setup, the check-ins, the live board) is ready now.
 
-A room full of engineers stops typing and starts **operating**: driving Claude by
-voice, running multi-step jobs to a checklist, wrapping agents in verification gates,
-and scheduling the work so it runs without them. By the end, everyone has assembled
-the full operator stack **once, end to end** — and the [live board](board/) shows the
-room exactly how many engineering-hours a week they just learned to reclaim.
+---
 
-It is **not a talk.** Every block is hands-on. One presenter drives the same repo the
-whole way through (so the recording is one clean journey), and the room's own
-volunteered data — never anything scanned off a machine — drives the projector.
+## ✨ What you'll actually do today
 
-## The day at a glance
+Four moves, each building on the last — all on this one repo:
 
-```mermaid
-gantt
-    title The AI-Native Engineer — Run of Show (~90 min · offsets from kickoff)
-    dateFormat H:mm
-    axisFormat +%H:%M
-    section Open
-    The pitch in one breath           :done, 0:00, 5m
-    section Hands-on
-    Block 1 — Voice coding            :active, 0:05, 25m
-    Block 2 — Loops & goals           :0:30, 25m
-    Block 3 — Verification gates      :0:55, 25m
-    section Finale
-    Block 4 — Scheduled tasks         :crit, 1:20, 20m
-    Close — the board's before→after  :1:40, 5m
-```
+| | Move | The moment it clicks |
+|:--:|------|----------------------|
+| 🎙️ | **Voice coding** | Hands off the keyboard — talk at 180 wpm and drive *several* agents at once. |
+| 🔁 | **Loops & goals** | Hand off a multi-step job and walk away. "Done" becomes a checklist, not a hope. |
+| 🛡️ | **Verification gates** | Wrap your agents in hooks + reviews so you *trust* what they ship. |
+| ⏰ | **Scheduled tasks** | Put the work on a timer. It runs every Monday — while you sleep. |
 
-## The arc
+And the whole time, a **live board** on the projector shows the room its own data — where the
+toil is, what to automate, and how many hours/week we're all about to reclaim. 📈
 
-Four blocks, one repo, building on each other. Each links to its curriculum page.
+---
 
-| # | Block | The move | The aha |
-|---|-------|----------|---------|
-| 1 | [**Voice coding**](curriculum/01-voice-coding.md) | Install [Handy](https://handy.computer) (free, local), fix a bug by voice, then drive **several agents at once** across tabs. | Your voice removes the bottleneck — you can manufacture work in parallel. |
-| 2 | [**Loops & goals**](curriculum/02-loops-and-goals.md) | Hand the agent a checklist it can't declare done early, and a `/loop` that self-paces. Run them on parallel worktrees. | "Done" is a checklist you encode, not a vibe the model claims. |
-| 3 | [**Verification gates**](curriculum/03-verification-gates.md) | A hook that lints/typechecks/tests every change; an adversarial **Codex** review on risky diffs. | Operators trust the gates, not the model's confidence. |
-| 4 | [**Scheduled tasks**](curriculum/04-scheduled-tasks.md) | Schedule the *same* work you just built so it runs every Monday, while you sleep. | The loop you ran by hand now runs itself — and you keep it. |
+## 🧰 Before you start (2 minutes)
 
-## The live board — the room is the content
+You'll need just three things:
 
-Each attendee runs an opt-in [coach check-in](skills/coach-checkin/) walking in and again
-at the close. Their answers feed a Cloudflare-hosted projector board that reveals the
-room to itself — where the toil is, what to automate, and the marquee number:
-**total engineering-hours/week reclaimed.**
+1. **A laptop** (macOS or Windows) 💻
+2. **[Claude Code](https://claude.com/claude-code)** installed and signed in
+3. **[Node.js](https://nodejs.org)** (v18+) — check with `node --version`
 
-```mermaid
-flowchart LR
-    A["👤 Attendee<br/>(in Claude Code)"] -->|opt-in, volunteered answers only| S["coach-checkin skill"]
-    S -->|POST /api/response| W["☁️ aie-board Worker"]
-    W --> D[("D1")]
-    W -.->|Haiku · per-answer<br/>bucket · score · automation| D
-    W -.->|Opus · room synthesis<br/>themes · top automations| D
-    P["📽️ Projector board"] -->|poll /api/board every 2.5s| W
-    P ==>|toil → leverage migration<br/>+ hours reclaimed| R["🎉 The reveal"]
-```
+Then, **open this repo in Claude Code and trust it.** That one step auto-loads the workshop
+skills and the `ideation` plugin — no manual setup. ✅
 
-> **Privacy is the hard line.** Only what a participant *types and confirms* is ever sent.
-> No repo scans, no `git log`, no transcript reads — volunteered answers only. See
-> [`docs/design.md`](docs/design.md).
+> 💬 Throughout this guide, text in quotes like *"set up Handy"* is something you literally
+> **say or type to Claude**. Go ahead — talk to it.
 
-## Quickstart
+---
 
-### Run the workshop (as an attendee)
+## 🚀 Your journey, step by step
 
-```bash
-# 1. Trust this repo in Claude Code — that auto-loads the skills + the `ideation` plugin.
-# 2. Set up voice:
-#    > "Set up Handy for me."          → runs the setup-handy skill
-# 3. Opening check-in (anonymous, opt-in):
-#    > "Run my workshop check-in."     → runs coach-checkin, posts to the board
-# 4. …work Blocks 1–4…
-# 5. Closing check-in:
-#    > "Run my closing check-in."
-```
+### 🎙️ Block 1 — Voice coding
 
-### Stand up the live board (facilitator)
+**Step 1 · Get your voice working.** Say to Claude:
 
-You're logged into the **WorkOS Internal** Cloudflare account via `wrangler login`
-(confirm: `npx wrangler whoami`). Full runbook in [`board/README.md`](board/README.md).
+> *"Set up Handy for me."*
 
-```bash
-cd board && npm install
-npm run db:create            # create D1, paste database_id into wrangler.jsonc
-npm run migrate:remote       # apply the schema
-echo -n "<submit-token>"  | npx wrangler secret put SUBMIT_TOKEN
-echo -n "<admin-token>"   | npx wrangler secret put ADMIN_TOKEN
-echo -n "<anthropic-key>" | npx wrangler secret put ANTHROPIC_API_KEY
-npm run deploy               # builds the frontend → public/, then deploys
+[Handy](https://handy.computer) is **free, local, and private** (nothing leaves your machine).
+Claude walks you through install, a quick model download, mic permission, and your push-to-talk
+hotkey — **under 5 minutes.** Stuck on permissions? That's almost always macOS *Accessibility* —
+ask Claude. ⏱️
 
-# Point the check-in skill at the deployed board:
-export WORKER_URL="https://aie-board.<your-subdomain>.workers.dev/api/response"
-export WORKER_TOKEN="<submit-token>"
-```
+**Step 2 · Say hello to the room.** Run your opening check-in:
 
-### Develop & verify locally
+> *"Run my workshop check-in."*
 
-```bash
-npm test                     # coach-checkin script tests (node --test)
-npm run lint                 # markdownlint everything CI would
+It asks a few quick questions — your role, your biggest time-sink, what you'd love to automate —
+and (only with your OK) posts them **anonymously** to the live board. Watch the room's toil light
+up on the projector. 🔦
 
-cd board
-npm run dev                  # build + wrangler dev; append ?sim to force the simulator
-# Projector check with canned data (zero AI spend):
-curl -s -X POST $BASE/api/admin/seed  -H "Authorization: Bearer <admin-token>" | jq
-curl -s -X POST $BASE/api/admin/clear -H "Authorization: Bearer <admin-token>" | jq
-```
+**Step 3 · Fix a bug — by voice.** Pick a seeded bug in [`exercises/`](exercises/) and fix it
+without touching the keyboard. Feel how fast *intent → change* is when you just talk.
 
-## Repository map
+**Step 4 · The wow — many agents at once.** 🤯 Open three terminal tabs and, by voice, start
+three things together:
 
-| Path | What's inside |
-|------|---------------|
-| [`curriculum/`](curriculum/) | The four blocks — [voice](curriculum/01-voice-coding.md) · [loops & goals](curriculum/02-loops-and-goals.md) · [gates](curriculum/03-verification-gates.md) · [schedules](curriculum/04-scheduled-tasks.md) |
-| [`skills/`](skills/) | [`setup-handy`](skills/setup-handy/) (voice on-ramp) · [`coach-checkin`](skills/coach-checkin/) (opt-in interview) · `ideation` (plugin) |
-| [`board/`](board/) | The live room board — Cloudflare Worker + D1 + two-tier AI, D3 projector frontend |
-| [`mcp-coach/`](mcp-coach/) | *(planned)* the coach as an in-session MCP server + a one-command installer |
-| [`exercises/`](exercises/) | *(stub)* the local-first app attendees build on, with checklist issues |
-| [`docs/`](docs/) | [run of show](docs/run-of-show.md) · [design notes](docs/design.md) |
-| [`post-workshop/`](post-workshop/) | the follow-up check-in + roadmap (workshop RAG, keep-the-repo) |
+- 🛠️ Tab A: a bigger refactor
+- 🐛 Tab B: a second fix
+- ✍️ Tab C: something that isn't even code (draft a short post about the fix)
 
-## The operator stack
+Keep talking — kick off the next one while the last is still working. **Your voice just removed
+the bottleneck.**
 
-What "AI-native" actually means here — the glue, not the off-the-shelf parts:
+→ *More depth: [`curriculum/01-voice-coding.md`](curriculum/01-voice-coding.md)*
 
-- **Voice** as the input layer — talk at ~180 wpm, hands off the keyboard.
-- **Goals & loops** to hand off multi-step work and walk away.
-- **Verification gates** (hooks + adversarial review) so you trust the output.
-- **Scheduled tasks** so the work recurs without you.
-- **A coach** that meets you where you are and a **board** that shows the room its own gains.
+---
+
+### 🔁 Block 2 — Loops & goals
+
+**Step 5 · "Done" is a checklist, not a vibe.** Open an issue in [`exercises/`](exercises/) —
+its description is a list of checkboxes. Tell Claude:
+
+> *"Work this issue. It's not done until every todo is checked off."*
+
+Watch it decompose the work and hold *itself* to the list. 📋
+
+**Step 6 · Let it run with `/loop`.** Some work is recurring or unknown-size. Try:
+
+> *"`/loop` until the test suite is green."*
+
+Quick rule of thumb:
+- 🎯 **Goal / checklist** → one bounded job with known steps.
+- ♾️ **Loop** → keep going until a condition is met.
+
+They compose — and with **git worktrees**, you can run several agents in parallel without them
+colliding.
+
+→ *More depth: [`curriculum/02-loops-and-goals.md`](curriculum/02-loops-and-goals.md)*
+
+---
+
+### 🛡️ Block 3 — Verification gates
+
+**Step 7 · The cheapest gate — a hook.** Ask Claude:
+
+> *"Add a hook that runs lint + typecheck + the tests on every change, and fix anything it flags."*
+
+Now the agent **can't** hand you code that doesn't build. The gate fails it; it fixes itself. 🟢
+
+**Step 8 · The adversarial gate — a second opinion.** On anything risky, fan out to the Codex CLI
+for an independent review and fix what it finds:
+
+> *"Fan this diff out to Codex for an adversarial review, then fix everything it found."*
+
+Two models disagreeing and reconciling catches what one model alone talks itself past.
+
+> 🧭 **The operator's definition of done:** the *gates* pass — not "the model sounds confident."
+
+→ *More depth: [`curriculum/03-verification-gates.md`](curriculum/03-verification-gates.md)*
+
+---
+
+### ⏰ Block 4 — Scheduled tasks
+
+**Step 9 · Put it on a timer.** Take the work you just did — fixed, gated, written up — and
+schedule it:
+
+> *"Schedule this every Monday morning: pull the latest, fix the top lint issues, run the gates,
+> and draft a short post about what changed."*
+
+The loop you ran by hand now **runs itself.** That schedule is yours to keep. 🗓️
+
+**Step 10 · Close the loop.** Run your closing check-in:
+
+> *"Run my closing check-in."*
+
+It asks what you wired up and what you'll automate next. Watch the board's dots **migrate from
+toil to leverage** — and the big number land: *the engineering-hours/week this room just
+reclaimed.* 🎉
+
+→ *More depth: [`curriculum/04-scheduled-tasks.md`](curriculum/04-scheduled-tasks.md)*
+
+---
+
+## 🎁 What you leave with
+
+- ✅ **Voice coding** set up and working on your machine.
+- ✅ A repo with **hooks and gates** wired in.
+- ✅ A **scheduled task** running in your own environment — not a demo, the real thing.
+- ✅ The full operator stack, assembled once, end to end: **voice → loops & goals → gates → schedules.**
+- ✅ A number on the board for what that's worth to you, every week.
+
+---
+
+## 🔒 Your privacy
+
+The check-in only ever sends **what you type and confirm** — your role and your answers, with a
+random anonymous id. **Nothing is scanned off your machine** — no repos, no `git log`, no
+transcripts. Ever. You can skip it entirely and still do every exercise.
+
+---
+
+## 🗺️ Where to look
+
+| If you want… | Go to |
+|--------------|-------|
+| Deeper notes on each block | [`curriculum/`](curriculum/) |
+| The skills you're using | [`skills/`](skills/) — [`setup-handy`](skills/setup-handy/), [`coach-checkin`](skills/coach-checkin/) |
+| The live board's code | [`board/`](board/) |
+| The exercises | [`exercises/`](exercises/) |
+| To run this workshop yourself | [`docs/facilitator.md`](docs/facilitator.md) |
 
 ---
 
 <div align="center">
-<sub>Made with care — and Claude Code. 🔥</sub>
+<sub>Now stop reading and go talk to your computer. 🎙️🔥</sub>
 </div>

@@ -1,0 +1,775 @@
+/**
+ * deck-animations.css — animation primitives for the Applied AI Learnings deck.
+ *
+ * Pairs with deck-animations.js. Hides animation targets up front so the
+ * entry animation has somewhere to come from. JS swaps to the final state
+ * via the Web Animations API.
+ *
+ * The `.deck-anim-ready` class is added to <html> by an inline script at
+ * the very top of <body> — so styles below apply on first paint, no FOUC.
+ */
+
+/* ---- Stagger reveal: prep state ---- */
+.deck-anim-ready .anim-rise {
+  opacity: 0;
+  transform: translateY(18px);
+  will-change: opacity, transform;
+}
+
+.deck-anim-ready .anim-rise-soft {
+  opacity: 0;
+  transform: translateY(8px);
+  will-change: opacity, transform;
+}
+
+/* ---- Underline accent: prep at 0% width ---- */
+.deck-anim-ready .anim-accent {
+  background-size: 0% 16px;
+  will-change: background-size;
+}
+
+/* ---- Count-up: prep with monospace tabular numerals so digits don't shift width ---- */
+[data-count-to] {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/* ---- Pipeline arrow: prep with dashoffset ---- */
+.deck-anim-ready .pipe-arrow path {
+  stroke-dasharray: 32 32;
+  stroke-dashoffset: 32;
+  will-change: stroke-dashoffset;
+}
+
+/* ---- Gap-chart paths: prep with dashoffset ---- */
+.deck-anim-ready .gap-chart .draw-path {
+  stroke-dasharray: var(--path-len, 4000);
+  stroke-dashoffset: var(--path-len, 4000);
+  will-change: stroke-dashoffset;
+}
+
+.deck-anim-ready .gap-chart .draw-fade {
+  opacity: 0;
+  will-change: opacity;
+}
+
+/* ---- Cards / pipe nodes / ladder rows: stagger group convenience ---- */
+.deck-anim-ready .anim-cascade > * {
+  opacity: 0;
+  transform: translateY(24px);
+  will-change: opacity, transform;
+}
+
+.deck-anim-ready .anim-cascade-x > * {
+  opacity: 0;
+  transform: translateX(-24px);
+  will-change: opacity, transform;
+}
+
+/* ---- Quote mark: scale-in pop ---- */
+.deck-anim-ready .anim-pop {
+  opacity: 0;
+  transform: scale(0.6);
+  transform-origin: left center;
+  will-change: opacity, transform;
+}
+
+/* ---- Code-block "monitor on" prep ---- */
+.deck-anim-ready .anim-monitor {
+  opacity: 0;
+  filter: brightness(0.2);
+  will-change: opacity, filter;
+}
+
+/* ---- Listen-bot pulsing dot on the buffer-pattern slide ---- */
+.listen-dot {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--burnt-400, #e67e22);
+  vertical-align: middle;
+  margin-right: 12px;
+  box-shadow: 0 0 0 0 rgba(230, 126, 34, 0.45);
+  animation: listen-pulse 1.6s ease-out infinite;
+}
+
+@keyframes listen-pulse {
+  0%   { box-shadow: 0 0 0 0   rgba(230, 126, 34, 0.55); }
+  70%  { box-shadow: 0 0 0 18px rgba(230, 126, 34, 0); }
+  100% { box-shadow: 0 0 0 0   rgba(230, 126, 34, 0); }
+}
+
+/* ---- Caret blink on monospace types ---- */
+.anim-caret::after {
+  content: "▍";
+  display: inline-block;
+  color: var(--amber-400, #f39c12);
+  margin-left: 6px;
+  animation: caret-blink 0.9s steps(1, end) infinite;
+}
+.anim-caret.anim-caret-done::after { display: none; }
+
+@keyframes caret-blink {
+  0%, 50%  { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* ---- Worked-example panel (slide 15) ---- */
+.worked-example {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  max-width: 1600px;
+  margin-top: 16px;
+}
+.worked-example .step {
+  display: grid;
+  grid-template-columns: 88px 1fr;
+  gap: 32px;
+  align-items: baseline;
+}
+.worked-example .step .arrow {
+  font-family: var(--font-mono);
+  font-size: 44px;
+  color: var(--burnt-500);
+  line-height: 1;
+}
+.worked-example .step .text {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 54px;
+  line-height: 1.15;
+  color: var(--charcoal-100);
+  letter-spacing: -0.015em;
+}
+.worked-example .step small {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 26px;
+  font-weight: 400;
+  color: var(--parchment-600);
+  letter-spacing: 0;
+  margin-top: 10px;
+  line-height: 1.4;
+}
+
+/* ---- Three-integration callout strip (slide 10) ---- */
+.kit-strip {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 48px;
+  margin-top: auto;
+  padding-top: 56px;
+  border-top: 1px solid var(--parchment-300);
+}
+.kit-strip .item .num {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  letter-spacing: 0.12em;
+  color: var(--parchment-500);
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.kit-strip .item .name {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 42px;
+  color: var(--charcoal-100);
+  line-height: 1.1;
+  margin-bottom: 14px;
+}
+.kit-strip .item .role {
+  font-size: 24px;
+  color: var(--parchment-600);
+  line-height: 1.4;
+}
+
+/* ---- Slack-style thread mockup (slide: Blog Bot in the wild) ---- */
+.slack-thread {
+  background: #fff;
+  border: 1px solid var(--parchment-300, #e8e0d0);
+  border-radius: 16px;
+  padding: 32px 40px;
+  margin-top: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  box-shadow: 0 2px 0 rgba(0,0,0,0.02);
+  max-width: 1700px;
+  font-family: 'Lato', 'Inter', system-ui, -apple-system, sans-serif;
+}
+.slack-msg {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 18px;
+  align-items: flex-start;
+}
+.slack-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  color: white;
+  font-size: 22px;
+  letter-spacing: 0;
+}
+.slack-avatar--bot {
+  background: linear-gradient(135deg, var(--amber-300, #f5b350) 0%, var(--burnt-500, #d35400) 100%);
+}
+.slack-head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+.slack-name {
+  font-weight: 700;
+  font-size: 24px;
+  color: #1d1c1d;
+}
+.slack-app {
+  background: #e8e8e8;
+  color: #616061;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  margin-left: 6px;
+  vertical-align: middle;
+  letter-spacing: 0.04em;
+}
+.slack-time {
+  font-size: 18px;
+  color: #616061;
+}
+.slack-text {
+  font-size: 24px;
+  color: #1d1c1d;
+  line-height: 1.45;
+}
+.slack-mention {
+  background: #e8f5fa;
+  color: #1264a3;
+  padding: 0 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.slack-attach {
+  display: inline-block;
+  background: #f6f6f6;
+  border: 1px solid #d8d8d8;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 18px;
+  margin-top: 8px;
+  color: #1d1c1d;
+}
+.slack-text--checklist {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  line-height: 1.75;
+  color: #2c2d30;
+}
+.slack-check {
+  color: #2eb67d;
+  margin-right: 8px;
+}
+.slack-muted { color: #888; font-style: italic; }
+.slack-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+.slack-btn {
+  padding: 9px 16px;
+  border: 1px solid #d8d8d8;
+  border-radius: 6px;
+  font-size: 18px;
+  background: #fff;
+  color: #1d1c1d;
+  font-weight: 600;
+}
+.slack-btn--primary {
+  background: #007a5a;
+  color: white;
+  border-color: #007a5a;
+}
+.slack-divider {
+  border-top: 1px dashed #d8d8d8;
+  margin: 4px 0;
+}
+.slack-title {
+  font-weight: 700;
+  color: #1d1c1d;
+  margin-bottom: 6px;
+}
+
+/* ---- 12-step pipeline (slide: Behind the interface) ---- */
+.pipeline-12 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px 56px;
+  margin-top: 40px;
+  margin-bottom: 48px;
+  max-width: 1700px;
+}
+.pipeline-12 .step {
+  font-family: var(--font-mono);
+  font-size: 26px;
+  line-height: 1.4;
+  color: var(--charcoal-50, #1a1a2e);
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+}
+.pipeline-12 .step .pipe-check {
+  color: #2eb67d;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.hood-tags {
+  display: flex;
+  gap: 14px;
+  margin-top: 32px;
+  margin-bottom: 36px;
+  flex-wrap: wrap;
+}
+.hood-punch {
+  font-style: italic;
+  font-size: 44px;
+  line-height: 1.2;
+  font-family: var(--font-serif);
+  font-weight: 700;
+  color: var(--burnt-500);
+  max-width: 1600px;
+}
+
+/* ---- Bartleby joke slide ---- */
+.bartleby-slide {
+  background:
+    linear-gradient(180deg, rgba(8,6,4,0.62) 0%, rgba(8,6,4,0.36) 35%, rgba(8,6,4,0.78) 100%),
+    url("bartleby-hero.webp") center center / cover no-repeat,
+    #1a120a !important;
+  color: #f4ead7;
+  overflow: hidden;
+}
+.bartleby-slide .frame {
+  justify-content: flex-end;
+  padding-bottom: 140px;
+}
+.bartleby-slide .deck-eyebrow {
+  font-family: var(--font-sans);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #f5b350;
+  margin-bottom: 32px;
+}
+.bartleby-slide .bartleby-line {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 700;
+  font-size: 96px;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: #f4ead7;
+  text-shadow: 0 2px 18px rgba(0,0,0,0.55);
+  max-width: 1500px;
+  margin: 0;
+}
+.bartleby-slide .bartleby-quote {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 600;
+  font-size: 48px;
+  line-height: 1.25;
+  color: #f5b350;
+  text-shadow: 0 2px 18px rgba(0,0,0,0.55);
+  max-width: 1400px;
+  margin-top: 32px;
+}
+.bartleby-slide .bartleby-tomb {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  letter-spacing: 0.2em;
+  color: rgba(244, 234, 215, 0.72);
+  text-transform: uppercase;
+  margin-top: 48px;
+}
+
+/* ---- Bartleby login overlay slide (the door that killed it) ---- */
+.bartleby-login-slide {
+  background:
+    linear-gradient(180deg, rgba(8,6,4,0.78) 0%, rgba(8,6,4,0.55) 35%, rgba(8,6,4,0.82) 100%),
+    url("bartleby-hero.webp") center center / cover no-repeat,
+    #1a120a !important;
+  color: #f4ead7;
+  overflow: hidden;
+}
+.bartleby-login-slide .frame {
+  align-items: center;
+  justify-content: center;
+  padding-top: 80px;
+  padding-bottom: 80px;
+}
+.bartleby-login-slide .login-eyebrow {
+  font-family: var(--font-sans);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #f5b350;
+  margin-bottom: 36px;
+  text-align: center;
+}
+.fake-authkit-card {
+  background: #ffffff;
+  border-radius: 24px;
+  padding: 64px 64px 56px;
+  width: 700px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.55), 0 4px 18px rgba(0,0,0,0.35);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  position: relative;
+}
+.fake-authkit-card .product-thumb {
+  width: 240px;
+  height: 240px;
+  border-radius: 16px;
+  background: url("bartleby-hero.webp") center center / cover no-repeat;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.fake-authkit-card h1 {
+  font-family: var(--font-sans);
+  font-size: 40px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  text-align: center;
+}
+.fake-authkit-card .login-sub {
+  font-family: var(--font-sans);
+  font-size: 22px;
+  color: #6b7280;
+  margin: -16px 0 8px;
+  text-align: center;
+}
+.fake-authkit-card .google-btn {
+  width: 100%;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 18px 24px;
+  font-family: var(--font-sans);
+  font-size: 22px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(37,99,235,0.25);
+}
+.kill-tag {
+  position: absolute;
+  top: 32px;
+  right: -180px;
+  transform: rotate(8deg);
+  font-family: var(--font-mono);
+  font-size: 22px;
+  font-weight: 700;
+  color: #ef4444;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(254, 226, 226, 0.95);
+  border: 2px solid #ef4444;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+  white-space: nowrap;
+}
+.bartleby-login-slide .login-caption {
+  margin-top: 56px;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 600;
+  font-size: 40px;
+  line-height: 1.25;
+  color: #f4ead7;
+  text-align: center;
+  max-width: 1500px;
+  text-shadow: 0 2px 18px rgba(0,0,0,0.55);
+}
+.bartleby-login-slide .login-caption b {
+  color: #f5b350;
+  font-weight: 700;
+}
+
+/* ---- Capability columns (refactored "behind the interface") ---- */
+.capability-columns {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
+  margin-top: 40px;
+  margin-bottom: 36px;
+  max-width: 1720px;
+}
+.capability-col {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border-top: 3px solid var(--burnt-400, #e67e22);
+  padding-top: 22px;
+}
+.capability-col .col-num {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  color: var(--parchment-500);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.capability-col .col-title {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 36px;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  color: var(--charcoal-100);
+  margin-bottom: 8px;
+}
+.capability-col .col-item {
+  font-family: var(--font-sans);
+  font-size: 22px;
+  line-height: 1.4;
+  color: var(--charcoal-50);
+}
+.capability-col .col-item .pill {
+  display: inline-block;
+  background: rgba(230,126,34,0.12);
+  color: var(--burnt-500);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  padding: 1px 7px;
+  border-radius: 4px;
+  margin-left: 6px;
+  vertical-align: 2px;
+}
+.unifying-strip {
+  background: var(--charcoal-400, #1a1a2e);
+  color: #f5b350;
+  font-family: var(--font-mono);
+  font-size: 22px;
+  text-align: center;
+  padding: 20px 32px;
+  border-radius: 10px;
+  max-width: 1720px;
+  letter-spacing: 0.04em;
+  margin-top: 12px;
+}
+.unifying-strip b { color: #f4ead7; font-weight: 700; }
+
+/* ---- Asymmetry slide ---- */
+.asymmetry-grid {
+  display: grid;
+  grid-template-columns: 460px 80px 1fr;
+  gap: 0;
+  margin-top: 48px;
+  flex: 1;
+  min-height: 0;
+}
+.asymmetry-grid .arrow-col {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--burnt-400);
+  font-size: 72px;
+  font-family: var(--font-serif);
+  font-weight: 700;
+}
+.asymmetry-input {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 18px;
+}
+.asymmetry-input .label {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  color: var(--parchment-500);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.asymmetry-input .quote-box {
+  background: #fff;
+  border: 1px solid var(--parchment-300);
+  border-radius: 12px;
+  padding: 26px 28px;
+  font-family: var(--font-serif);
+  font-size: 30px;
+  font-style: italic;
+  line-height: 1.35;
+  color: var(--charcoal-100);
+  font-weight: 600;
+  box-shadow: 0 2px 0 rgba(0,0,0,0.02);
+}
+.asymmetry-input .meta {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  color: var(--parchment-600);
+}
+.asymmetry-output {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.asymmetry-output .label {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  color: var(--parchment-500);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.asymmetry-output .map {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px 16px;
+}
+.asymmetry-output .chip {
+  background: var(--parchment-50);
+  border: 1px solid var(--parchment-300);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-family: var(--font-mono);
+  font-size: 18px;
+  line-height: 1.3;
+  color: var(--charcoal-50);
+}
+.asymmetry-output .chip b { color: var(--burnt-500); }
+
+/* ---- Loop-in-action timeline slide ---- */
+.loop-timeline {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 1720px;
+  margin-top: 28px;
+  margin-bottom: 24px;
+}
+.loop-timeline::before {
+  content: "";
+  position: absolute;
+  left: 88px;
+  top: 28px;
+  bottom: 28px;
+  width: 2px;
+  background: linear-gradient(
+    to bottom,
+    var(--parchment-300, #e8e0d0) 0%,
+    var(--burnt-400, #e67e22) 15%,
+    var(--burnt-400, #e67e22) 85%,
+    var(--parchment-300, #e8e0d0) 100%
+  );
+  pointer-events: none;
+}
+.loop-step {
+  display: grid;
+  grid-template-columns: 70px 32px 160px 1fr;
+  gap: 20px;
+  align-items: center;
+  padding: 2px 0;
+  position: relative;
+}
+.loop-step .step-num {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  color: var(--parchment-500);
+  letter-spacing: 0.1em;
+  text-align: right;
+}
+.loop-step .step-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--parchment-100);
+  border: 3px solid var(--parchment-400, #c4b39a);
+  box-sizing: border-box;
+  z-index: 1;
+  position: relative;
+}
+.loop-step.human-step .step-dot {
+  background: var(--burnt-500, #d35400);
+  border-color: var(--burnt-500, #d35400);
+  box-shadow: 0 0 0 6px rgba(230, 126, 34, 0.18);
+}
+.loop-step .actor-chip {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border-radius: 999px;
+  width: fit-content;
+  text-align: center;
+}
+.loop-step .actor-chip.human {
+  background: var(--burnt-500, #d35400);
+  color: white;
+}
+.loop-step .actor-chip.bot {
+  background: var(--parchment-200, #efe5d0);
+  color: var(--charcoal-100, #1a1a2e);
+  border: 1px solid var(--parchment-300, #e8e0d0);
+}
+.loop-step .action {
+  font-family: var(--font-serif);
+  font-size: 30px;
+  line-height: 1.15;
+  color: var(--charcoal-100, #1a1a2e);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.loop-step .action small {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 19px;
+  font-weight: 400;
+  color: var(--parchment-600, #8a795c);
+  margin-top: 2px;
+  line-height: 1.35;
+  letter-spacing: 0;
+}
+
+/* ---- Reduced motion: collapse all animations to instant ---- */
+@media (prefers-reduced-motion: reduce) {
+  .deck-anim-ready .anim-rise,
+  .deck-anim-ready .anim-rise-soft,
+  .deck-anim-ready .anim-cascade > *,
+  .deck-anim-ready .anim-cascade-x > *,
+  .deck-anim-ready .anim-pop,
+  .deck-anim-ready .anim-monitor {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+  .deck-anim-ready .anim-accent {
+    background-size: 100% 16px !important;
+  }
+  .deck-anim-ready .pipe-arrow path,
+  .deck-anim-ready .gap-chart .draw-path {
+    stroke-dashoffset: 0 !important;
+  }
+  .deck-anim-ready .gap-chart .draw-fade {
+    opacity: 1 !important;
+  }
+  .listen-dot { animation: none !important; }
+  .anim-caret::after { animation: none !important; }
+}

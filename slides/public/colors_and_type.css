@@ -1,0 +1,327 @@
+/* =========================================================
+   zackproser.com Design System — Foundations
+   Source of truth for color + type tokens.
+   ========================================================= */
+
+/* ---- Webfonts (Google Fonts substitute — see README) ---- */
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;0,8..60,800;1,8..60,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root {
+  /* ===== BASE COLOR STYLES ===== */
+
+  /* Parchment — warm off-white, light-mode canvas */
+  --parchment-50:  #fefdfb;
+  --parchment-100: #fbf7f0;  /* Main light background */
+  --parchment-200: #f5f0e6;  /* Secondary light background / sections */
+  --parchment-300: #e8e0d0;  /* Borders, dividers */
+  --parchment-400: #d1c7b7;  /* Pencil gray, subtle borders */
+  --parchment-500: #b8a88f;  /* Muted text */
+  --parchment-600: #8b7355;  /* Darker copy / prose on parchment */
+
+  /* Charcoal — deep blue-black, dark-mode canvas */
+  --charcoal-50:  #2c3e50;   /* Dark text tone */
+  --charcoal-100: #1f2d3d;
+  --charcoal-200: #1a2533;
+  --charcoal-300: #16213e;   /* Secondary dark bg */
+  --charcoal-400: #1a1a2e;   /* Main dark bg */
+  --charcoal-500: #141428;
+  --charcoal-600: #0f0f1f;   /* Deepest dark */
+
+  /* Burnt — primary warm accent (light mode) */
+  --burnt-50:  #fef3e2;
+  --burnt-100: #fde4c4;
+  --burnt-200: #fbd38d;
+  --burnt-300: #f6ad55;
+  --burnt-400: #e67e22;   /* Primary accent */
+  --burnt-500: #d35400;   /* Hover */
+  --burnt-600: #b84a00;
+
+  /* Amber — primary glowing accent (dark mode) + premium */
+  --amber-50:  #fffbeb;
+  --amber-100: #fef3c7;
+  --amber-200: #fde68a;
+  --amber-300: #fcd34d;
+  --amber-400: #f39c12;   /* Dark-mode accent */
+  --amber-500: #f59e0b;   /* Premium gold */
+  --amber-600: #d97706;
+
+  /* Slate — dark-mode neutrals (per AuthorityHero) */
+  --slate-100: #f1f5f9;
+  --slate-200: #e2e8f0;
+  --slate-300: #cbd5e1;
+  --slate-400: #94a3b8;
+  --slate-500: #64748b;
+  --slate-600: #475569;
+  --slate-700: #334155;
+  --slate-800: #1e293b;
+  --slate-900: #0f172a;
+  --slate-950: #020617;
+
+  /* Stone — prose neutrals */
+  --stone-100: #f5f5f4;
+  --stone-200: #e7e5e4;
+  --stone-300: #d6d3d1;
+  --stone-400: #a8a29e;
+  --stone-500: #78716c;
+  --stone-600: #57534e;
+  --stone-700: #44403c;
+  --stone-800: #292524;
+  --stone-900: #1c1917;
+
+  /* Sky — dark-mode link color for prose */
+  --sky-300: #7dd3fc;
+  --sky-400: #38bdf8;
+  --sky-500: #0ea5e9;
+
+  /* Status / badge utilities */
+  --green-500: #22c55e;
+  --green-600: #16a34a;
+  --green-700: #15803d;
+  --blue-400:  #60a5fa;
+  --blue-500:  #3b82f6;
+  --blue-600:  #2563eb;
+  --blue-800:  #1e40af;
+  --blue-900:  #1e3a8a;
+  --teal-100:  #ccfbf1;
+  --teal-800:  #115e59;
+  --red-500:   #ef4444;
+
+  /* Premium gold gradient stops */
+  --premium-gold:       #F59E0B;
+  --premium-gold-light: #FCD34D;
+  --premium-gold-dark:  #B45309;
+  --glow-color:         #FFD700;
+
+  /* ===== SEMANTIC COLOR STYLES ===== */
+
+  /* Light mode (default) */
+  --bg:            var(--parchment-100);
+  --bg-secondary:  var(--parchment-200);
+  --bg-elevated:   var(--parchment-50);   /* cards */
+  --bg-inverse:    var(--charcoal-400);
+
+  --fg:            var(--charcoal-50);    /* primary text */
+  --fg-muted:      var(--parchment-600);
+  --fg-subtle:     var(--parchment-500);
+  --fg-on-accent:  #ffffff;
+
+  --accent:        var(--burnt-400);      /* CTA bg / link */
+  --accent-hover:  var(--burnt-500);
+  --accent-soft:   rgb(230 126 34 / .10); /* pill bg */
+  --accent-ring:   rgb(230 126 34 / .40);
+
+  --border:        var(--parchment-300);
+  --border-strong: var(--parchment-400);
+  --ring:          rgb(230 126 34 / .50);
+
+  --link:          var(--burnt-400);
+  --link-hover:    var(--burnt-500);
+
+  --shadow-sm: 0 1px 2px 0 rgb(24 24 40 / .04);
+  --shadow-md: 0 4px 10px -2px rgb(24 24 40 / .08), 0 2px 4px -2px rgb(24 24 40 / .05);
+  --shadow-lg: 0 12px 28px -8px rgb(24 24 40 / .14), 0 4px 8px -4px rgb(24 24 40 / .08);
+  --shadow-xl: 0 24px 48px -12px rgb(24 24 40 / .22);
+  --shadow-gold: 0 0 10px rgb(245 158 11 / .5), 0 0 15px rgb(245 158 11 / .3);
+
+  /* ===== BASE TYPE STYLES ===== */
+  --font-serif: 'Source Serif 4', 'Source Serif Pro', Georgia, 'Times New Roman', serif;
+  --font-sans:  'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  --font-mono:  'JetBrains Mono', ui-monospace, SFMono-Regular, 'Menlo', Consolas, monospace;
+
+  --fw-regular: 400;
+  --fw-medium:  500;
+  --fw-semibold: 600;
+  --fw-bold:    700;
+  --fw-extrabold: 800;
+
+  --tracking-tight: -0.02em;
+  --tracking-snug:  -0.01em;
+  --tracking-normal: 0;
+  --tracking-wide:  0.04em;
+
+  --leading-tight: 1.15;
+  --leading-snug:  1.35;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.65;
+
+  /* Scale (px): 12 14 16 18 20 24 30 36 48 60 72 */
+  --fs-xs:   0.8125rem;  /* 13 */
+  --fs-sm:   0.875rem;   /* 14 */
+  --fs-base: 1rem;       /* 16 */
+  --fs-lg:   1.125rem;   /* 18 */
+  --fs-xl:   1.25rem;    /* 20 */
+  --fs-2xl:  1.5rem;     /* 24 */
+  --fs-3xl:  1.875rem;   /* 30 */
+  --fs-4xl:  2.25rem;    /* 36 */
+  --fs-5xl:  3rem;       /* 48 */
+  --fs-6xl:  3.75rem;    /* 60 */
+  --fs-7xl:  4.5rem;     /* 72 */
+
+  /* ===== RADII ===== */
+  --radius-xs:  4px;
+  --radius-sm:  6px;
+  --radius-md:  8px;
+  --radius-lg:  12px;
+  --radius-xl:  16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 24px;
+  --radius-pill: 999px;
+
+  /* ===== SPACING (4-px base grid) ===== */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+}
+
+/* ===== DARK MODE ===== */
+.dark, [data-theme="dark"] {
+  --bg:            var(--charcoal-400);
+  --bg-secondary:  var(--charcoal-500);
+  --bg-elevated:   var(--slate-800);
+  --bg-inverse:    var(--parchment-100);
+
+  --fg:            var(--parchment-100);
+  --fg-muted:      var(--slate-300);
+  --fg-subtle:     var(--slate-400);
+  --fg-on-accent:  #ffffff;
+
+  --accent:        var(--amber-400);
+  --accent-hover:  var(--amber-300);
+  --accent-soft:   rgb(243 156 18 / .20);
+  --accent-ring:   rgb(243 156 18 / .40);
+
+  --border:        var(--slate-700);
+  --border-strong: var(--slate-600);
+  --ring:          rgb(243 156 18 / .45);
+
+  --link:          var(--sky-400);   /* prose links */
+  --link-hover:    var(--sky-300);
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / .4);
+  --shadow-md: 0 4px 10px -2px rgb(0 0 0 / .5);
+  --shadow-lg: 0 12px 28px -8px rgb(0 0 0 / .6);
+  --shadow-xl: 0 24px 48px -12px rgb(0 0 0 / .7);
+}
+
+/* ===== SEMANTIC TYPE STYLES (elements) ===== */
+body {
+  font-family: var(--font-sans);
+  font-size:   var(--fs-base);
+  line-height: var(--leading-normal);
+  color: var(--fg);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1, .h1 {
+  font-family: var(--font-serif);
+  font-weight: var(--fw-extrabold);
+  font-size:   var(--fs-6xl);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--fg);
+}
+
+h2, .h2 {
+  font-family: var(--font-serif);
+  font-weight: var(--fw-bold);
+  font-size:   var(--fs-4xl);
+  line-height: var(--leading-snug);
+  letter-spacing: var(--tracking-snug);
+  color: var(--fg);
+}
+
+h3, .h3 {
+  font-family: var(--font-serif);
+  font-weight: var(--fw-bold);
+  font-size:   var(--fs-2xl);
+  line-height: var(--leading-snug);
+  color: var(--fg);
+}
+
+h4, .h4 {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-semibold);
+  font-size:   var(--fs-xl);
+  line-height: var(--leading-snug);
+  color: var(--fg);
+}
+
+p, .body {
+  font-family: var(--font-sans);
+  font-size:   var(--fs-base);
+  line-height: var(--leading-relaxed);
+  color: var(--fg);
+}
+
+.lead {
+  font-family: var(--font-sans);
+  font-size:   var(--fs-xl);
+  line-height: var(--leading-relaxed);
+  color: var(--fg-muted);
+}
+
+small, .small {
+  font-size: var(--fs-sm);
+  color: var(--fg-muted);
+}
+
+.eyebrow {
+  font-family: var(--font-sans);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  color: var(--fg-subtle);
+}
+
+.serif-display {
+  font-family: var(--font-serif);
+  font-weight: var(--fw-extrabold);
+  letter-spacing: var(--tracking-tight);
+}
+
+code, kbd, samp, pre, .mono {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+}
+
+code {
+  background: var(--accent-soft);
+  color: var(--burnt-500);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-sm);
+}
+.dark code { color: var(--amber-300); background: rgb(28 25 23 / .6); }
+
+a {
+  color: var(--link);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, var(--link) 35%, transparent);
+  text-underline-offset: 3px;
+  transition: color .15s ease, text-decoration-color .15s ease;
+}
+a:hover { color: var(--link-hover); text-decoration-color: var(--link-hover); }
+
+blockquote {
+  border-left: 2px solid var(--burnt-300);
+  padding-left: var(--space-6);
+  font-style: italic;
+  color: var(--fg-muted);
+}
+.dark blockquote { border-left-color: rgb(14 165 233 / .5); }
+
+hr { border: 0; border-top: 1px solid var(--border); margin: var(--space-12) 0; }

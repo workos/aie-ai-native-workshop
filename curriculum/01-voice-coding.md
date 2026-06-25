@@ -1,6 +1,6 @@
 # Block 1 — Voice coding (hands off the keyboard)
 
-**~25 min · the on-ramp.** Everyone gets off the keyboard and drives Claude by voice, then learns the real unlock: one voice, many agents.
+**~20 min · the on-ramp.** Everyone gets off the keyboard and drives Claude by voice, then learns the real unlock: one voice, many agents.
 
 ## The arc
 

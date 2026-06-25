@@ -1,6 +1,6 @@
 # Block 4 — Scheduled tasks (it runs without you)
 
-**~20 min · the payoff.** Everything so far ran because *they* were sitting there. This block cuts the cord: the work happens on a schedule, while they sleep.
+**~8 min · the payoff.** Everything so far ran because *they* were sitting there. This block cuts the cord: the work happens on a schedule, while they sleep.
 
 ## The arc
 

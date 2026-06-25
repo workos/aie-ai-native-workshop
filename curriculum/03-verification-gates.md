@@ -1,6 +1,6 @@
 # Block 3 — Verification gates (make it trustworthy)
 
-**~25 min.** A loop or goal is only as good as what it has to *pass* before it claims success. This is where operators separate from tinkerers: you wrap the agent in gates it can't skip.
+**~12 min.** A loop or goal is only as good as what it has to *pass* before it claims success. This is where operators separate from tinkerers: you wrap the agent in gates it can't skip.
 
 ## The arc
 
