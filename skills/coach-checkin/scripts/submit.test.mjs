@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, existsSync, readFileSync, readdirSync } from 'node:fs';
+import { mkdtempSync, existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createServer } from 'node:http';
@@ -53,6 +53,33 @@ test('writes marker', () =>
     assert.equal(marker.participantId, result.participantId);
     assert.equal(marker.role, 'Backend / Go');
     assert.ok(marker.preSubmittedAt);
+  }));
+
+test('merge: pre submit preserves pre-existing progress fields', () =>
+  inTempDir(async () => {
+    process.env.WORKER_URL = UNREACHABLE; // marker is written before the POST
+    // Fabricate a checkpoint-only marker (attendee hit some checkpoints before
+    // ever running the opening check-in). Phase 3 must not depend on Phase 4 to
+    // produce these, so they're seeded by hand.
+    writeFileSync(
+      '.aie-coach-state.json',
+      JSON.stringify({ currentBlock: 3, blocksDone: [1, 2] }, null, 2),
+    );
+
+    const result = await submit({
+      role: 'Backend / Go',
+      answers: PRE_ANSWERS,
+      confirmed: true,
+    });
+
+    const marker = JSON.parse(readFileSync('.aie-coach-state.json', 'utf8'));
+    // identity was written
+    assert.equal(marker.participantId, result.participantId);
+    assert.equal(marker.role, 'Backend / Go');
+    assert.ok(marker.preSubmittedAt);
+    // progress fields survived the read-merge-write
+    assert.equal(marker.currentBlock, 3, 'currentBlock not clobbered');
+    assert.deepEqual(marker.blocksDone, [1, 2], 'blocksDone not clobbered');
   }));
 
 test('reuses uuid', () =>

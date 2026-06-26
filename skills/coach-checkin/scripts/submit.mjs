@@ -235,11 +235,18 @@ export async function submit(input) {
   }
 
   // Write the marker before the POST so the next run is recognised as `post`
-  // even when this submission falls back to the outbox.
+  // even when this submission falls back to the outbox. Read-merge-write (not a
+  // fresh object) so any progress fields the coach server wrote (currentBlock,
+  // blocksDone) survive a check-in that runs after some checkpoints.
   if (phase === 'pre') {
+    const existing = readMarker() ?? {};
     writeFileSync(
       markerPath(),
-      JSON.stringify({ participantId, role, preSubmittedAt: new Date().toISOString() }, null, 2),
+      JSON.stringify(
+        { ...existing, participantId, role, preSubmittedAt: new Date().toISOString() },
+        null,
+        2,
+      ),
     );
   }
 
