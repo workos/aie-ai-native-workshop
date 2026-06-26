@@ -46,6 +46,19 @@ export const QUESTION_KEYS = {
   post: ['built', 'next'],
 };
 
+// Canonical prompt wording, transcribed verbatim from SKILL.md (the agent prose
+// mirrors these by eye). The MCP server imports these so its surfaced questions
+// can never silently drift from the skill. The parity test in submit.test.mjs
+// guards that every QUESTION_KEYS entry has a non-empty prompt here.
+export const QUESTION_PROMPTS = {
+  time_sink: 'What dev task eats the most of your week?',
+  friction: "What's the most repetitive thing you still do by hand?",
+  goal: 'What would you most love to automate or speed up today?',
+  built: 'What did you wire up today — a hook, a skill, a scheduled task?',
+  next: 'What are you going to automate next?',
+};
+export const ROLE_PROMPT = "What's your role and main stack?";
+
 const workerUrl = () => process.env.WORKER_URL || DEFAULT_WORKER_URL;
 const authToken = () => process.env.WORKER_TOKEN || DEFAULT_WORKER_TOKEN;
 const markerPath = () => join(process.cwd(), MARKER);

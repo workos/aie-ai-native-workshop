@@ -5,7 +5,16 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createServer } from 'node:http';
 
-import { detect, submit, buildPayload, validateAgainstSchema, loadSchema } from './submit.mjs';
+import {
+  detect,
+  submit,
+  buildPayload,
+  validateAgainstSchema,
+  loadSchema,
+  QUESTION_KEYS,
+  QUESTION_PROMPTS,
+  ROLE_PROMPT,
+} from './submit.mjs';
 
 const UNREACHABLE = 'http://127.0.0.1:1'; // refuses immediately, no hanging timeout
 const PRE_ANSWERS = {
@@ -152,3 +161,22 @@ test('no send without confirmation', () =>
       server.close();
     }
   }));
+
+test('prompts: every question key has a non-empty prompt', () => {
+  // The MCP server reads QUESTION_PROMPTS instead of re-stating the prose, so a
+  // future key addition must not ship a prompt-less question. This guards
+  // coverage (wording is mirrored against SKILL.md by eye).
+  const keys = QUESTION_KEYS.pre.concat(QUESTION_KEYS.post);
+  for (const k of keys) {
+    const prompt = QUESTION_PROMPTS[k];
+    assert.equal(typeof prompt, 'string', `prompt for "${k}" is a string`);
+    assert.ok(prompt.trim().length > 0, `prompt for "${k}" is non-empty`);
+  }
+  // No orphan prompts: every prompt key maps to a known question key.
+  for (const k of Object.keys(QUESTION_PROMPTS)) {
+    assert.ok(keys.includes(k), `prompt key "${k}" maps to a known question key`);
+  }
+  // The pre run also surfaces a role prompt.
+  assert.equal(typeof ROLE_PROMPT, 'string');
+  assert.ok(ROLE_PROMPT.trim().length > 0, 'ROLE_PROMPT is non-empty');
+});

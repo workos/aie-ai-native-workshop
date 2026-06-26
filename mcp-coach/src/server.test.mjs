@@ -11,6 +11,9 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { mkdtempSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { createServer } from 'node:http';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SERVER = join(__dirname, 'server.mjs');
@@ -22,9 +25,16 @@ const REPO_ROOT = join(__dirname, '..', '..');
 // close stdin, and resolve once the child exits with { lines, stderr, code }.
 // `lines` is stdout split on newlines (blank trailing entry dropped). Closing
 // stdin is what ends the server's read loop, so every harness call terminates.
-function run(requests, { cwd = REPO_ROOT } = {}) {
+function run(requests, { cwd = REPO_ROOT, env } = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn('node', [SERVER], { cwd, stdio: ['pipe', 'pipe', 'pipe'] });
+    const child = spawn('node', [SERVER], {
+      cwd,
+      // Merge any overrides (e.g. WORKER_URL) onto the inherited env so the
+      // check-in tools delegate to submit.mjs against a local stub, not the
+      // real board.
+      env: env ? { ...process.env, ...env } : process.env,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
     let out = '';
     let err = '';
     child.stdout.setEncoding('utf8');
@@ -124,12 +134,12 @@ describe('handshake', () => {
 });
 
 describe('tools/list', () => {
-  test('returns an array (empty at phase 1)', async () => {
+  test('returns a correlated array result', async () => {
+    // Framing contract only — the exact tool set is asserted by `tools/list mvp`.
     const { lines } = await run([{ jsonrpc: '2.0', id: 3, method: 'tools/list', params: {} }]);
     const msg = JSON.parse(lines[0]);
     assert.equal(msg.id, 3);
     assert.ok(Array.isArray(msg.result.tools), 'result.tools is an array');
-    assert.deepEqual(msg.result.tools, [], 'no tools registered yet at phase 1');
   });
 });
 
@@ -162,5 +172,181 @@ describe('startup', () => {
     // The warning must not leak into the protocol channel.
     assert.equal(lines.length, 1, 'stdout still carries only the protocol reply');
     assert.ok(JSON.parse(lines[0]).result, 'the server still answers despite the wrong cwd');
+  });
+});
+
+// --- Phase 2: board-layer check-in tools ---------------------------------
+
+// Build a tools/call request for `name` with `args`.
+const call = (id, name, args = {}) => ({
+  jsonrpc: '2.0',
+  id,
+  method: 'tools/call',
+  params: { name, arguments: args },
+});
+
+// Find the response with `id` in the framed stdout lines and parse the tool
+// result out of its content[0].text (the server JSON-stringifies tool results).
+function toolResult(lines, id) {
+  const msg = lines.map((l) => JSON.parse(l)).find((m) => m.id === id);
+  assert.ok(msg, `a response for id ${id} was returned`);
+  assert.ok(msg.result, `id ${id} is a result, not an error: ${JSON.stringify(msg.error)}`);
+  return { parsed: JSON.parse(msg.result.content[0].text), isError: msg.result.isError === true };
+}
+
+// A fresh temp dir to use as the server's cwd so marker/outbox writes are
+// isolated from the repo. Returns the path.
+function freshCwd() {
+  return mkdtempSync(join(tmpdir(), 'coach-srv-'));
+}
+
+describe('tools/list mvp', () => {
+  test('exposes exactly the two board-layer tools with valid schemas', async () => {
+    const { lines } = await run([{ jsonrpc: '2.0', id: 10, method: 'tools/list', params: {} }]);
+    const msg = JSON.parse(lines[0]);
+    assert.equal(msg.id, 10);
+
+    const names = msg.result.tools.map((t) => t.name).sort();
+    // Exactly these two at the MVP — coach_status / coach_checkpoint arrive in Phase 4.
+    assert.deepEqual(names, ['coach_checkin', 'coach_submit_checkin'], 'only the two MVP tools');
+
+    for (const t of msg.result.tools) {
+      assert.equal(typeof t.description, 'string');
+      assert.ok(t.description.length > 0, `${t.name} has a description`);
+      assert.equal(t.inputSchema.type, 'object', `${t.name} inputSchema is an object`);
+      assert.equal(t.inputSchema.additionalProperties, false, `${t.name} disallows extra props`);
+    }
+
+    const submitTool = msg.result.tools.find((t) => t.name === 'coach_submit_checkin');
+    assert.deepEqual(submitTool.inputSchema.required, ['answers', 'confirmed'], 'submit requires answers+confirmed');
+  });
+});
+
+describe('coach_checkin', () => {
+  test('pre phase: needsRole and the three opening questions with prompts', async () => {
+    const cwd = freshCwd(); // no marker -> pre
+    const { lines } = await run([call(1, 'coach_checkin')], { cwd });
+    const { parsed, isError } = toolResult(lines, 1);
+
+    assert.equal(isError, false, 'not an error result');
+    assert.equal(parsed.phase, 'pre');
+    assert.equal(parsed.needsRole, true, 'pre asks for the role');
+    assert.ok(parsed.rolePrompt && parsed.rolePrompt.length > 0, 'a role prompt is provided');
+
+    assert.deepEqual(
+      parsed.questions.map((q) => q.questionKey),
+      ['time_sink', 'friction', 'goal'],
+      'the three opening questions in order',
+    );
+    for (const q of parsed.questions) {
+      assert.ok(q.prompt && q.prompt.length > 0, `${q.questionKey} has a non-empty prompt`);
+    }
+  });
+
+  test('post phase (marker has participantId): no role, the two closing questions', async () => {
+    const cwd = freshCwd();
+    // Fabricate a pre marker so detect() reports post.
+    writeFileSync(
+      join(cwd, '.aie-coach-state.json'),
+      JSON.stringify({ participantId: 'fixed-id', role: 'Backend / Go', preSubmittedAt: new Date().toISOString() }),
+    );
+    const { lines } = await run([call(2, 'coach_checkin')], { cwd });
+    const { parsed } = toolResult(lines, 2);
+
+    assert.equal(parsed.phase, 'post');
+    assert.equal(parsed.needsRole, false, 'post reuses the marker role');
+    assert.equal(parsed.rolePrompt, undefined, 'no role prompt in post');
+    assert.deepEqual(
+      parsed.questions.map((q) => q.questionKey),
+      ['built', 'next'],
+      'the two closing questions in order',
+    );
+  });
+});
+
+describe('consent', () => {
+  test('confirmed:false writes no marker, no outbox, makes no POST', async () => {
+    const cwd = freshCwd();
+    let hit = false;
+    const server = createServer((req, res) => {
+      hit = true;
+      res.end('ok');
+    });
+    await new Promise((r) => server.listen(0, '127.0.0.1', r));
+    const url = `http://127.0.0.1:${server.address().port}`;
+
+    try {
+      const { lines } = await run([call(3, 'coach_submit_checkin', { role: 'PM', answers: { time_sink: 'a', friction: 'b', goal: 'c' }, confirmed: false })], {
+        cwd,
+        env: { WORKER_URL: url },
+      });
+      const { parsed } = toolResult(lines, 3);
+
+      assert.equal(parsed.sent, false);
+      assert.equal(parsed.reason, 'unconfirmed', 'the consent guard returns unconfirmed');
+      assert.equal(hit, false, 'no POST was made');
+      assert.equal(existsSync(join(cwd, '.aie-coach-state.json')), false, 'no marker written');
+      assert.equal(existsSync(join(cwd, '.aie-coach-outbox')), false, 'no outbox written');
+    } finally {
+      server.close();
+    }
+  });
+});
+
+describe('malformed', () => {
+  test('confirmed:true with bad answers returns invalid_answers and the server stays alive', async () => {
+    const cwd = freshCwd();
+    // Missing the required keys for the pre phase -> submit() throws before the
+    // consent guard. The handler must catch it and return a structured error,
+    // and the read loop must survive to answer the follow-up tools/list.
+    const { lines } = await run(
+      [
+        call(4, 'coach_submit_checkin', { role: 'Eng', answers: { not_a_key: 'x' }, confirmed: true }),
+        { jsonrpc: '2.0', id: 5, method: 'tools/list', params: {} }, // proves the process is still alive
+      ],
+      { cwd, env: { WORKER_URL: 'http://127.0.0.1:1' } },
+    );
+
+    const { parsed, isError } = toolResult(lines, 4);
+    assert.equal(isError, false, 'a caught validation error is a normal result, not a transport error');
+    assert.equal(parsed.error, 'invalid_answers', 'structured invalid_answers error');
+    assert.ok(parsed.detail && parsed.detail.length > 0, 'includes a human-readable detail');
+    // A missing key throws in buildAnswers (no schemaErrors); a schema-shape
+    // violation throws from validateAgainstSchema (schemaErrors array). The
+    // handler surfaces whichever the real cause was, defaulting to null.
+    assert.ok(
+      parsed.schemaErrors === null || Array.isArray(parsed.schemaErrors),
+      'schemaErrors is an array or null',
+    );
+    assert.ok('schemaErrors' in parsed, 'the handler always includes a schemaErrors field');
+
+    // The follow-up request was answered -> the malformed payload did not crash
+    // the server.
+    const after = lines.map((l) => JSON.parse(l)).find((m) => m.id === 5);
+    assert.ok(after && after.result, 'the server answered a request after the malformed one');
+
+    // Nothing leaked to disk on the error path.
+    assert.equal(existsSync(join(cwd, '.aie-coach-state.json')), false, 'no marker on the error path');
+    assert.equal(existsSync(join(cwd, '.aie-coach-outbox')), false, 'no outbox on the error path');
+  });
+});
+
+describe('outbox', () => {
+  test('confirmed:true with valid answers against an unreachable board falls back to the outbox', async () => {
+    const cwd = freshCwd();
+    const { lines } = await run(
+      [call(6, 'coach_submit_checkin', { role: 'Backend / Go', answers: { time_sink: 'a', friction: 'b', goal: 'c' }, confirmed: true })],
+      { cwd, env: { WORKER_URL: 'http://127.0.0.1:1' } }, // refuses immediately
+    );
+    const { parsed } = toolResult(lines, 6);
+
+    assert.equal(parsed.sent, false);
+    assert.ok(parsed.outbox, 'an outbox path is returned');
+    assert.equal(parsed.phase, 'pre');
+
+    // The marker is written before the POST, and exactly one outbox file lands.
+    assert.ok(existsSync(join(cwd, '.aie-coach-state.json')), 'marker written before the POST');
+    const files = readdirSync(join(cwd, '.aie-coach-outbox'));
+    assert.equal(files.length, 1, 'exactly one outbox file');
   });
 });

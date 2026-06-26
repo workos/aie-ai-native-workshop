@@ -20,6 +20,17 @@ import { join } from 'node:path';
 import { realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
+// Board-layer delegation target. The check-in tools are thin adapters over this
+// already-tested skill script — no board logic (validation, consent guard,
+// retry, outbox, marker) is reimplemented here.
+import {
+  detect,
+  submit,
+  QUESTION_KEYS,
+  QUESTION_PROMPTS,
+  ROLE_PROMPT,
+} from '../../skills/coach-checkin/scripts/submit.mjs';
+
 const PROTOCOL_VERSION = '2025-06-18'; // pinned fallback when the client omits one
 const SERVER_INFO = { name: 'aie-coach', version: '1.0.0' };
 
@@ -44,6 +55,70 @@ export class RpcError extends Error {
 // `schema` is the tool descriptor returned by tools/list; `handler(args)` runs
 // the tool and returns a JSON-serializable result (or throws to signal failure).
 export const tools = new Map();
+
+// --- board-layer tools (Phase 2) -----------------------------------------
+// Two thin adapters over submit.mjs. `coach_checkin` reads the marker via
+// detect() and returns the ordered questions; `coach_submit_checkin` delegates
+// straight to submit() and surfaces its result (or a structured validation
+// error) verbatim. The consent guard, retry, outbox, and marker write all live
+// in submit.mjs and are untouched here.
+
+// coach_checkin: return the phase and its ordered questions. Reads state only;
+// never sends anything.
+tools.set('coach_checkin', {
+  schema: {
+    name: 'coach_checkin',
+    description: "Return the ordered check-in questions for the attendee's current phase (pre/post).",
+    inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+  },
+  handler: () => {
+    const d = detect(); // { phase:'pre' } | { phase:'post', participantId, role }
+    const keys = QUESTION_KEYS[d.phase]; // pre: [time_sink,friction,goal]; post: [built,next]
+    return {
+      phase: d.phase,
+      // pre needs the role asked; post reuses the marker's role (per detect()).
+      needsRole: d.phase === 'pre',
+      rolePrompt: d.phase === 'pre' ? ROLE_PROMPT : undefined,
+      questions: keys.map((k) => ({ questionKey: k, prompt: QUESTION_PROMPTS[k] })),
+    };
+  },
+});
+
+// coach_submit_checkin: submit confirmed answers via submit(). submit() validates
+// BEFORE the consent guard, so malformed answers throw regardless of `confirmed`.
+// Catch that here and return a structured error Claude can re-collect from — do
+// not let it become a transport crash. The consent guard itself is untouched:
+// `confirmed !== true` returns { sent:false, reason:'unconfirmed' } from submit().
+tools.set('coach_submit_checkin', {
+  schema: {
+    name: 'coach_submit_checkin',
+    description: 'Submit confirmed check-in answers. Honors the consent guard; never sends without confirmed===true.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        role: { type: 'string' },
+        answers: { type: 'object' }, // { <questionKey>: <answer> }
+        confirmed: { type: 'boolean' },
+      },
+      required: ['answers', 'confirmed'],
+      additionalProperties: false,
+    },
+  },
+  handler: async ({ role, answers, confirmed }) => {
+    try {
+      return await submit({ role, answers, confirmed });
+      //  -> { sent:true, phase, participantId }
+      //  -> { sent:false, phase, participantId, outbox }
+      //  -> { sent:false, reason:'unconfirmed' }
+    } catch (err) {
+      return {
+        error: 'invalid_answers',
+        detail: String(err?.message ?? err),
+        schemaErrors: err?.schemaErrors ?? null,
+      };
+    }
+  },
+});
 
 // --- framing -------------------------------------------------------------
 
