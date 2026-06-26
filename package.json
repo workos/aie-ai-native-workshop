@@ -4,7 +4,7 @@
   "private": true,
   "description": "The AI-Native Engineer — an interactive Claude Code workshop for AIE SF.",
   "scripts": {
-    "test": "node --test \"skills/**/scripts/*.test.mjs\"",
+    "test": "node --test \"skills/**/scripts/*.test.mjs\" \"mcp-coach/**/*.test.mjs\"",
     "lint": "markdownlint-cli2 \"**/*.md\" \"#node_modules\" \"#board/public\"",
     "board:dev": "npm --prefix board run dev",
     "board:deploy": "npm --prefix board run deploy"
