@@ -31,6 +31,12 @@ import {
   ROLE_PROMPT,
 } from '../../skills/coach-checkin/scripts/submit.mjs';
 
+// Navigation-layer collaborators (Phase 4). `state.mjs` owns the progress side of
+// the shared marker (read + checkpoint transitions); `blocks.mjs` is the
+// four-block guidance data + the `nextBlock` advance helper.
+import { readState, recordCheckpoint } from './state.mjs';
+import { BLOCKS, nextBlock } from './blocks.mjs';
+
 const PROTOCOL_VERSION = '2025-06-18'; // pinned fallback when the client omits one
 const SERVER_INFO = { name: 'aie-coach', version: '1.0.0' };
 
@@ -117,6 +123,87 @@ tools.set('coach_submit_checkin', {
         schemaErrors: err?.schemaErrors ?? null,
       };
     }
+  },
+});
+
+// --- navigation-layer tools (Phase 4) ------------------------------------
+// The "where am I / what's next" layer. `coach_status` composes identity+phase
+// (detect) with progress (readState) into a read-only answer; `coach_checkpoint`
+// records a block done, advances, and returns the next block's guidance. Both
+// reuse the shared marker via state.mjs — no progress logic is reimplemented.
+
+// Pick the single most useful next action for the attendee. Priority order:
+//   1. No participantId (detect() returns it only in `post`, i.e. they haven't
+//      done the opening check-in yet) -> point at the opening check-in.
+//   2. All four blocks done -> point at the closing check-in.
+//   3. Otherwise -> the current block's first action (default to Block 1).
+// Advisory only: `blocksDone` is the authoritative progress record; this is a hint.
+export function nextActionFor(d, currentBlock, blocksDone) {
+  if (!d.participantId) return 'Run your opening check-in';
+  const allDone = [1, 2, 3, 4].every((n) => blocksDone.includes(n));
+  if (allDone) return 'Run your closing check-in';
+  const block = currentBlock ?? 1;
+  return `Block ${block}: ${BLOCKS[block - 1].firstAction}`;
+}
+
+// coach_status: read-only "where am I". Composes phase/identity with progress.
+tools.set('coach_status', {
+  schema: {
+    name: 'coach_status',
+    description: 'Return where the attendee is: phase, current block, blocks done, and the next action.',
+    inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+  },
+  handler: () => {
+    const d = detect(); // { phase:'pre' } | { phase:'post', participantId, role }
+    const { currentBlock = null, blocksDone = [] } = readState();
+    return {
+      phase: d.phase,
+      participantId: d.participantId,
+      role: d.role,
+      currentBlock,
+      blocksDone,
+      nextAction: nextActionFor(d, currentBlock, blocksDone),
+    };
+  },
+});
+
+// coach_checkpoint: "done with this block." Records it, advances, congratulates,
+// and returns the next block's guidance. `block` is constrained 1-4 by the input
+// schema, so out-of-range never reaches the handler. Block-1 carries a SOFT nudge
+// (not a hard gate): the checkpoint always records and advances, but if the
+// attendee hasn't done the opening check-in (detect() phase is 'pre', no
+// participantId) it adds an advisory `nudge` so Claude can prompt them — this is
+// the one behavioral nuance from the design review (Block-1 done gates on the
+// opening check-in, the board money shot) reconciled with "checkpoints must be
+// skippable."
+tools.set('coach_checkpoint', {
+  schema: {
+    name: 'coach_checkpoint',
+    description: "Mark a block done; advance and return the next block's goal + first action.",
+    inputSchema: {
+      type: 'object',
+      properties: { block: { type: 'integer', minimum: 1, maximum: 4 } },
+      required: ['block'],
+      additionalProperties: false,
+    },
+  },
+  handler: ({ block }) => {
+    recordCheckpoint(block);
+    const done = block === 4;
+    const next = nextBlock(block);
+    const res = {
+      congrats: `Nice — Block ${block} (${BLOCKS[block - 1].title}) done.`,
+      done,
+      nextBlock: next
+        ? { n: next.n, title: next.title, goal: next.goal, firstAction: next.firstAction, doneWhen: next.doneWhen }
+        : undefined,
+    };
+    // Block-1 gates on the opening check-in (soft): nudge if not checked in.
+    if (block === 1 && detect().phase === 'pre') {
+      res.nudge = 'Before moving on, run your opening check-in so your workflow lands on the board.';
+    }
+    if (done) res.closing = 'Last one — run your closing check-in to put a number on the board.';
+    return res;
   },
 });
 

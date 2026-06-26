@@ -201,14 +201,17 @@ function freshCwd() {
 }
 
 describe('tools/list mvp', () => {
-  test('exposes exactly the two board-layer tools with valid schemas', async () => {
+  test('exposes the two board-layer tools with valid schemas', async () => {
     const { lines } = await run([{ jsonrpc: '2.0', id: 10, method: 'tools/list', params: {} }]);
     const msg = JSON.parse(lines[0]);
     assert.equal(msg.id, 10);
 
-    const names = msg.result.tools.map((t) => t.name).sort();
-    // Exactly these two at the MVP — coach_status / coach_checkpoint arrive in Phase 4.
-    assert.deepEqual(names, ['coach_checkin', 'coach_submit_checkin'], 'only the two MVP tools');
+    const names = msg.result.tools.map((t) => t.name);
+    // The two board-layer tools must be present with valid schemas. (The exact
+    // four-tool set is asserted by `tools/list full` once Phase 4 lands the
+    // navigation tools.)
+    assert.ok(names.includes('coach_checkin'), 'coach_checkin is registered');
+    assert.ok(names.includes('coach_submit_checkin'), 'coach_submit_checkin is registered');
 
     for (const t of msg.result.tools) {
       assert.equal(typeof t.description, 'string');
@@ -219,6 +222,117 @@ describe('tools/list mvp', () => {
 
     const submitTool = msg.result.tools.find((t) => t.name === 'coach_submit_checkin');
     assert.deepEqual(submitTool.inputSchema.required, ['answers', 'confirmed'], 'submit requires answers+confirmed');
+  });
+});
+
+// --- Phase 4: navigation-layer guidance tools ----------------------------
+
+describe('tools/list full', () => {
+  test('exposes exactly the four tools after the navigation layer lands', async () => {
+    const { lines } = await run([{ jsonrpc: '2.0', id: 11, method: 'tools/list', params: {} }]);
+    const msg = JSON.parse(lines[0]);
+    assert.equal(msg.id, 11);
+
+    const names = msg.result.tools.map((t) => t.name).sort();
+    assert.deepEqual(
+      names,
+      ['coach_checkin', 'coach_checkpoint', 'coach_status', 'coach_submit_checkin'],
+      'exactly the four tools (two board-layer + two navigation)',
+    );
+
+    // The two navigation tools carry valid object schemas too.
+    const status = msg.result.tools.find((t) => t.name === 'coach_status');
+    const checkpoint = msg.result.tools.find((t) => t.name === 'coach_checkpoint');
+    assert.equal(status.inputSchema.type, 'object', 'coach_status inputSchema is an object');
+    assert.equal(status.inputSchema.additionalProperties, false, 'coach_status disallows extra props');
+    assert.deepEqual(checkpoint.inputSchema.required, ['block'], 'coach_checkpoint requires a block');
+    assert.equal(checkpoint.inputSchema.properties.block.minimum, 1, 'block is constrained >= 1');
+    assert.equal(checkpoint.inputSchema.properties.block.maximum, 4, 'block is constrained <= 4');
+  });
+});
+
+describe('coach_status', () => {
+  test('fresh marker (pre): no participantId, currentBlock null, nextAction is the opening check-in', async () => {
+    const cwd = freshCwd(); // no marker -> detect() returns { phase:'pre' }
+    const { lines } = await run([call(1, 'coach_status')], { cwd });
+    const { parsed, isError } = toolResult(lines, 1);
+
+    assert.equal(isError, false, 'not an error result');
+    assert.equal(parsed.phase, 'pre');
+    assert.equal(parsed.participantId, undefined, 'pre has no participantId');
+    assert.equal(parsed.currentBlock, null, 'no progress yet -> currentBlock null');
+    assert.deepEqual(parsed.blocksDone, [], 'no blocks done yet');
+    assert.match(parsed.nextAction, /opening check-in/i, 'fresh attendee is pointed at the opening check-in');
+  });
+
+  test('after two checkpoints: blocksDone [1,2] and a sensible block-3 nextAction', async () => {
+    const cwd = freshCwd();
+    // Seed a participantId so status is past the opening-check-in branch and the
+    // first-action hint (not the opening check-in) is exercised.
+    writeFileSync(
+      join(cwd, '.aie-coach-state.json'),
+      JSON.stringify({ participantId: 'fixed-id', role: 'Backend / Go', preSubmittedAt: new Date().toISOString() }),
+    );
+    const { lines } = await run(
+      [call(1, 'coach_checkpoint', { block: 1 }), call(2, 'coach_checkpoint', { block: 2 }), call(3, 'coach_status')],
+      { cwd },
+    );
+    const { parsed } = toolResult(lines, 3);
+
+    assert.equal(parsed.phase, 'post', 'a seeded participantId reads as post');
+    assert.deepEqual(parsed.blocksDone, [1, 2], 'both checkpoints recorded');
+    assert.equal(parsed.currentBlock, 3, 'advanced to block 3');
+    assert.match(parsed.nextAction, /Block 3/, 'nextAction names the current block');
+    assert.match(parsed.nextAction, /lint\/typecheck\/test hook/, "nextAction is block 3's first action");
+  });
+});
+
+describe('coach_checkpoint', () => {
+  test('block 1 with no participantId: congrats, advances to block 2, AND a soft nudge', async () => {
+    const cwd = freshCwd(); // no marker -> pre -> no participantId
+    const { lines } = await run([call(1, 'coach_checkpoint', { block: 1 })], { cwd });
+    const { parsed, isError } = toolResult(lines, 1);
+
+    assert.equal(isError, false, 'not an error result');
+    assert.match(parsed.congrats, /Block 1/, 'congratulates on block 1');
+    assert.equal(parsed.done, false, 'block 1 is not the last');
+    assert.equal(parsed.nextBlock.n, 2, 'advances to block 2');
+    assert.ok(parsed.nextBlock.goal && parsed.nextBlock.firstAction && parsed.nextBlock.doneWhen, 'next-block guidance is present');
+    assert.ok(parsed.nudge, 'a soft nudge is present when there is no opening check-in');
+    assert.match(parsed.nudge, /opening check-in/i, 'the nudge points at the opening check-in');
+  });
+
+  test('block 1 WITH a participantId: no nudge', async () => {
+    const cwd = freshCwd();
+    // Fabricate a pre marker so detect() reports post (has participantId).
+    writeFileSync(
+      join(cwd, '.aie-coach-state.json'),
+      JSON.stringify({ participantId: 'fixed-id', role: 'PM', preSubmittedAt: new Date().toISOString() }),
+    );
+    const { lines } = await run([call(2, 'coach_checkpoint', { block: 1 })], { cwd });
+    const { parsed } = toolResult(lines, 2);
+
+    assert.equal(parsed.nextBlock.n, 2, 'still advances to block 2');
+    assert.equal(parsed.nudge, undefined, 'no nudge once the opening check-in is done');
+  });
+
+  test('block 4: done true, no nextBlock, a closing-check-in prompt', async () => {
+    const cwd = freshCwd();
+    const { lines } = await run([call(3, 'coach_checkpoint', { block: 4 })], { cwd });
+    const { parsed } = toolResult(lines, 3);
+
+    assert.equal(parsed.done, true, 'block 4 is the last');
+    assert.equal(parsed.nextBlock, undefined, 'no next block after 4');
+    assert.ok(parsed.closing, 'a closing prompt is present');
+    assert.match(parsed.closing, /closing check-in/i, 'points at the closing check-in');
+  });
+
+  test('the recorded block survives into coach_status (shared marker)', async () => {
+    const cwd = freshCwd();
+    const { lines } = await run([call(1, 'coach_checkpoint', { block: 1 }), call(2, 'coach_status')], { cwd });
+    const { parsed } = toolResult(lines, 2);
+    assert.deepEqual(parsed.blocksDone, [1], 'the checkpoint persisted to the shared marker');
+    assert.equal(parsed.currentBlock, 2, 'status reflects the advance');
   });
 });
 
