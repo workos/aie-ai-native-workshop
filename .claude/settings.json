@@ -11,6 +11,13 @@
   "enabledPlugins": {
     "ideation@ideation": true
   },
+  "mcpServers": {
+    "aie-coach": {
+      "command": "node",
+      "args": ["${CLAUDE_PROJECT_DIR}/mcp-coach/src/server.mjs"],
+      "cwd": "${CLAUDE_PROJECT_DIR}"
+    }
+  },
   "permissions": {
     "allow": [
       "Bash(node:*)",
