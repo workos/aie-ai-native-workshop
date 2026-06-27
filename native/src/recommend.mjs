@@ -5,6 +5,7 @@
 // rec exists; here it is a capability gap. Plan 2 re-bases the highest-value recs
 // on observed waste (real hours/week from JSONL).
 import { subScores } from './score.mjs';
+import { applyEvidence } from './evidence.mjs';
 
 const ACTIONS = {
   verification: 'Add a hook that runs lint + typecheck + tests on every change',
@@ -14,10 +15,13 @@ const ACTIONS = {
   delegation: "Adopt a goal/checklist skill so \"done\" is a list, not a vibe",
 };
 
-export function recommend(signals, { threshold = 0.8 } = {}) {
+export function recommend(signals, { threshold = 0.8, observations = [] } = {}) {
   const subs = subScores(signals);
-  return Object.entries(subs)
+  const gaps = Object.entries(subs)
     .filter(([, value]) => value < threshold)
     .sort((a, b) => a[1] - b[1])
     .map(([pillar]) => ({ pillar, action: ACTIONS[pillar], basis: 'capability-gap' }));
+  // Evidence only re-bases/justifies the gap recs we already chose — it never adds
+  // a rec for a strong pillar and never re-orders the score-derived priority.
+  return applyEvidence(gaps, observations);
 }

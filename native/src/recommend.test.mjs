@@ -29,3 +29,28 @@ describe('recommend', () => {
     assert.ok(recs.every((r) => r.basis === 'capability-gap' && typeof r.action === 'string'));
   });
 });
+
+// --- append to native/src/recommend.test.mjs ---
+import { buildObservation } from './evidence.mjs';
+
+describe('recommend with evidence', () => {
+  test('an observation upgrades the matching rec to observed-waste', () => {
+    const observations = [buildObservation('manual-test-runs', 30, { windowDays: 30, now: 0 })];
+    const recs = recommend({ claudeMd: true }, { observations }); // verification is weak (0)
+    const v = recs.find((r) => r.pillar === 'verification');
+    assert.equal(v.basis, 'observed-waste');
+    assert.ok(v.hoursPerWeek > 0);
+    assert.match(v.evidence, /h\/wk/);
+  });
+
+  test('strong pillars are still omitted even if an observation exists for them', () => {
+    const observations = [buildObservation('manual-test-runs', 30, { windowDays: 30, now: 0 })];
+    const recs = recommend({ hooks: { lintTest: true } }, { observations }); // verification strong -> dropped
+    assert.ok(!recs.some((r) => r.pillar === 'verification'));
+  });
+
+  test('no observations -> identical to the gap-only output', () => {
+    const signals = { claudeMd: true };
+    assert.deepEqual(recommend(signals), recommend(signals, { observations: [] }));
+  });
+});
