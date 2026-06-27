@@ -36,7 +36,7 @@ function countDirs(path) {
 
 function countWorktrees(cwd) {
   try {
-    const out = execFileSync('git', ['worktree', 'list'], { cwd, encoding: 'utf8' });
+    const out = execFileSync('git', ['worktree', 'list'], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
     return out.trim().split('\n').filter(Boolean).length;
   } catch {
     return 0; // not a git repo, or git absent
