@@ -134,11 +134,18 @@ interface IncomingAnswer {
   questionKey: string;
   answer: string;
 }
+interface IncomingAiNativeScore {
+  before?: number;
+  after?: number;
+  delta?: number;
+  pillarsPassed?: string[];
+}
 interface IncomingBody {
   participantId?: string;
   phase?: string;
   role?: string;
   answers?: IncomingAnswer[];
+  aiNativeScore?: IncomingAiNativeScore;
 }
 
 async function handleResponse(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -147,13 +154,20 @@ async function handleResponse(req: Request, env: Env, ctx: ExecutionContext): Pr
   const body = (await req.json().catch(() => null)) as IncomingBody | null;
   if (!body) return json({ error: "bad_json" }, env, 400);
 
-  const phase = body.phase as Phase;
-  if (!PHASES.includes(phase)) return json({ error: "bad_phase" }, env, 400);
-
   const answers = (body.answers || []).filter(
     (a) => a && typeof a.questionKey === "string" && typeof a.answer === "string" && a.answer.trim(),
   );
-  if (!answers.length) return json({ error: "no_answers" }, env, 400);
+  // Sanitize the opt-in score up front so we know whether this is a score post.
+  const aiNativeScore = sanitizeAiNativeScore(body.aiNativeScore);
+  // A post must carry SOMETHING: answers, or a volunteered score. (Score posts
+  // legitimately have no answers.)
+  if (!answers.length && !aiNativeScore) return json({ error: "no_answers" }, env, 400);
+
+  // Phase is only meaningful for an answers post. A score-only post carries no
+  // phase, so the bad_phase guard applies only when answers are present (the
+  // existing answers path is unchanged: it still requires a valid phase).
+  const phase = body.phase as Phase;
+  if (answers.length && !PHASES.includes(phase)) return json({ error: "bad_phase" }, env, 400);
 
   const participantId = (body.participantId || crypto.randomUUID()).slice(0, 64);
   const role = body.role?.slice(0, 240) ?? null;
@@ -168,20 +182,62 @@ async function handleResponse(req: Request, env: Env, ctx: ExecutionContext): Pr
     .bind(participantId, role, ts)
     .run();
 
-  // Insert raw rows immediately so nothing is ever lost if AI is slow/down.
-  const inserts = answers.map((a) =>
-    env.DB.prepare(
-      `INSERT INTO responses
-        (id, participant_id, phase, question_key, answer_raw, created_at)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6)`,
-    ).bind(crypto.randomUUID(), participantId, phase, a.questionKey.slice(0, 64), a.answer.slice(0, 2000), ts),
-  );
-  await env.DB.batch(inserts);
+  // Persist the opt-in AI-Native score when present — but only with a real
+  // before->after pair (sanitizeAiNativeScore already guaranteed both; this
+  // mirrors the coach-side "no phantom baseline" rule). DISTINCT from
+  // responses.score (the AI-derived per-answer leverage).
+  if (aiNativeScore) {
+    await env.DB.prepare(
+      `UPDATE participants
+          SET ai_native_before = ?2, ai_native_after = ?3, ai_native_delta = ?4,
+              pillars_passed = ?5, scored_at = ?6
+        WHERE id = ?1`,
+    )
+      .bind(
+        participantId,
+        aiNativeScore.before,
+        aiNativeScore.after,
+        aiNativeScore.delta,
+        aiNativeScore.pillarsPassed ? JSON.stringify(aiNativeScore.pillarsPassed) : null,
+        ts,
+      )
+      .run();
+  }
 
-  // Enrich out-of-band — the POST returns now.
-  ctx.waitUntil(enrich(env, participantId, role, phase, answers, ts));
+  // Insert raw rows immediately so nothing is ever lost if AI is slow/down.
+  // A score-only post has no answers — skip the responses write + enrichment.
+  if (answers.length) {
+    const inserts = answers.map((a) =>
+      env.DB.prepare(
+        `INSERT INTO responses
+          (id, participant_id, phase, question_key, answer_raw, created_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6)`,
+      ).bind(crypto.randomUUID(), participantId, phase, a.questionKey.slice(0, 64), a.answer.slice(0, 2000), ts),
+    );
+    await env.DB.batch(inserts);
+
+    // Enrich out-of-band — the POST returns now.
+    ctx.waitUntil(enrich(env, participantId, role, phase, answers, ts));
+  }
 
   return json({ ok: true, participantId }, env);
+}
+
+// Validate + clamp the opt-in AI-Native score. Returns null unless BOTH before and
+// after are finite (no phantom baseline). delta is recomputed server-side.
+function sanitizeAiNativeScore(s: IncomingBody["aiNativeScore"]): {
+  before: number; after: number; delta: number; pillarsPassed: string[] | null;
+} | null {
+  if (!s || typeof s !== "object") return null;
+  const clamp = (n: unknown) =>
+    typeof n === "number" && Number.isFinite(n) ? Math.max(0, Math.min(100, Math.round(n))) : null;
+  const before = clamp(s.before);
+  const after = clamp(s.after);
+  if (before == null || after == null) return null;
+  const pillars = Array.isArray(s.pillarsPassed)
+    ? s.pillarsPassed.filter((p) => typeof p === "string" && p).slice(0, 5)
+    : null;
+  return { before, after, delta: after - before, pillarsPassed: pillars?.length ? pillars : null };
 }
 
 // ── Tier 1: Haiku per-submission enrichment ───────────────────────────────────
