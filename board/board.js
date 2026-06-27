@@ -143,7 +143,8 @@ function estHours(people) {
 function synth(people, themes, automations, hoursOverride) {
   const n = people.length;
   if (!n) return { voices:0, pre:0, post:0, delta:0, hoursReclaimed:0,
-                   people:[], functions:[], themes:[], automations:[], headline:'' };
+                   people:[], functions:[], themes:[], automations:[], headline:'',
+                   aiNative:{before:0,after:0,delta:0,scored:0} };
   const pre  = Math.round(d3.mean(people, d => d.pre));
   const post = Math.round(d3.mean(people, d => d.post));
   const functions = FN_ORDER.map(key => {
@@ -156,7 +157,8 @@ function synth(people, themes, automations, hoursOverride) {
   const hoursReclaimed = hoursOverride != null ? hoursOverride : estHours(people);
   const autos = (automations || []).slice().sort((a, b) => b.hours - a.hours);
   return { voices:n, pre, post, delta:post - pre, hoursReclaimed,
-           people, functions, themes, automations:autos, headline:HEADLINE };
+           people, functions, themes, automations:autos, headline:HEADLINE,
+           aiNative:{before:0,after:0,delta:0,scored:0} };
 }
 
 /* ── live feed: drip seeded submissions, or poll a real worker (?api=) ────── */
@@ -224,6 +226,11 @@ function normalizeApi(j) {
   if (j.headline) s.headline = j.headline;
   if (j.aggregate) Object.assign(s, { pre:+j.aggregate.pre, post:+j.aggregate.post,
     delta:+j.aggregate.delta, voices:+j.aggregate.voices || people.length });
+  if (j.aggregate && j.aggregate.aiNative) {
+    const ai = j.aggregate.aiNative;
+    s.aiNative = { before: +ai.before || 0, after: +ai.after || 0,
+      delta: +ai.delta || 0, scored: +ai.scored || 0 };
+  }
   return s;
 }
 
@@ -695,6 +702,12 @@ function renderMasthead(instant) {
     label.textContent = 'Engineering-hours/week reclaimed';
     animateNum(num, DATA.hoursReclaimed, '', instant);
     sub.innerHTML = `room leverage <b>${DATA.pre} → ${DATA.post}</b> · ${DATA.voices} devs`;
+    if (DATA.aiNative && DATA.aiNative.scored > 0) {
+      const ai = document.createElement('div');
+      ai.className = 'ai-native-line';
+      ai.textContent = `AI-Native ${DATA.aiNative.before}% → ${DATA.aiNative.after}% · ${DATA.aiNative.scored} scored`;
+      sub.appendChild(ai);
+    }
     num.parentElement.style.setProperty('--num-glow', .55);
   } else {
     num.classList.add('pre');
