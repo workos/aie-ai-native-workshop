@@ -110,6 +110,27 @@ export function buildPayload({ phase, participantId, role, answers }) {
   };
 }
 
+// Build the opt-in AI-Native score body — an ADDITIVE block on the existing
+// POST /api/response contract. Only derived integers + the pillar id list ever
+// go on the wire; raw signals never leave the machine. Throws loudly on a
+// missing id or a non-finite score so a never-scanned attendee (no real
+// baseline) can't post a phantom 0->0 that would understate the room delta.
+export function buildScorePayload({ participantId, before, after, pillarsPassed } = {}) {
+  if (typeof participantId !== 'string' || participantId.trim() === '') {
+    throw new Error('participantId is required to post an AI-Native score');
+  }
+  if (!Number.isFinite(before) || !Number.isFinite(after)) {
+    throw new Error('before/after score must each be a finite number');
+  }
+  const b = Math.round(before);
+  const a = Math.round(after);
+  const aiNativeScore = { before: b, after: a, delta: a - b };
+  if (Array.isArray(pillarsPassed) && pillarsPassed.length > 0) {
+    aiNativeScore.pillarsPassed = pillarsPassed.filter((p) => typeof p === 'string' && p);
+  }
+  return { participantId: participantId.trim(), aiNativeScore };
+}
+
 function jsonType(v) {
   if (v === null) return 'null';
   if (Array.isArray(v)) return 'array';

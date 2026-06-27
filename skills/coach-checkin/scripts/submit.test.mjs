@@ -1,4 +1,4 @@
-import { test } from 'node:test';
+import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -206,4 +206,43 @@ test('prompts: every question key has a non-empty prompt', () => {
   // The pre run also surfaces a role prompt.
   assert.equal(typeof ROLE_PROMPT, 'string');
   assert.ok(ROLE_PROMPT.trim().length > 0, 'ROLE_PROMPT is non-empty');
+});
+
+// --- AI-Native score payload (Plan 4) ---------------------------------------
+import { buildScorePayload } from './submit.mjs';
+
+describe('buildScorePayload', () => {
+  test('builds the additive aiNativeScore block and computes delta', () => {
+    const p = buildScorePayload({ participantId: 'abc', before: 31, after: 68 });
+    assert.equal(p.participantId, 'abc');
+    assert.equal(p.aiNativeScore.before, 31);
+    assert.equal(p.aiNativeScore.after, 68);
+    assert.equal(p.aiNativeScore.delta, 37);
+    assert.ok(!('pillarsPassed' in p.aiNativeScore)); // omitted when not given
+  });
+
+  test('includes pillarsPassed only when a non-empty string array', () => {
+    const withPillars = buildScorePayload({
+      participantId: 'abc', before: 0, after: 40, pillarsPassed: ['verification', 'context'],
+    });
+    assert.deepEqual(withPillars.aiNativeScore.pillarsPassed, ['verification', 'context']);
+    const emptyPillars = buildScorePayload({ participantId: 'abc', before: 0, after: 40, pillarsPassed: [] });
+    assert.ok(!('pillarsPassed' in emptyPillars.aiNativeScore));
+  });
+
+  test('coerces to integers (the board stores INTEGER columns)', () => {
+    const p = buildScorePayload({ participantId: 'abc', before: 30.6, after: 67.4 });
+    assert.equal(p.aiNativeScore.before, 31);
+    assert.equal(p.aiNativeScore.after, 67);
+    assert.equal(p.aiNativeScore.delta, 36);
+  });
+
+  test('throws on a missing participantId (loud, never silently sent)', () => {
+    assert.throws(() => buildScorePayload({ before: 10, after: 20 }), /participantId/);
+  });
+
+  test('throws when a score is not a finite number (no phantom baseline)', () => {
+    assert.throws(() => buildScorePayload({ participantId: 'abc', before: null, after: 20 }), /score/);
+    assert.throws(() => buildScorePayload({ participantId: 'abc', before: 10, after: NaN }), /score/);
+  });
 });
