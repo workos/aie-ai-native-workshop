@@ -600,6 +600,23 @@ async function handleBoard(_req: Request, env: Env, ctx: ExecutionContext): Prom
   ).first<{ total: number }>();
   const hoursReclaimed = Math.round(hoursRow?.total ?? 0);
 
+  // Room AI-Native before->after — the coach pillar score (opt-in, volunteered).
+  // SEPARATE from aggregate.pre/post above (which are responses.score leverage
+  // means). Counts only participants who volunteered a real before->after.
+  const aiRow = await env.DB.prepare(
+    `SELECT ROUND(AVG(ai_native_before)) AS before,
+            ROUND(AVG(ai_native_after))  AS after,
+            COUNT(*)                     AS scored
+       FROM participants
+      WHERE ai_native_after IS NOT NULL`,
+  ).first<{ before: number | null; after: number | null; scored: number }>();
+  const aiNative = {
+    before: aiRow?.before ?? 0,
+    after: aiRow?.after ?? 0,
+    delta: aiRow?.before != null && aiRow?.after != null ? aiRow.after - aiRow.before : 0,
+    scored: aiRow?.scored ?? 0,
+  };
+
   const synthRow = await env.DB.prepare(`SELECT payload_json FROM synthesis WHERE phase = 'post'`).first<{ payload_json: string }>();
   const synth = synthRow
     ? (JSON.parse(synthRow.payload_json) as {
@@ -634,6 +651,7 @@ async function handleBoard(_req: Request, env: Env, ctx: ExecutionContext): Prom
         delta: avgPre != null && avgPost != null ? Math.round(avgPost - avgPre) : 0,
         voices: people.length,
         hoursReclaimed,
+        aiNative,
       },
       people,
       themes,
@@ -733,8 +751,15 @@ async function handleSeed(req: Request, env: Env): Promise<Response> {
       const [preLine, postLine, hours] = SEED_LINES[bucket][i % SEED_LINES[bucket].length];
       const preS = 8 + ((idx * 7) % 24); // 8..31 (mostly manual toil)
       const postS = 72 + ((idx * 5) % 22); // 72..93 (automated)
+      const aiBefore = 18 + ((idx * 11) % 20); // 18..37 (walking in)
+      const aiAfter = 60 + ((idx * 9) % 28); // 60..87 (after)
       idx++;
-      stmts.push(env.DB.prepare(`INSERT INTO participants (id, role_raw, bucket, created_at) VALUES (?1,?2,?3,?4)`).bind(pid, bucket, bucket, ts));
+      stmts.push(
+        env.DB.prepare(
+          `INSERT INTO participants (id, role_raw, bucket, created_at, ai_native_before, ai_native_after, ai_native_delta, scored_at)
+           VALUES (?1,?2,?3,?4,?5,?6,?7,?4)`,
+        ).bind(pid, bucket, bucket, ts, aiBefore, aiAfter, aiAfter - aiBefore),
+      );
       stmts.push(
         env.DB.prepare(
           `INSERT INTO responses (id, participant_id, phase, question_key, answer_raw, score, est_hours, enriched_at, created_at)
