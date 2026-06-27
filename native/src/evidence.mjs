@@ -64,3 +64,76 @@ export function countRepastedContexts(historyLines) {
   for (const sids of sessionsByHash.values()) if (sids.size >= 2) repasted += 1;
   return repasted;
 }
+
+// --- append to native/src/evidence.mjs ---
+
+// Count delegation (Task tool_use) vs real user turns. High real-turn count with
+// near-zero Task calls = babysitting; Task calls = real handoffs. (subagent
+// transcripts are SEPARATE session files on this CLI, not inline isSidechain
+// lines, so we count Task calls in the parent — not sidechain markers.)
+export function summarizeDelegation(lines) {
+  let taskCalls = 0;
+  for (const _ of toolUses(lines, 'Task')) taskCalls += 1;
+  let realUserTurns = 0;
+  for (const line of lines ?? []) if (isRealUserTurn(line)) realUserTurns += 1;
+  return { taskCalls, realUserTurns };
+}
+
+// Minutes PER EVENT used to translate an observed COUNT into time. These are
+// ESTIMATES (a deliberate calibration surface), NOT measured per-event durations
+// — that is why every observation is flagged `estimated:true` and rendered "est.".
+// The COUNT is measured; only this multiplier is assumed.
+export const PER_EVENT_MINUTES = Object.freeze({
+  'manual-test-runs': 4,   // a by-hand lint/test cycle the user waited on
+  'repasted-context': 3,   // re-finding + re-pasting the same context blob
+});
+
+// Which pillar each observation justifies (the seam into recommend()).
+const OBSERVATION_PILLAR = Object.freeze({
+  'manual-test-runs': 'verification',
+  'repasted-context': 'context',
+});
+
+const round2 = (n) => Math.round(n * 100) / 100;
+
+// Build one observation from a measured count. Returns null at count 0 so we
+// never manufacture waste. `now` is accepted for symmetry with windowed callers
+// and to keep this deterministic under test (unused in the math itself).
+export function buildObservation(kind, count, { windowDays = 30 } = {}) {
+  if (!count || count <= 0) return null;
+  const perEventMinutes = PER_EVENT_MINUTES[kind];
+  const pillar = OBSERVATION_PILLAR[kind];
+  if (perEventMinutes == null || pillar == null) return null;
+  const weeks = windowDays / 7;
+  const hoursPerWeek = round2((count * perEventMinutes) / 60 / weeks);
+  const detail =
+    kind === 'manual-test-runs'
+      ? `ran tests/lint by hand ${count}x in the last ${windowDays}d`
+      : `re-pasted the same context across sessions ${count}x in the last ${windowDays}d`;
+  return { kind, count, windowDays, perEventMinutes, hoursPerWeek, estimated: true, pillar, detail };
+}
+
+// Upgrade recs IN PLACE-style (returns a new array): a rec whose pillar matches
+// an observation becomes basis:'observed-waste' with the observed hours + a human
+// `evidence` string. Observations with no matching rec are dropped — evidence
+// JUSTIFIES gap-based recs, it does not create new ones. If several observations
+// hit one pillar, the largest (by hoursPerWeek) wins.
+export function applyEvidence(recs, observations) {
+  const best = new Map(); // pillar -> observation
+  for (const o of observations ?? []) {
+    if (!o) continue;
+    const cur = best.get(o.pillar);
+    if (!cur || o.hoursPerWeek > cur.hoursPerWeek) best.set(o.pillar, o);
+  }
+  return (recs ?? []).map((rec) => {
+    const o = best.get(rec.pillar);
+    if (!o) return rec;
+    const est = o.estimated ? ' (est.)' : '';
+    return {
+      ...rec,
+      basis: 'observed-waste',
+      hoursPerWeek: o.hoursPerWeek,
+      evidence: `${o.detail} — ~${o.hoursPerWeek}h/wk${est}`,
+    };
+  });
+}

@@ -75,3 +75,76 @@ describe('countRepastedContexts', () => {
     assert.equal(countRepastedContexts([{ sessionId: 's1' }, {}, { pastedContents: null }]), 0);
   });
 });
+
+// --- append to native/src/evidence.test.mjs ---
+import { summarizeDelegation, buildObservation, applyEvidence, PER_EVENT_MINUTES } from './evidence.mjs';
+
+const task = (subagent) => ({
+  type: 'assistant',
+  message: { content: [{ type: 'tool_use', name: 'Task', input: { description: 'd', prompt: 'p', subagent_type: subagent } }] },
+});
+
+describe('summarizeDelegation', () => {
+  test('counts Task calls and real user turns separately', () => {
+    const lines = [
+      { type: 'user', message: { content: 'do a thing' } },
+      task('Explore'),
+      { type: 'user', message: { content: 'and another' } },
+      { type: 'user', isMeta: true, message: { content: 'meta noise' } }, // not real
+    ];
+    const r = summarizeDelegation(lines);
+    assert.equal(r.taskCalls, 1);
+    assert.equal(r.realUserTurns, 2);
+  });
+  test('empty -> zeros, never throws', () => {
+    assert.deepEqual(summarizeDelegation([]), { taskCalls: 0, realUserTurns: 0 });
+  });
+});
+
+describe('buildObservation', () => {
+  test('zero count -> null (no observation invented)', () => {
+    assert.equal(buildObservation('manual-test-runs', 0, { windowDays: 30, now: 0 }), null);
+  });
+  test('derives hoursPerWeek from the real count and is flagged estimated', () => {
+    // 12 manual runs in 30 days, 4 min each -> 12*4/60 = 0.8h over ~4.286 wk -> 0.186 h/wk
+    const o = buildObservation('manual-test-runs', 12, { windowDays: 30, now: 0 });
+    assert.equal(o.kind, 'manual-test-runs');
+    assert.equal(o.count, 12);
+    assert.equal(o.windowDays, 30);
+    assert.equal(o.pillar, 'verification');
+    assert.equal(o.estimated, true);
+    assert.equal(o.perEventMinutes, PER_EVENT_MINUTES['manual-test-runs']);
+    // buildObservation rounds hoursPerWeek to 2dp (round2), so compare against the
+    // rounded value — not the raw quotient (which would differ in the 3rd dp).
+    const expected = Math.round(((12 * PER_EVENT_MINUTES['manual-test-runs']) / 60 / (30 / 7)) * 100) / 100;
+    assert.equal(o.hoursPerWeek, expected);
+    assert.match(o.detail, /12/); // the measured count appears in the human detail
+  });
+});
+
+describe('applyEvidence', () => {
+  const recs = [
+    { pillar: 'verification', action: 'add a test hook', basis: 'capability-gap' },
+    { pillar: 'context', action: 'add CLAUDE.md', basis: 'capability-gap' },
+  ];
+  test('upgrades the matching rec to observed-waste with hours + evidence', () => {
+    const obs = [buildObservation('manual-test-runs', 20, { windowDays: 30, now: 0 })];
+    const out = applyEvidence(recs, obs);
+    const v = out.find((r) => r.pillar === 'verification');
+    assert.equal(v.basis, 'observed-waste');
+    assert.ok(v.hoursPerWeek > 0);
+    assert.equal(typeof v.evidence, 'string');
+    // non-matching rec is untouched
+    assert.equal(out.find((r) => r.pillar === 'context').basis, 'capability-gap');
+  });
+  test('an observation with no matching rec is dropped (never fabricates a rec)', () => {
+    const obs = [buildObservation('manual-test-runs', 20, { windowDays: 30, now: 0 })];
+    const out = applyEvidence([{ pillar: 'context', action: 'x', basis: 'capability-gap' }], obs);
+    assert.equal(out.length, 1);
+    assert.equal(out[0].pillar, 'context');
+    assert.equal(out[0].basis, 'capability-gap');
+  });
+  test('no observations -> recs returned unchanged', () => {
+    assert.deepEqual(applyEvidence(recs, []), recs);
+  });
+});
