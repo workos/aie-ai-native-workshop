@@ -34,8 +34,17 @@ import {
 // Navigation-layer collaborators (Phase 4). `state.mjs` owns the progress side of
 // the shared marker (read + checkpoint transitions); `blocks.mjs` is the
 // four-block guidance data + the `nextBlock` advance helper.
-import { readState, recordCheckpoint } from './state.mjs';
+import { readState, recordCheckpoint, writeProgress } from './state.mjs';
 import { BLOCKS, nextBlock } from './blocks.mjs';
+
+// Engine-layer collaborators (Plan 3). The adapter composes the native engine
+// (scan -> score -> recommend) and owns the scan-backed gate; renderCard turns
+// raw signals into the shareable HTML card. These import the LIBRARY functions —
+// never native/src/cli.mjs's run(), which writes to stdout and would corrupt the
+// protocol stream.
+import { coachScan, nextStep, gateResult, GATE_THRESHOLD } from './engine.mjs';
+import { renderCard } from '../../native/src/card.mjs';
+import { score } from '../../native/src/score.mjs';
 
 const PROTOCOL_VERSION = '2025-06-18'; // pinned fallback when the client omits one
 const SERVER_INFO = { name: 'aie-coach', version: '1.0.0' };
@@ -204,6 +213,120 @@ tools.set('coach_checkpoint', {
     }
     if (done) res.closing = 'Last one — run your closing check-in to put a number on the board.';
     return res;
+  },
+});
+
+// --- engine-layer tools (Plan 3) -----------------------------------------
+// The guided-coach surface over the deterministic engine. coach_scan runs the
+// full scan->score->recommend report; coach_next hands back the single next step;
+// coach_gate RE-SCANS and advances only if the pillar's machinery is now actually
+// on disk (no flag can fake it); coach_card renders the before/after card from the
+// stored opening scan + a fresh scan. Advancement + the opening baseline persist
+// through the shared marker via state.mjs (read-merge-write; identity/progress
+// fields are untouched).
+
+// coach_scan: full report. The first scan with no stored baseline records the
+// opening signals + score so the closing card has a real before. Subsequent scans
+// leave the baseline alone (firstScan:false).
+tools.set('coach_scan', {
+  schema: {
+    name: 'coach_scan',
+    description: 'Scan the local AI-native setup and return the report: signals, per-pillar scores, total, recommendations, and observed waste.',
+    inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+  },
+  handler: () => {
+    const report = coachScan(); // { signals, pillars, total, recommendations, observations }
+    const { openingSignals } = readState();
+    let firstScan = false;
+    if (!openingSignals) {
+      // Persist the opening baseline once. Extra marker fields are invisible to
+      // detect() (it keys only off participantId), so this never disturbs the
+      // check-in identity or block progress.
+      writeProgress({ openingSignals: report.signals, scoreBefore: report.total });
+      firstScan = true;
+    }
+    return { ...report, firstScan };
+  },
+});
+
+// coach_next: the single next step for the weakest sub-threshold pillar. Returns a
+// done sentinel when every pillar already clears the bar ("you're good here").
+tools.set('coach_next', {
+  schema: {
+    name: 'coach_next',
+    description: 'Return the single next step to act on now: the weakest pillar below the bar, its action, and its current sub-score.',
+    inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+  },
+  handler: () => {
+    const step = nextStep();
+    if (step === null) {
+      return { done: true, message: "Every pillar clears the bar — you're AI-native. Run coach_card." };
+    }
+    return step; // { pillar, action, basis, subScore }
+  },
+});
+
+// coach_gate: the scan-backed gate. RE-SCANS via the engine and advances ONLY if
+// the pillar's fresh sub-score crossed the threshold. `pillar` is constrained to
+// the five ids by the schema enum, so a bad id never reaches the handler. On pass,
+// the pillar is recorded into pillarsPassed (Set-dedup) on the shared marker.
+tools.set('coach_gate', {
+  schema: {
+    name: 'coach_gate',
+    description: 'Re-scan and decide whether a pillar is now actually present. Advances ONLY if the fresh scan sees it — it cannot be faked by a flag.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        pillar: {
+          type: 'string',
+          enum: ['verification', 'automation', 'context', 'orchestration', 'delegation'],
+        },
+      },
+      required: ['pillar'],
+      additionalProperties: false,
+    },
+  },
+  handler: ({ pillar }) => {
+    const gate = gateResult(pillar); // { pillar, subScore, threshold, passed } — re-scans
+    if (!gate.passed) {
+      return {
+        ...gate,
+        advanced: false,
+        hint: `Not there yet — a fresh scan still scores ${pillar} at ${gate.subScore} (need >= ${GATE_THRESHOLD}). Install the machinery, then gate again.`,
+      };
+    }
+    // Record the pass on the shared marker (Set-dedup, stable order).
+    const { pillarsPassed = [] } = readState();
+    const merged = [...new Set([...pillarsPassed, pillar])].sort();
+    writeProgress({ pillarsPassed: merged });
+    return { ...gate, advanced: true, pillarsPassed: merged };
+  },
+});
+
+// coach_card: render the before/after card. `before` is the stored opening scan
+// (falling back to a fresh scan if coach_scan was never run); `after` is a fresh
+// scan now. renderCard takes RAW signals and scores them internally.
+tools.set('coach_card', {
+  schema: {
+    name: 'coach_card',
+    description: 'Render the self-contained before/after AI-Native card (HTML) from the stored opening scan and a fresh scan.',
+    inputSchema: {
+      type: 'object',
+      properties: { name: { type: 'string' } },
+      additionalProperties: false,
+    },
+  },
+  handler: ({ name = 'You' } = {}) => {
+    const after = coachScan().signals;            // fresh scan now
+    const { openingSignals } = readState();
+    const before = openingSignals ?? after;       // no baseline -> delta is 0
+    const html = renderCard({ before, after, name });
+    return {
+      html,
+      scoreBefore: score(before).total,
+      scoreAfter: score(after).total,
+      delta: score(after).total - score(before).total,
+    };
   },
 });
 

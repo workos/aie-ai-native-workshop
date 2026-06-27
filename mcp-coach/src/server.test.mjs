@@ -228,7 +228,7 @@ describe('tools/list mvp', () => {
 // --- Phase 4: navigation-layer guidance tools ----------------------------
 
 describe('tools/list full', () => {
-  test('exposes exactly the four tools after the navigation layer lands', async () => {
+  test('exposes all eight tools after the engine layer lands', async () => {
     const { lines } = await run([{ jsonrpc: '2.0', id: 11, method: 'tools/list', params: {} }]);
     const msg = JSON.parse(lines[0]);
     assert.equal(msg.id, 11);
@@ -236,8 +236,8 @@ describe('tools/list full', () => {
     const names = msg.result.tools.map((t) => t.name).sort();
     assert.deepEqual(
       names,
-      ['coach_checkin', 'coach_checkpoint', 'coach_status', 'coach_submit_checkin'],
-      'exactly the four tools (two board-layer + two navigation)',
+      ['coach_card', 'coach_checkin', 'coach_checkpoint', 'coach_gate', 'coach_next', 'coach_scan', 'coach_status', 'coach_submit_checkin'],
+      'all eight tools (four original + four engine-backed)',
     );
 
     // The two navigation tools carry valid object schemas too.
@@ -462,5 +462,110 @@ describe('outbox', () => {
     assert.ok(existsSync(join(cwd, '.aie-coach-state.json')), 'marker written before the POST');
     const files = readdirSync(join(cwd, '.aie-coach-outbox'));
     assert.equal(files.length, 1, 'exactly one outbox file');
+  });
+});
+
+// server.test.mjs ALREADY imports test, describe, assert, mkdtempSync,
+// writeFileSync, tmpdir, and join at the top of the file. Re-importing any of
+// them here is an ESM "Identifier has already been declared" SyntaxError that
+// fails the WHOLE file. Import ONLY the new symbols; reuse the existing bindings.
+import { beforeEach, afterEach } from 'node:test';
+import { mkdirSync, rmSync } from 'node:fs';
+import { tools } from './server.mjs';
+
+// Call a tool exactly as the server would: look it up in the registry, run the
+// handler with the given args, and return the parsed result (handlers return
+// JSON-serializable objects; here we read them directly).
+async function callTool(name, args = {}) {
+  const entry = tools.get(name);
+  assert.ok(entry, `tool ${name} is registered`);
+  return entry.handler(args);
+}
+
+describe('engine-backed coach tools', () => {
+  let prevCwd;
+  let dir;
+
+  beforeEach(() => {
+    prevCwd = process.cwd();
+    // A throwaway repo-root-like dir so the marker (.aie-coach-state.json,
+    // resolved via process.cwd()) and the coach-checkin anchor both resolve here.
+    dir = mkdtempSync(join(tmpdir(), 'aie-coach-engine-'));
+    mkdirSync(join(dir, 'skills', 'coach-checkin', 'scripts'), { recursive: true });
+    writeFileSync(join(dir, 'skills', 'coach-checkin', 'scripts', 'submit.mjs'), '');
+    process.chdir(dir);
+  });
+
+  afterEach(() => {
+    process.chdir(prevCwd);
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  test('all four engine tools are registered and listed', () => {
+    for (const name of ['coach_scan', 'coach_next', 'coach_gate', 'coach_card']) {
+      const entry = tools.get(name);
+      assert.ok(entry, `${name} registered`);
+      assert.equal(entry.schema.name, name);
+      assert.equal(entry.schema.inputSchema.additionalProperties, false);
+    }
+    // The four pre-existing tools must still be present (not broken/overwritten).
+    for (const name of ['coach_checkin', 'coach_submit_checkin', 'coach_status', 'coach_checkpoint']) {
+      assert.ok(tools.get(name), `${name} still registered`);
+    }
+  });
+
+  test('coach_scan returns the report and records the opening baseline', async () => {
+    const r = await callTool('coach_scan');
+    assert.ok(typeof r.total === 'number');
+    assert.ok(r.pillars && typeof r.pillars.verification === 'number');
+    assert.ok(Array.isArray(r.recommendations));
+    assert.ok(Array.isArray(r.observations));
+    assert.equal(r.firstScan, true); // first scan in a fresh marker
+    // A second scan no longer claims firstScan (baseline already stored).
+    const r2 = await callTool('coach_scan');
+    assert.equal(r2.firstScan, false);
+  });
+
+  test('coach_next returns a single next step or a done sentinel', async () => {
+    const step = await callTool('coach_next');
+    // On a fresh machine there is almost always at least one gap; tolerate both.
+    if (step.done) {
+      assert.equal(step.done, true);
+    } else {
+      assert.ok(typeof step.pillar === 'string');
+      assert.ok(typeof step.action === 'string');
+      assert.ok(typeof step.subScore === 'number');
+    }
+  });
+
+  test('coach_gate rejects an out-of-enum pillar via the input schema', () => {
+    // The handler trusts the schema; enum membership is the contract we assert.
+    const props = tools.get('coach_gate').schema.inputSchema.properties;
+    assert.deepEqual([...props.pillar.enum].sort(), [
+      'automation', 'context', 'delegation', 'orchestration', 'verification',
+    ]);
+  });
+
+  test('coach_gate advances only when the scan sees the pillar', async () => {
+    // verification is present on most dev machines via a lint/test hook; assert on
+    // the SHAPE + the invariant rather than a machine-specific truth value.
+    const r = await callTool('coach_gate', { pillar: 'verification' });
+    assert.equal(r.pillar, 'verification');
+    assert.equal(r.threshold, 0.8);
+    assert.equal(typeof r.passed, 'boolean');
+    assert.equal(r.advanced, r.passed); // advanced iff passed — the core invariant
+    if (r.passed) assert.ok(r.pillarsPassed.includes('verification'));
+    else assert.ok(typeof r.hint === 'string');
+  });
+
+  test('coach_card renders a self-contained before/after card', async () => {
+    await callTool('coach_scan'); // establish the opening baseline first
+    const r = await callTool('coach_card', { name: 'Tester' });
+    assert.match(r.html, /<!doctype html>/i);
+    assert.ok(!/\bsrc=|\bhref=/.test(r.html)); // offline-safe
+    assert.match(r.html, /Tester/);
+    assert.ok(typeof r.scoreBefore === 'number');
+    assert.ok(typeof r.scoreAfter === 'number');
+    assert.equal(r.delta, r.scoreAfter - r.scoreBefore);
   });
 });
