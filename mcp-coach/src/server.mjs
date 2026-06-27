@@ -26,6 +26,7 @@ import { fileURLToPath } from 'node:url';
 import {
   detect,
   submit,
+  submitScore,
   QUESTION_KEYS,
   QUESTION_PROMPTS,
   ROLE_PROMPT,
@@ -327,6 +328,46 @@ tools.set('coach_card', {
       scoreAfter: score(after).total,
       delta: score(after).total - score(before).total,
     };
+  },
+});
+
+// coach_submit_score: opt-in, consent-gated send of the attendee's AI-Native
+// before->after to the board. Sources before from the stored opening baseline
+// (openingSignals) and after from a FRESH scan now — never raw signals. Refuses
+// (structured, not a throw) when there is no real opening baseline, so a
+// never-scanned attendee can't post a phantom 0->0. Identity (participantId)
+// comes from the marker via detect(); the score rides submitScore()'s consent
+// gate + retry + outbox unchanged.
+tools.set('coach_submit_score', {
+  schema: {
+    name: 'coach_submit_score',
+    description:
+      "Opt-in: POST the attendee's AI-Native before->after score to the board. " +
+      'Consent-gated (never sends without confirmed===true); sources the score from the coach, never a live scan of raw signals.',
+    inputSchema: {
+      type: 'object',
+      properties: { confirmed: { type: 'boolean' }, name: { type: 'string' } },
+      required: ['confirmed'],
+      additionalProperties: false,
+    },
+  },
+  handler: async ({ confirmed }) => {
+    // Gate FIRST: on an unconfirmed call do NO local work at all — not even a
+    // local scan runs before consent. submitScore re-checks the same gate, so
+    // this is defense-in-depth, not the only guard.
+    if (confirmed !== true) return { sent: false, reason: 'unconfirmed' };
+    const d = detect(); // identity comes from the marker, never from args
+    if (!d.participantId) {
+      return { sent: false, reason: 'no_checkin', message: 'Run your opening check-in first so you have an identity on the board.' };
+    }
+    const { openingSignals, pillarsPassed = [] } = readState();
+    if (!openingSignals) {
+      return { sent: false, reason: 'no_baseline', message: 'No opening scan on record — run coach_scan at the start so there is a real before.' };
+    }
+    const before = score(openingSignals).total;     // stored baseline
+    const after = score(coachScan().signals).total; // fresh scan now
+    return submitScore({ participantId: d.participantId, before, after, pillarsPassed, confirmed });
+    //  -> { sent:true, participantId } | { sent:false, reason:'unconfirmed' } | { sent:false, participantId, outbox }
   },
 });
 

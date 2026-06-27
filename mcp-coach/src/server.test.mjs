@@ -228,7 +228,7 @@ describe('tools/list mvp', () => {
 // --- Phase 4: navigation-layer guidance tools ----------------------------
 
 describe('tools/list full', () => {
-  test('exposes all eight tools after the engine layer lands', async () => {
+  test('exposes all nine tools after the engine layer lands', async () => {
     const { lines } = await run([{ jsonrpc: '2.0', id: 11, method: 'tools/list', params: {} }]);
     const msg = JSON.parse(lines[0]);
     assert.equal(msg.id, 11);
@@ -236,8 +236,8 @@ describe('tools/list full', () => {
     const names = msg.result.tools.map((t) => t.name).sort();
     assert.deepEqual(
       names,
-      ['coach_card', 'coach_checkin', 'coach_checkpoint', 'coach_gate', 'coach_next', 'coach_scan', 'coach_status', 'coach_submit_checkin'],
-      'all eight tools (four original + four engine-backed)',
+      ['coach_card', 'coach_checkin', 'coach_checkpoint', 'coach_gate', 'coach_next', 'coach_scan', 'coach_status', 'coach_submit_checkin', 'coach_submit_score'],
+      'all nine tools (+ coach_submit_score)',
     );
 
     // The two navigation tools carry valid object schemas too.
@@ -567,5 +567,19 @@ describe('engine-backed coach tools', () => {
     assert.ok(typeof r.scoreBefore === 'number');
     assert.ok(typeof r.scoreAfter === 'number');
     assert.equal(r.delta, r.scoreAfter - r.scoreBefore);
+  });
+});
+
+// --- coach_submit_score (Plan 4) -------------------------------------------
+describe('coach_submit_score', () => {
+  test('is registered with a confirmed flag in its input schema', () => {
+    const t = tools.get('coach_submit_score');
+    assert.ok(t, 'coach_submit_score should be registered');
+    assert.equal(t.schema.inputSchema.properties.confirmed.type, 'boolean');
+  });
+
+  test('never reports sent:true on an unconfirmed call (gate or no-baseline refusal)', async () => {
+    const res = await tools.get('coach_submit_score').handler({ confirmed: false });
+    assert.notEqual(res.sent, true); // either {sent:false,reason:'unconfirmed'} or a no_baseline/no_checkin refusal
   });
 });
