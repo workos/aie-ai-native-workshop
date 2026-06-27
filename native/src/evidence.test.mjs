@@ -148,3 +148,96 @@ describe('applyEvidence', () => {
     assert.deepEqual(applyEvidence(recs, []), recs);
   });
 });
+
+// --- append to native/src/evidence.test.mjs ---
+import { collectObservations } from './evidence.mjs';
+import { mkdtempSync, mkdirSync, writeFileSync, utimesSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+// Build a throwaway ~/.claude/projects corpus. `files` maps relative jsonl paths
+// (under projects/) to an array of objects; each object is written as one line.
+function fakeCorpus({ projects = {}, history = [] } = {}) {
+  const home = mkdtempSync(join(tmpdir(), 'aie-corpus-'));
+  const claude = join(home, '.claude');
+  const proj = join(claude, 'projects');
+  mkdirSync(proj, { recursive: true });
+  for (const [rel, objs] of Object.entries(projects)) {
+    const full = join(proj, rel);
+    mkdirSync(join(full, '..'), { recursive: true });
+    writeFileSync(full, objs.map((o) => JSON.stringify(o)).join('\n') + '\n');
+  }
+  if (history.length) {
+    writeFileSync(join(claude, 'history.jsonl'), history.map((o) => JSON.stringify(o)).join('\n') + '\n');
+  }
+  return home;
+}
+
+const bashLine = (cmd) => ({ type: 'assistant', message: { content: [{ type: 'tool_use', name: 'Bash', input: { command: cmd } }] } });
+
+describe('collectObservations', () => {
+  test('produces a manual-test-runs observation from the corpus', () => {
+    const home = fakeCorpus({
+      projects: {
+        'slug-a/s1.jsonl': [bashLine('npx tsc --noEmit'), bashLine('npm test'), bashLine('pytest')],
+      },
+    });
+    const obs = collectObservations({ home, now: Date.now(), windowDays: 30 });
+    const o = obs.find((x) => x.kind === 'manual-test-runs');
+    assert.ok(o, 'expected a manual-test-runs observation');
+    assert.equal(o.count, 3);
+    assert.equal(o.pillar, 'verification');
+    assert.equal(o.estimated, true);
+  });
+
+  test('produces a repasted-context observation from history.jsonl (within window)', () => {
+    const now = Date.now();
+    const home = fakeCorpus({
+      history: [
+        { sessionId: 's1', timestamp: now - 1000, pastedContents: { 1: { contentHash: 'H' } } },
+        { sessionId: 's2', timestamp: now - 2000, pastedContents: { 1: { contentHash: 'H' } } },
+      ],
+    });
+    const obs = collectObservations({ home, now, windowDays: 30 });
+    const o = obs.find((x) => x.kind === 'repasted-context');
+    assert.ok(o);
+    assert.equal(o.count, 1);
+    assert.equal(o.pillar, 'context');
+  });
+
+  test('re-pastes older than the window are excluded (count period == divisor period)', () => {
+    const now = Date.now();
+    const old = now - 60 * 86_400_000; // 60 days ago, outside a 30d window
+    const home = fakeCorpus({
+      history: [
+        { sessionId: 's1', timestamp: old, pastedContents: { 1: { contentHash: 'H' } } },
+        { sessionId: 's2', timestamp: old, pastedContents: { 1: { contentHash: 'H' } } },
+      ],
+    });
+    const obs = collectObservations({ home, now, windowDays: 30 });
+    assert.equal(obs.find((x) => x.kind === 'repasted-context'), undefined);
+  });
+
+  test('files older than the window are skipped (by mtime)', () => {
+    const home = fakeCorpus({ projects: { 'slug-a/old.jsonl': [bashLine('npm test'), bashLine('npm test')] } });
+    const old = join(home, '.claude', 'projects', 'slug-a', 'old.jsonl');
+    const ancient = new Date('2000-01-01T00:00:00Z');
+    utimesSync(old, ancient, ancient);
+    const obs = collectObservations({ home, now: Date.now(), windowDays: 30 });
+    assert.equal(obs.find((x) => x.kind === 'manual-test-runs'), undefined);
+  });
+
+  test('missing corpus -> [] (never throws)', () => {
+    const home = mkdtempSync(join(tmpdir(), 'aie-empty-'));
+    assert.deepEqual(collectObservations({ home, now: Date.now() }), []);
+  });
+
+  test('a malformed line does not abort the file', () => {
+    const home = mkdtempSync(join(tmpdir(), 'aie-bad-'));
+    const proj = join(home, '.claude', 'projects', 'slug-a');
+    mkdirSync(proj, { recursive: true });
+    writeFileSync(join(proj, 's1.jsonl'), 'not json\n' + JSON.stringify(bashLine('npm test')) + '\n');
+    const obs = collectObservations({ home, now: Date.now(), windowDays: 30 });
+    assert.equal(obs.find((x) => x.kind === 'manual-test-runs').count, 1);
+  });
+});

@@ -6,6 +6,10 @@
 // section, never guessed. All functions are total: bad input yields 0/empty,
 // never a throw (JSONL fields vary by CLI version, so every field is optional).
 
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { join } from 'node:path';
+import { homedir } from 'node:os';
+
 // --- pure line classifiers --------------------------------------------------
 
 // A real user turn = a typed string prompt, not meta, not a tool_result wrapper,
@@ -136,4 +140,83 @@ export function applyEvidence(recs, observations) {
       evidence: `${o.detail} — ~${o.hoursPerWeek}h/wk${est}`,
     };
   });
+}
+
+// --- corpus IO -------------------------------------------------------------
+
+const DAY_MS = 86_400_000;
+
+// Recursively list *.jsonl under a dir. Total: unreadable dirs are skipped.
+function listJsonl(dir) {
+  let out = [];
+  let entries;
+  try {
+    entries = readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return out;
+  }
+  for (const e of entries) {
+    const full = join(dir, e.name);
+    if (e.isDirectory()) out = out.concat(listJsonl(full));
+    else if (e.isFile() && e.name.endsWith('.jsonl')) out.push(full);
+  }
+  return out;
+}
+
+// Parse a JSONL file into objects, skipping blank/garbage lines. Never throws.
+function parseJsonl(path) {
+  let text;
+  try {
+    text = readFileSync(path, 'utf8');
+  } catch {
+    return [];
+  }
+  const objs = [];
+  for (const line of text.split('\n')) {
+    const t = line.trim();
+    if (!t) continue;
+    try {
+      objs.push(JSON.parse(t));
+    } catch {
+      /* one bad line must not abort the file */
+    }
+  }
+  return objs;
+}
+
+function withinWindow(path, now, windowDays) {
+  try {
+    return now - statSync(path).mtimeMs <= windowDays * DAY_MS;
+  } catch {
+    return false;
+  }
+}
+
+// Walk the LOCAL corpus and return observations for the kinds with non-zero
+// counts. mtime is a cheap pre-filter so we don't parse ancient sessions. Every
+// layer is total: a bad file/line/dir yields fewer observations, never a throw.
+export function collectObservations({ home = homedir(), now = Date.now(), windowDays = 30 } = {}) {
+  const claude = join(home, '.claude');
+
+  // (1) transcripts -> manual test/lint loops
+  let manualTestRuns = 0;
+  for (const file of listJsonl(join(claude, 'projects'))) {
+    if (!withinWindow(file, now, windowDays)) continue;
+    manualTestRuns += countManualTestRuns(parseJsonl(file));
+  }
+
+  // (2) history.jsonl -> re-pasted context across sessions, WINDOWED by each row's
+  // timestamp so the count's period matches buildObservation's divisor (otherwise an
+  // all-time count over a 30d denominator inflates hoursPerWeek). Rows without a
+  // numeric timestamp are dropped — conservative: never overstate.
+  const historyRows = parseJsonl(join(claude, 'history.jsonl')).filter(
+    (r) => typeof r?.timestamp === 'number' && now - r.timestamp <= windowDays * DAY_MS,
+  );
+  const repasted = countRepastedContexts(historyRows);
+
+  const observations = [
+    buildObservation('manual-test-runs', manualTestRuns, { windowDays, now }),
+    buildObservation('repasted-context', repasted, { windowDays, now }),
+  ];
+  return observations.filter(Boolean);
 }
