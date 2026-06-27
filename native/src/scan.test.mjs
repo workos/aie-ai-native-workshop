@@ -63,3 +63,78 @@ describe('scan', () => {
     assert.equal(s.mcpServers, 0);
   });
 });
+
+// --- append to native/src/scan.test.mjs ---
+import { countBackgroundJobs, detectDelegation } from './scan.mjs';
+
+function jobsHome(setup) {
+  const home = mkdtempSync(join(tmpdir(), 'aie-jobs-'));
+  const claude = join(home, '.claude');
+  mkdirSync(claude, { recursive: true });
+  setup(claude);
+  return home;
+}
+
+describe('countBackgroundJobs', () => {
+  test('counts jobs/<short>/state.json with template:bg + backend:daemon', () => {
+    const home = jobsHome((claude) => {
+      const a = join(claude, 'jobs', '2774fdfa');
+      const b = join(claude, 'jobs', 'c9d7acd4');
+      mkdirSync(a, { recursive: true });
+      mkdirSync(b, { recursive: true });
+      writeFileSync(join(a, 'state.json'), JSON.stringify({ template: 'bg', backend: 'daemon', state: 'done' }));
+      writeFileSync(join(b, 'state.json'), JSON.stringify({ template: 'bg', backend: 'daemon', state: 'failed' }));
+      writeFileSync(join(claude, 'jobs', 'pins.json'), '[]'); // not a job dir
+    });
+    assert.equal(countBackgroundJobs(home), 2);
+  });
+  test('no jobs dir -> 0, never throws', () => {
+    assert.equal(countBackgroundJobs(mkdtempSync(join(tmpdir(), 'aie-nojobs-'))), 0);
+  });
+});
+
+describe('detectDelegation', () => {
+  const taskLine = { type: 'assistant', message: { content: [{ type: 'tool_use', name: 'Task', input: { description: 'd', prompt: 'p', subagent_type: 'Explore' } }] } };
+  function corpusHome(perSession) {
+    const home = mkdtempSync(join(tmpdir(), 'aie-deleg-'));
+    const proj = join(home, '.claude', 'projects', 'slug-a');
+    mkdirSync(proj, { recursive: true });
+    for (const [name, objs] of Object.entries(perSession)) {
+      writeFileSync(join(proj, name), objs.map((o) => JSON.stringify(o)).join('\n') + '\n');
+    }
+    return home;
+  }
+  test('Task calls in >=2 distinct sessions -> reusable pattern true', () => {
+    const home = corpusHome({ 's1.jsonl': [taskLine], 's2.jsonl': [taskLine] });
+    const r = detectDelegation(home, { now: Date.now(), windowDays: 365 });
+    assert.equal(r.reusableDelegationPattern, true);
+    assert.equal(r.delegationSessions, 2);
+    assert.equal(r.taskCalls, 2);
+  });
+  test('a single Task call in one session is NOT a pattern', () => {
+    const home = corpusHome({ 's1.jsonl': [taskLine] });
+    const r = detectDelegation(home, { now: Date.now(), windowDays: 365 });
+    assert.equal(r.reusableDelegationPattern, false);
+    assert.equal(r.delegationSessions, 1);
+  });
+  test('no corpus -> false/0, never throws', () => {
+    const r = detectDelegation(mkdtempSync(join(tmpdir(), 'aie-nodeleg-')), { now: Date.now() });
+    assert.equal(r.reusableDelegationPattern, false);
+    assert.equal(r.taskCalls, 0);
+  });
+});
+
+describe('scan (evidence-layer additions)', () => {
+  test('scheduledJobs is always 0 from disk; behavior carries backgroundJobs', () => {
+    const home = jobsHome((claude) => {
+      const a = join(claude, 'jobs', 'x');
+      mkdirSync(a, { recursive: true });
+      writeFileSync(join(a, 'state.json'), JSON.stringify({ template: 'bg', backend: 'daemon' }));
+    });
+    const cwd = mkdtempSync(join(tmpdir(), 'aie-cwd-'));
+    const s = scan({ home, cwd });
+    assert.equal(s.scheduledJobs, 0);                 // honest: no on-disk recurrence
+    assert.equal(s.behavior.backgroundJobs, 1);       // the real fact we DO have
+    assert.equal(typeof s.reusableDelegationPattern, 'boolean');
+  });
+});
