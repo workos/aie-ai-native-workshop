@@ -10,13 +10,27 @@ import { scan } from './scan.mjs';
 import { score } from './score.mjs';
 import { recommend } from './recommend.mjs';
 import { renderCard } from './card.mjs';
+import { collectObservations } from './evidence.mjs';
 
-export function run(argv = process.argv.slice(2), { scanFn = scan } = {}) {
+export function run(argv = process.argv.slice(2), { scanFn = scan, observeFn = collectObservations } = {}) {
   const cmd = argv[0] ?? 'scan';
   const signals = scanFn();
 
   if (cmd === 'scan') {
-    const result = { signals, ...score(signals), recommendations: recommend(signals) };
+    // Evidence is best-effort: a missing/huge/hostile corpus must never crash the
+    // scan or move the score. On any failure we fall back to gap-only recs.
+    let observations = [];
+    try {
+      observations = observeFn() ?? [];
+    } catch {
+      observations = [];
+    }
+    const result = {
+      signals,
+      ...score(signals),
+      recommendations: recommend(signals, { observations }),
+      observations,
+    };
     process.stdout.write(JSON.stringify(result, null, 2) + '\n');
     return result;
   }

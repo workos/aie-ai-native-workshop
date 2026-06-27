@@ -25,3 +25,32 @@ describe('run', () => {
     assert.match(readFileSync(out, 'utf8'), /22%/);
   });
 });
+
+// --- append to native/src/cli.test.mjs ---
+import { buildObservation } from './evidence.mjs';
+
+describe('run with evidence', () => {
+  const fakeScanWeakVerify = () => ({ claudeMd: true }); // verification weak (0)
+  const fakeObserve = () => [buildObservation('manual-test-runs', 30, { windowDays: 30, now: 0 })];
+
+  test('scan merges observations: a rec becomes observed-waste, score unchanged', () => {
+    const result = run(['scan'], { scanFn: fakeScanWeakVerify, observeFn: fakeObserve });
+    const baseline = run(['scan'], { scanFn: fakeScanWeakVerify, observeFn: () => [] });
+    // evidence does not move the number
+    assert.equal(result.total, baseline.total);
+    const v = result.recommendations.find((r) => r.pillar === 'verification');
+    assert.equal(v.basis, 'observed-waste');
+    assert.ok(v.hoursPerWeek > 0);
+    assert.ok(Array.isArray(result.observations));
+  });
+
+  test('a throwing observeFn does not crash scan (degrades to gap-only)', () => {
+    const result = run(['scan'], {
+      scanFn: fakeScanWeakVerify,
+      observeFn: () => { throw new Error('corpus exploded'); },
+    });
+    assert.ok(Array.isArray(result.recommendations));
+    assert.deepEqual(result.observations, []);
+    assert.equal(result.recommendations.find((r) => r.pillar === 'verification').basis, 'capability-gap');
+  });
+});
