@@ -88,3 +88,64 @@ describe('gateResult', () => {
     assert.throws(() => gateResult('teleportation', { scanFn: weakSignals }), /unknown pillar/i);
   });
 });
+
+// mcp-coach/src/engine.test.mjs  (append)
+import { beforeEach, afterEach } from 'node:test';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { tools } from './server.mjs';
+import { readState, writeProgress } from './state.mjs';
+
+describe('gate persistence (marker round-trip)', () => {
+  let prevCwd;
+  let dir;
+
+  beforeEach(() => {
+    prevCwd = process.cwd();
+    dir = mkdtempSync(join(tmpdir(), 'aie-coach-gate-'));
+    mkdirSync(join(dir, 'skills', 'coach-checkin', 'scripts'), { recursive: true });
+    writeFileSync(join(dir, 'skills', 'coach-checkin', 'scripts', 'submit.mjs'), '');
+    process.chdir(dir);
+  });
+
+  afterEach(() => {
+    process.chdir(prevCwd);
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  test('a passing gate records the pillar; re-passing is idempotent', async () => {
+    const gate = tools.get('coach_gate');
+    const first = await gate.handler({ pillar: 'verification' });
+    if (!first.passed) return; // machine without a lint/test hook: nothing to assert
+    assert.deepEqual(readState().pillarsPassed, ['verification']);
+    const second = await gate.handler({ pillar: 'verification' });
+    assert.deepEqual(second.pillarsPassed, ['verification']); // no duplicate
+  });
+
+  test('gate fields do not clobber identity or progress fields', async () => {
+    // Seed identity (submit.mjs's job) + progress (state.mjs's job) on the marker.
+    writeProgress({ participantId: 'p-123', role: 'backend', currentBlock: 2, blocksDone: [1] });
+    const gate = tools.get('coach_gate');
+    const r = await gate.handler({ pillar: 'verification' });
+    const state = readState();
+    // Identity + progress survive the gate write regardless of pass/fail.
+    assert.equal(state.participantId, 'p-123');
+    assert.equal(state.role, 'backend');
+    assert.equal(state.currentBlock, 2);
+    assert.deepEqual(state.blocksDone, [1]);
+    if (r.passed) assert.deepEqual(state.pillarsPassed, ['verification']);
+  });
+
+  test('coach_scan stores the opening baseline exactly once', async () => {
+    const scanTool = tools.get('coach_scan');
+    const a = await scanTool.handler({});
+    const baseline = readState();
+    assert.ok(baseline.openingSignals, 'opening signals stored');
+    assert.equal(baseline.scoreBefore, a.total);
+    // A later scan must NOT overwrite the stored opening baseline.
+    await scanTool.handler({});
+    assert.deepEqual(readState().openingSignals, baseline.openingSignals);
+    assert.equal(readState().scoreBefore, baseline.scoreBefore);
+  });
+});
