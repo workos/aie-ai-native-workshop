@@ -246,3 +246,26 @@ describe('buildScorePayload', () => {
     assert.throws(() => buildScorePayload({ participantId: 'abc', before: 10, after: NaN }), /score/);
   });
 });
+
+// --- submitScore consent gate (Plan 4) -------------------------------------
+import { submitScore } from './submit.mjs';
+
+describe('submitScore consent gate', () => {
+  test('does not send when unconfirmed', async () => {
+    const res = await submitScore({ participantId: 'abc', before: 10, after: 50, confirmed: false });
+    assert.deepEqual(res, { sent: false, reason: 'unconfirmed' });
+  });
+
+  test('a missing confirmed is treated as not-confirmed (strict === true)', async () => {
+    const res = await submitScore({ participantId: 'abc', before: 10, after: 50 });
+    assert.equal(res.sent, false);
+    assert.equal(res.reason, 'unconfirmed');
+  });
+
+  test('validation runs before the gate: a bad payload throws even when unconfirmed', async () => {
+    await assert.rejects(
+      () => submitScore({ before: 10, after: 50, confirmed: false }), // no participantId
+      /participantId/,
+    );
+  });
+});

@@ -278,6 +278,27 @@ export async function submit(input) {
   return { sent: false, phase, participantId, outbox };
 }
 
+// input: { participantId, before, after, pillarsPassed?, confirmed }
+// The opt-in AI-Native score send. Same consent gate, same retry, same outbox as
+// submit() — only the payload differs (a derived-integers conclusion, sourced
+// from the coach marker by the caller, never a live scan). No marker write here:
+// identity already exists (the pre check-in minted it); this only adds a score.
+export async function submitScore(input) {
+  const payload = buildScorePayload(input); // throws loudly on a bad/empty score
+
+  // Consent guard — identical to submit(): without explicit confirmation,
+  // nothing leaves the machine. Strict === true; anything else blocks.
+  if (input.confirmed !== true) {
+    return { sent: false, reason: 'unconfirmed' };
+  }
+
+  const res = await postWithRetry(workerUrl(), payload);
+  if (res.ok) return { sent: true, participantId: payload.participantId };
+
+  const outbox = writeOutbox({ phase: 'score', ...payload });
+  return { sent: false, participantId: payload.participantId, outbox };
+}
+
 function readStdin() {
   return new Promise((resolve) => {
     if (process.stdin.isTTY) {
@@ -305,8 +326,14 @@ async function main() {
     console.log(JSON.stringify(await submit(input)));
     return;
   }
+  if (cmd === 'submit-score') {
+    const raw = await readStdin();
+    const input = JSON.parse(raw || '{}');
+    console.log(JSON.stringify(await submitScore(input)));
+    return;
+  }
   console.error(
-    JSON.stringify({ status: 'error', message: `unknown command: ${cmd ?? '(none)'} (expected detect|submit)` }),
+    JSON.stringify({ status: 'error', message: `unknown command: ${cmd ?? '(none)'} (expected detect|submit|submit-score)` }),
   );
   process.exit(2);
 }
