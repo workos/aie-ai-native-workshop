@@ -59,7 +59,8 @@ You'll need just three things:
 
 1. **A laptop** (macOS or Windows) 💻
 2. **[Claude Code](https://claude.com/claude-code)** installed and signed in
-3. **[Node.js](https://nodejs.org)** (v18+) — check with `node --version`
+3. **[Bun](https://bun.sh)** — the check-in tool runs on it. Install with
+   `curl -fsSL https://bun.sh/install | bash`, or just ask Claude: *"install Bun for me."*
 
 Then, **open this repo in Claude Code and trust it.** That one step auto-loads the workshop
 skills and the `ideation` plugin — no manual setup. ✅
