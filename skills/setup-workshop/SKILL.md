@@ -32,17 +32,35 @@ The fast path. This gets an attendee from a freshly-cloned repo to **ready for B
 
 6. **Confirm the repo wiring.** The attendee is in the repo and has trusted it, so the workshop skills, the `ideation` plugin, and the `aie-coach` MCP coach are loaded. A quick sanity check: the `setup-handy` and `coach-checkin` skills should be available, and `bun ${CLAUDE_PROJECT_DIR}/native/src/cli.ts --version` should run. If the coach MCP isn't loaded, tell them to re-trust the repo or restart Claude Code.
 
-7. **Report a checklist** — one line per item, with the verified version or status:
+7. **Always end with the uniform status report** — print this exact block, **every run, success or failure**, so it's instantly clear what's ready and what isn't. One row per item, fixed-width name column, a status glyph, and a detail (version on success; the **reason** on failure). Then a summary line.
+
+   Status glyphs (use exactly these):
+   - `[✓]` — verified working (show the version / confirmation)
+   - `[✗]` — failed (show **what failed and why**, plus the one-line fix)
+   - `[!]` — needs a manual step you can't do for them (e.g. `codex login`, granting macOS Accessibility) — show the exact command/action
+   - `[-]` — skipped (say why, e.g. "already installed")
 
    ```
-   ✓ Bun         1.x
-   ✓ Codex CLI   installed  (run `codex login` before Block 3)
-   ✓ Handy       installed + hotkey set
-   ✓ Git         2.x
-   ✓ Repo        trusted — skills + ideation + aie-coach MCP loaded
+   ══════════════════════════════════════════════════════════
+    AI-Native Engineer · workshop setup
+   ══════════════════════════════════════════════════════════
+    [✓] Bun         1.3.14
+    [✓] Codex CLI   0.x installed
+    [!] Codex login required → run:  codex login   (before Block 3)
+    [✗] Handy       brew cask not found → install from https://handy.computer
+    [✓] Git         2.43.0
+    [✓] Repo        trusted · skills + ideation + aie-coach MCP loaded
+   ──────────────────────────────────────────────────────────
+    READY: 4/5   ·   NEEDS YOU: Codex login   ·   FAILED: Handy
+   ══════════════════════════════════════════════════════════
    ```
 
-8. **Hand off to Block 1.** Close with: *"You're set. Kick off the workshop with — say: \"run my workshop check-in\" — to log your starting point (and your AI-Native score) on the live board."*
+   Rules for the report:
+   - Include **every** item (Bun, Codex CLI, Handy, Git, Repo wiring) on its own row, in this order — never omit one because it failed.
+   - On any `[✗]`, the detail must say **why** (the actual error, trimmed) and the fix. Never report `[✓]` for something you didn't successfully verify.
+   - The summary line always shows the `READY: n/total` count, plus `NEEDS YOU:` and `FAILED:` lists (write `none` when empty).
+
+8. **Hand off to Block 1.** After the report, if Bun + Handy are `[✓]`, close with: *"You're set — say \"run my workshop check-in\" to log your starting point (and your AI-Native score) on the live board."* If anything blocking failed, say which one to fix first and that the rest can wait.
 
 ## Notes
 
