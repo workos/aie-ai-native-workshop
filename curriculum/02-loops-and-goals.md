@@ -4,7 +4,7 @@
 
 ## The arc
 
-1. **Goals: "done" is a checklist, not a vibe.** The [`../exercises/`](../exercises/) repo ships issues whose description is a list of subtasks with checkboxes — *you are not done until every box is checked.* Point an agent at one:
+1. **Goals: "done" is a checklist, not a vibe.** Take a real issue from a repo you brought — or write one as a list of subtask checkboxes — where *you are not done until every box is checked.* Point an agent at it:
    > "Work this issue. It's not done until every todo is checked off."
 
    They watch the agent decompose, work each subtask, and hold itself to the list. The lesson: encode "done" explicitly and the agent stops declaring victory early.

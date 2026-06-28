@@ -29,5 +29,5 @@ a target, not a script.
 
 - Board deployed and reachable; `WORKER_URL` / `WORKER_TOKEN` set for the room (see [`../board/README.md`](../board/README.md)).
 - `POST /api/admin/seed` once to confirm the projector renders, then `POST /api/admin/clear` before doors open.
-- Exercise repo ([`../exercises/`](../exercises/)) checked out with seeded issues.
+- A repo to work in — attendees bring their own (or use this one); have a bug or issue in mind.
 - Handy install path confirmed on at least one macOS and one Windows machine.
