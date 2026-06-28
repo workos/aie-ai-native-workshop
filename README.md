@@ -18,11 +18,13 @@ leave with it **running by itself**.
 
 <br/>
 
-### 🔗 Live links
+### 🔗 Live links — open these now
 
-**📊 Live board → https://aie-board.workos-internal.workers.dev**
+**🖥️ Slides** → https://aie-deck.workos-internal.workers.dev
 &nbsp;·&nbsp;
-**🖥️ Slides → https://aie-deck.workos-internal.workers.dev**
+**📊 Live board** → https://aie-board.workos-internal.workers.dev
+&nbsp;·&nbsp;
+**📖 Glossary** → https://aie-glossary.workos-internal.workers.dev
 
 </div>
 
@@ -64,6 +66,10 @@ skills and the `ideation` plugin — no manual setup. ✅
 
 > 💬 Throughout this guide, text in quotes like *"set up Handy"* is something you literally
 > **say or type to Claude**. Go ahead — talk to it.
+
+> 📖 **Hear a term you don't know?** The [**AI-Native Glossary**](https://aie-glossary.workos-internal.workers.dev)
+> has every term behind today's workshop — voice workflows, agentic loops, scheduled tasks — and you can
+> **ask it anything** right on the page. No dumb questions.
 
 ---
 
@@ -194,11 +200,13 @@ transcripts. Ever. You can skip it entirely and still do every exercise.
 
 | If you want… | Go to |
 |--------------|-------|
+| **The slides** | https://aie-deck.workos-internal.workers.dev |
+| **The live board** | https://aie-board.workos-internal.workers.dev · code in [`board/`](board/) |
+| **The glossary** (ask it anything) | https://aie-glossary.workos-internal.workers.dev · code in [`glossary/`](glossary/) |
 | Deeper notes on each block | [`curriculum/`](curriculum/) |
 | The skills you're using | [`skills/`](skills/) — [`setup-handy`](skills/setup-handy/), [`coach-checkin`](skills/coach-checkin/) |
-| The live board's code | [`board/`](board/) |
 | The exercises | [`exercises/`](exercises/) |
-| To run this workshop yourself | [`docs/facilitator.md`](docs/facilitator.md) |
+| To run this workshop yourself | [`docs/facilitator.md`](docs/facilitator.md) — facilitator notes, deploy & debug |
 
 ---
 

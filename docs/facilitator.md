@@ -11,6 +11,7 @@ board, the run of show, and the day-of checklist.
 | Live board | https://aie-board.workos-internal.workers.dev | Cloudflare Worker + D1 + two-tier AI. Runbook: [`../board/README.md`](../board/README.md) |
 | Board admin | `…/admin.html` | Paste the ADMIN token once (stored in `localStorage`); seed / clear buttons |
 | Slide deck | https://aie-deck.workos-internal.workers.dev | Animated HTML; arrow keys / space to advance; `#14` deep-links. Runbook: [`../slides/README.md`](../slides/README.md) |
+| Glossary + chat | https://aie-glossary.workos-internal.workers.dev | Cloudflare-native (Vite+React+Worker); chat on `claude-haiku-4-5`, needs `ANTHROPIC_API_KEY`. Code: [`../glossary/`](../glossary/) |
 | Exercise repo | [`../exercises/`](../exercises/) | The repo attendees build on (fork target) |
 
 > Both Workers live on the **WorkOS Internal** Cloudflare account and sit behind
