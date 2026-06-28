@@ -1,0 +1,875 @@
+/* ── The AI-Native Glossary — dark, teal-forward editorial theme ─────────── */
+
+:root {
+  --bg: #06110f;
+  --bg-2: #0a1a17;
+  --panel: #0e211d;
+  --panel-2: #102824;
+  --ink: #e8f3ef;
+  --ink-soft: #a8c4bc;
+  --ink-dim: #6f8b84;
+  --line: #1c352f;
+  --teal: #16c391;
+  --teal-soft: #4ad9b2;
+  --teal-dim: #0e6e54;
+  --amber: #f0b429;
+  --amber-soft: #f7d070;
+
+  --serif: 'Fraunces', Georgia, serif;
+  --sans: 'Inter', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --measure: 760px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(900px 600px at 80% -5%, rgba(22, 195, 145, 0.12), transparent 60%),
+    radial-gradient(700px 500px at 0% 10%, rgba(240, 180, 41, 0.06), transparent 55%),
+    var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.6;
+}
+
+.aie-glossary {
+  min-height: 100vh;
+  padding-bottom: 8rem;
+}
+
+.gg-measure {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+/* ── reading progress ── */
+.gg-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 50;
+  background: transparent;
+}
+.gg-progress-fill {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, var(--teal), var(--teal-soft));
+  box-shadow: 0 0 12px rgba(22, 195, 145, 0.6);
+  transition: width 0.1s linear;
+}
+
+/* ── hero ── */
+.gg-hero {
+  padding: 4.5rem 0 2rem;
+}
+.gg-kicker {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin: 0 0 1.25rem;
+}
+.gg-mark {
+  display: inline-block;
+  padding: 0.15em 0.5em;
+  margin-right: 0.5em;
+  border-radius: 4px;
+  background: var(--teal-dim);
+  color: #eafff7;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.gg-title {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(2.4rem, 6vw, 4rem);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  margin: 0 0 1rem;
+  background: linear-gradient(180deg, #f3fbf8, #b9e8d8);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.gg-dek {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: clamp(1.1rem, 2.4vw, 1.45rem);
+  color: var(--ink-soft);
+  margin: 0 0 1rem;
+  max-width: 38ch;
+}
+.gg-promise {
+  color: var(--ink-soft);
+  max-width: 50ch;
+  margin: 0 0 1.75rem;
+}
+
+/* ── inline ask bar ── */
+.gg-ask {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.5rem 0.5rem 0.5rem 0.9rem;
+  margin: 0 0 2.25rem;
+}
+.gg-ask-label {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--teal-soft);
+  white-space: nowrap;
+}
+.gg-ask input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 0.95rem;
+}
+.gg-ask input::placeholder {
+  color: var(--ink-dim);
+}
+.gg-ask button {
+  flex: none;
+  width: 2.1rem;
+  height: 2.1rem;
+  border: none;
+  border-radius: 8px;
+  background: var(--teal);
+  color: #04120d;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.gg-ask button:hover {
+  background: var(--teal-soft);
+}
+
+/* ── difficulty steps ── */
+.gg-steps {
+  margin: 0 0 2rem;
+}
+.gg-steps-label {
+  font-size: 0.85rem;
+  color: var(--ink-dim);
+  margin: 0 0 0.65rem;
+}
+.d-easy {
+  color: var(--teal-soft);
+}
+.d-medium {
+  color: var(--amber-soft);
+}
+.d-advanced {
+  color: var(--amber);
+}
+.gg-steps-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.gg-step {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  text-decoration: none;
+  color: var(--ink-soft);
+  min-width: 92px;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.gg-step:hover {
+  transform: translateY(-2px);
+  border-color: var(--teal-dim);
+}
+.gg-step.here {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 1px var(--teal-dim);
+}
+.gg-step-lvl {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--ink-dim);
+}
+.gg-step-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+.gg-step-diff {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-dim);
+}
+.gg-step-bar {
+  margin-top: 0.3rem;
+  width: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--teal-dim), var(--teal));
+  opacity: 0.7;
+}
+
+/* ── stats ── */
+.gg-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  margin: 0;
+  padding: 1.25rem 0 0;
+  border-top: 1px solid var(--line);
+}
+.gg-stats div {
+  display: flex;
+  flex-direction: column;
+}
+.gg-stats dt {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-dim);
+}
+.gg-stats dd {
+  margin: 0.15rem 0 0;
+  font-family: var(--serif);
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--teal-soft);
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+.gg-stats .unit {
+  font-family: var(--sans);
+  font-size: 0.68rem;
+  font-weight: 400;
+  color: var(--ink-dim);
+}
+
+/* ── jump bar ── */
+.gg-jumpbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(6, 17, 15, 0.85);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  margin: 1.5rem 0 0;
+}
+.gg-jumpbar-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  overflow-x: auto;
+}
+.gg-jumpbar a {
+  white-space: nowrap;
+  text-decoration: none;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  padding: 0.3rem 0.55rem;
+  border-radius: 7px;
+  transition: background 0.15s, color 0.15s;
+}
+.gg-jumpbar a:hover {
+  color: var(--ink);
+  background: var(--panel);
+}
+.gg-jumpbar a.active {
+  color: var(--teal-soft);
+  background: var(--panel-2);
+}
+.gg-jumpbar .lvl {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+}
+.gg-seen {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--ink-dim);
+  white-space: nowrap;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.gg-seen.fluent {
+  color: #04120d;
+  background: var(--teal);
+  border-color: var(--teal);
+}
+.gg-search {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.25rem 0.55rem;
+}
+.gg-search svg {
+  width: 14px;
+  height: 14px;
+  color: var(--ink-dim);
+  flex: none;
+}
+.gg-search input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--ink);
+  font-size: 0.82rem;
+  width: 120px;
+}
+.gg-search input::placeholder {
+  color: var(--ink-dim);
+}
+
+/* ── levels ── */
+.gg-level {
+  padding-top: 3.5rem;
+  scroll-margin-top: 70px;
+}
+.gg-level-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.gg-level-num {
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  color: var(--teal-dim);
+}
+.gg-level-name {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.gg-level-tag {
+  margin-left: auto;
+  font-size: 0.78rem;
+  color: var(--ink-dim);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.gg-diff {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.7rem;
+}
+.gg-diff .ramp {
+  display: inline-flex;
+  gap: 2px;
+}
+.gg-diff .ramp i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--line);
+}
+.gg-diff .ramp i.on {
+  background: currentColor;
+}
+.gg-level-intro {
+  color: var(--ink-soft);
+  font-size: 1.02rem;
+  margin: 0.75rem 0 1.5rem;
+  max-width: 60ch;
+}
+
+/* ── entries ── */
+.gg-entry {
+  padding: 1.4rem 0;
+  border-top: 1px solid var(--line);
+  scroll-margin-top: 80px;
+}
+.gg-entry h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 0 0 0.5rem;
+  font-family: var(--serif);
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.gg-new {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #04120d;
+  background: var(--amber);
+  padding: 0.1em 0.4em;
+  border-radius: 4px;
+}
+.gg-entry .anchor {
+  color: var(--ink-dim);
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.gg-entry:hover .anchor {
+  opacity: 1;
+}
+.gg-share {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--ink-dim);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.gg-share:hover {
+  color: var(--teal-soft);
+  border-color: var(--teal-dim);
+}
+.gg-def {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 1.02rem;
+}
+.xref {
+  color: var(--teal-soft);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--teal-dim);
+  cursor: pointer;
+}
+.xref:hover {
+  border-bottom-style: solid;
+}
+.gg-hear {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin: 0.75rem 0 0;
+  font-family: var(--serif);
+  font-style: italic;
+  color: var(--ink-soft);
+}
+.gg-hear .tag,
+.gg-demo .tag {
+  font-family: var(--mono);
+  font-style: normal;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--amber);
+  border: 1px solid rgba(240, 180, 41, 0.3);
+  border-radius: 4px;
+  padding: 0.1em 0.4em;
+  white-space: nowrap;
+}
+
+/* flash on cross-link jump */
+.gg-entry.flash {
+  animation: flash 1.4s ease;
+}
+@keyframes flash {
+  0% {
+    background: rgba(22, 195, 145, 0.18);
+  }
+  100% {
+    background: transparent;
+  }
+}
+
+/* ── inline viz ── */
+.gg-viz {
+  margin-top: 1rem;
+  padding: 1rem 1.1rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.gg-viz-loop {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+.gg-viz-loop .node {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--teal-soft);
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--teal-dim);
+  border-radius: 999px;
+}
+.gg-viz-loop .loop-arrow {
+  color: var(--amber);
+  font-size: 1.3rem;
+}
+.gg-viz-ctx .ctx-frame {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 4px;
+}
+.gg-viz-ctx .ctx-cell {
+  height: 16px;
+  border-radius: 3px;
+  background: var(--teal);
+}
+.gg-viz-ctx .ctx-label {
+  display: block;
+  margin-top: 0.55rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--ink-dim);
+}
+.gg-viz-fan {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+.gg-viz-fan .root {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--teal-soft);
+  padding: 0.25rem 0.7rem;
+  border: 1px solid var(--teal-dim);
+  border-radius: 8px;
+}
+.gg-viz-fan .leaves {
+  display: flex;
+  gap: 0.6rem;
+}
+.gg-viz-fan .leaf {
+  width: 42px;
+  height: 10px;
+  border-radius: 4px;
+  background: var(--amber);
+}
+
+/* ── empty state ── */
+.gg-empty {
+  padding: 3rem 0;
+  text-align: center;
+  color: var(--ink-soft);
+}
+.gg-empty .big {
+  display: block;
+  font-family: var(--serif);
+  font-size: 1.4rem;
+  color: var(--ink);
+  margin-bottom: 0.5rem;
+}
+.gg-empty-ask {
+  display: inline-block;
+  margin-top: 0.75rem;
+  background: var(--teal-dim);
+  color: #eafff7;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.gg-empty-ask:hover {
+  background: var(--teal);
+  color: #04120d;
+}
+
+/* ── finale ── */
+.gg-finale {
+  margin-top: 4rem;
+  padding: 2.5rem 0 1rem;
+  border-top: 1px solid var(--line);
+  text-align: center;
+}
+.gg-finale h2 {
+  font-family: var(--serif);
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  font-weight: 600;
+  margin: 0.5rem 0 1.25rem;
+}
+.gg-finale h2 em {
+  color: var(--teal-soft);
+}
+.gg-finale-levels {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+.gg-finale-levels span {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--teal-soft);
+  border: 1px solid var(--teal-dim);
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+}
+.gg-finale-sub {
+  color: var(--ink-soft);
+  max-width: 52ch;
+  margin: 1.5rem auto;
+}
+.gg-share-page {
+  background: var(--teal);
+  color: #04120d;
+  border: none;
+  border-radius: 10px;
+  padding: 0.7rem 1.2rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.gg-share-page:hover {
+  background: var(--teal-soft);
+}
+
+/* ── footer ── */
+.gg-foot {
+  margin-top: 4rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--line);
+}
+.gg-foot .cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+.gg-foot h5 {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--teal-soft);
+  margin: 0 0 0.5rem;
+}
+.gg-foot p {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 0.88rem;
+}
+
+/* ── floating chat ── */
+.gg-chat-fab {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 60;
+  background: var(--teal);
+  color: #04120d;
+  border: none;
+  border-radius: 999px;
+  padding: 0.8rem 1.3rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 30px rgba(22, 195, 145, 0.35);
+  transition: transform 0.15s, background 0.15s;
+}
+.gg-chat-fab:hover {
+  transform: translateY(-2px);
+  background: var(--teal-soft);
+}
+.gg-chat-fab.hidden-fab {
+  display: none;
+}
+
+.gg-chat {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 61;
+  width: min(420px, calc(100vw - 2rem));
+  height: min(560px, calc(100vh - 3rem));
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+.gg-chat-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+.gg-chat-title {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+.gg-chat-sub {
+  font-size: 0.75rem;
+  color: var(--ink-dim);
+}
+.gg-chat-close {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: var(--ink-dim);
+  font-size: 1rem;
+  cursor: pointer;
+}
+.gg-chat-close:hover {
+  color: var(--ink);
+}
+.gg-chat-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.gg-chat-empty p {
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+  margin: 0 0 0.9rem;
+}
+.gg-chat-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.gg-chat-chips button {
+  text-align: left;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--ink-soft);
+  padding: 0.6rem 0.8rem;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.gg-chat-chips button:hover {
+  border-color: var(--teal-dim);
+  color: var(--teal-soft);
+}
+.gg-chat-msg {
+  max-width: 88%;
+  padding: 0.6rem 0.85rem;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+.gg-chat-msg.user {
+  align-self: flex-end;
+  background: var(--teal-dim);
+  color: #eafff7;
+}
+.gg-chat-msg.assistant {
+  align-self: flex-start;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+.gg-chat-msg.assistant p {
+  margin: 0 0 0.5rem;
+}
+.gg-chat-msg.assistant p:last-child {
+  margin-bottom: 0;
+}
+.gg-chat-msg.assistant code {
+  font-family: var(--mono);
+  font-size: 0.85em;
+  background: var(--bg);
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
+}
+.gg-chat-msg.thinking {
+  color: var(--ink-dim);
+  letter-spacing: 0.2em;
+}
+.gg-chat-msg.error {
+  border-color: rgba(240, 180, 41, 0.4);
+  color: var(--amber-soft);
+}
+.gg-chat-input {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-top: 1px solid var(--line);
+  background: var(--panel);
+}
+.gg-chat-input input {
+  flex: 1;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  outline: none;
+  color: var(--ink);
+  padding: 0.55rem 0.75rem;
+  font-size: 0.92rem;
+}
+.gg-chat-input input::placeholder {
+  color: var(--ink-dim);
+}
+.gg-chat-input button {
+  width: 2.4rem;
+  border: none;
+  border-radius: 10px;
+  background: var(--teal);
+  color: #04120d;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+.gg-chat-input button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ── mobile ── */
+@media (max-width: 640px) {
+  .gg-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .gg-foot .cols {
+    grid-template-columns: 1fr;
+  }
+  .gg-level-tag {
+    margin-left: 0;
+    width: 100%;
+  }
+}

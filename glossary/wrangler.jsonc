@@ -1,0 +1,25 @@
+{
+  // aie-glossary — "The AI-Native Glossary" leave-behind for The AI-Native
+  // Engineer workshop (AI Engineer · San Francisco).
+  //
+  // Deploys to the WorkOS Internal Cloudflare account. You are already logged in
+  // via `wrangler login` (OAuth, zack@workos.com) — confirm with
+  // `npx wrangler whoami` (should show "WorkOS Internal").
+  //
+  // The Worker serves the Vite static build (./dist) via the ASSETS binding for
+  // every non-/api path, and handles POST /api/chat itself (streaming Claude).
+  //
+  // Secret (set via `wrangler secret put`, never here):
+  //   ANTHROPIC_API_KEY — provider key. The page builds and renders without it;
+  //                       the chat just errors gracefully until it's set.
+  "name": "aie-glossary",
+  "account_id": "7e7fcec4d315661895440b439328033d",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-06-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS"
+  }
+}
