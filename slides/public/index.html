@@ -858,8 +858,9 @@
   .cover .cover-bg img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .cover .cover-bg::after {
     content: ""; position: absolute; inset: 0; pointer-events: none;
+    /* Dark under the title (left), clearing to the right so the hero art reads. */
     background:
-      linear-gradient(95deg, rgba(7,16,14,.97) 0%, rgba(7,16,14,.92) 34%, rgba(7,16,14,.74) 60%, rgba(7,16,14,.52) 100%),
+      linear-gradient(95deg, rgba(7,16,14,.96) 0%, rgba(7,16,14,.90) 30%, rgba(7,16,14,.60) 55%, rgba(7,16,14,.24) 80%, rgba(7,16,14,.12) 100%),
       radial-gradient(ellipse at 14% 90%, rgba(246,183,60,.05), transparent 52%);
   }
   .cover .frame, .cover .meta, .cover .stripe, .cover .qr-corner { z-index: 2; }
@@ -888,7 +889,7 @@
 
   <!-- ============ 01 COVER ============ -->
   <section data-label="01 Cover" class="grain cover">
-    <div class="cover-bg" aria-hidden="true"><img src="img/art/voice-hero.jpg" alt="" /></div>
+    <div class="cover-bg" aria-hidden="true"><img src="img/art/hero.jpg" alt="" /></div>
     <div class="qr-corner">
       <span>The live board &middot; scan to join</span>
       <img src="img/qr-board.png" alt="Live board QR" class="qr-img" />
@@ -998,16 +999,15 @@
   <!-- ============ O2 TODAY IN ONE SCREEN ============ -->
   <section data-label="Buffer pattern · Today in one screen" class="grain">
     <div class="frame">
-      <div class="eyebrow" style="margin-bottom: 24px;">The plan</div>
-      <h2 class="deck-h2" style="margin-bottom: 48px;">Four moves. One repo. One <span class="underline-accent">hour</span>.</h2>
+      <div class="eyebrow" style="margin-bottom: 24px;">How today works</div>
+      <h2 class="deck-h2" style="margin-bottom: 48px;">We show you. Then <span class="underline-accent">you</span> try it.</h2>
       <div class="chips-row">
-        <div class="move-chip card"><span class="mnum">01</span><span class="mname">Voice coding</span></div>
-        <div class="move-chip card"><span class="mnum">02</span><span class="mname">Loops &amp; goals</span></div>
-        <div class="move-chip card"><span class="mnum">03</span><span class="mname">Verification gates</span></div>
-        <div class="move-chip card"><span class="mnum">04</span><span class="mname">Scheduled tasks</span></div>
+        <div class="move-chip card"><span class="mnum">&rarr;</span><span class="mname">We teach it</span></div>
+        <div class="move-chip card"><span class="mnum">&#9654;</span><span class="mname">You run it</span></div>
+        <div class="move-chip card"><span class="mnum">&#9733;</span><span class="mname">You keep it</span></div>
       </div>
       <p class="body muted" style="margin-top: 48px; font-size: 34px; max-width: 1660px;">
-        Each block: we show you, then you try it. You leave with all four <b class="lev">running on your machine</b>.
+        Hands-on the whole way &mdash; you drive, we drive alongside. Every block ends with a prompt you run yourself, and the repo is <b class="lev">yours to finish later</b>.
       </p>
     </div>
   </section>
@@ -1047,12 +1047,12 @@
   <section data-label="Orientation · meet your coach" class="grain art-split text-right">
     <div class="frame">
       <div class="art-cols">
-        <div class="art-panel" aria-hidden="true"><img src="img/art/parallel-agents.jpg" alt="A coach riding along in the terminal" loading="lazy" /></div>
+        <div class="art-panel" aria-hidden="true"><img src="img/art/coach.jpg" alt="A coach interviewing a developer, with an AI-native score gauge rising before and after" loading="lazy" /></div>
         <div class="art-text">
           <div class="eyebrow" style="margin-bottom: 28px;">Your guide today</div>
-          <h2 class="deck-h2" style="font-size: 80px; margin-bottom: 32px;">A coach rides along in your <span class="underline-accent">terminal</span>.</h2>
-          <p class="body" style="font-size: 36px; max-width: 760px;">
-            An opt-in companion that interviews you, can score how AI-native your setup is, and guides you block to block. It's <b class="lev">for fun</b> &mdash; and it quietly powers the board.
+          <h2 class="deck-h2" style="font-size: 76px; margin-bottom: 32px;">It interviews you &mdash; and scores how <span class="underline-accent">AI-native</span> you are.</h2>
+          <p class="body" style="font-size: 34px; max-width: 780px;">
+            A quick before-and-after: the coach asks how you work, gives you an <b class="lev">AI-native score</b>, and points at what to start doing next. Use today to finally try that workflow you've been meaning to get to. Opt-in, for fun &mdash; and it quietly powers the board.
           </p>
         </div>
       </div>
@@ -1205,7 +1205,7 @@
   <section data-label="Voice · one voice many agents" class="grain art-split text-right">
     <div class="frame">
       <div class="art-cols">
-        <div class="art-panel" aria-hidden="true"><img src="img/art/parallel-agents.jpg" alt="One conductor directing many agent screens" loading="lazy" /></div>
+        <div class="art-panel" aria-hidden="true"><img src="img/art/voice-hero.jpg" alt="One operator driving several agent terminals by voice" loading="lazy" /></div>
         <div class="art-text">
           <div class="eyebrow" style="margin-bottom: 28px;">The real unlock</div>
           <h2 class="deck-h2" style="margin-bottom: 32px;">One voice. Many <span class="underline-accent">agents</span>.</h2>
@@ -2080,7 +2080,7 @@
   "Orientation divider — what we're doing today. The plan, your tools, where to start. Short.",
   "Today in one screen. Four moves, one repo, one hour. Let the chips cascade. We show you, then you try it — you leave with all four running on your machine.",
   "Your three resources. Point at each QR: these slides, the live board, the glossary. Tell them to open all three on their phone now.",
-  "Meet your coach. An opt-in companion in your terminal that interviews you, can score how AI-native your setup is, and guides you block to block. It's for fun — and it quietly powers the board.",
+  "Meet your coach. It interviews you and gives you an AI-native score, before and after — a mirror for what to start doing. Nudge them: use today to try the workflow they've been meaning to get to. Opt-in, for fun, and it powers the board.",
   "How the coach works. Two check-ins: opening (role, biggest time-sink, what to automate) and closing (what you wired up, what's next). Only what you type and confirm is ever sent — skip it and still do every exercise.",
   "The live board. Your check-ins light it up: where the room's toil is, the top hooks and scheduled tasks worth building, hours/week we'll reclaim. The before→after at the close is the payoff.",
   "The glossary. No dumb questions — every term behind today, plus the fundamentals. A chat on the page answers in plain language.",
