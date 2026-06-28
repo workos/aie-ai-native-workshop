@@ -14,6 +14,7 @@ import { scan } from '../scan.ts';
 import { subScores } from '../score.ts';
 import { score } from '../score.ts';
 import { recommend } from '../recommend.ts';
+import { isGateable } from '../pillars.ts';
 import { collectObservations } from '../evidence.ts';
 import type {
   CoachReport,
@@ -77,27 +78,37 @@ export function coachScan({ scanFn = scan, observeFn = collectObservations, home
   };
 }
 
-// The single next step: the weakest sub-threshold pillar (recommend() already
-// sorts weakest-first and drops strong pillars), enriched with its current
-// sub-score. null when every pillar already clears the bar ("you're good here").
+// The single next step: the weakest GATEABLE sub-threshold pillar (recommend()
+// already sorts weakest-first and drops strong pillars), enriched with its
+// current sub-score. Non-gateable pillars (automation) are skipped here — they
+// are recommend-only advice, never the gated next step. null when every gateable
+// pillar already clears the bar ("you're good here").
 export function nextStep({ scanFn = scan, observeFn = collectObservations, home, cwd }: EngineDeps = {}): NextStep | null {
   const signals = scanFn({ home, cwd });
   const observations = observeSafely(observeFn, { home, hasVerifyHook: signals?.hooks?.lintTest === true });
   const recs = recommend(signals, { threshold: GATE_THRESHOLD, observations });
-  if (recs.length === 0) return null;
-  const top = recs[0];
+  const top = recs.find((r) => isGateable(r.pillar));
+  if (!top) return null;
   const subs = subScores(signals);
   return { pillar: top.pillar, action: top.action, basis: top.basis, subScore: subs[top.pillar] };
 }
 
 // The gate: RE-SCAN and decide. Throws on an unknown pillar (caught upstream and
-// returned as a readable isError result). `passed` is purely a function of the
-// fresh on-disk sub-score vs the threshold — there is no flag to fake it with.
+// returned as a readable isError result). For a gateable pillar `passed` is purely
+// a function of the fresh on-disk sub-score vs the threshold — there is no flag to
+// fake it with. A non-gateable pillar (automation) is forced passed:false +
+// recommendOnly:true: it can never be machine-verified from disk, so it is honest
+// advice, not a gated step. The sub-score is still reported either way.
 export function gateResult(pillar: string, { scanFn = scan, home, cwd }: EngineDeps = {}): GateResult {
   if (!PILLAR_IDS.includes(pillar as PillarId)) {
     throw new Error(`unknown pillar: ${pillar} (expected one of ${PILLAR_IDS.join(', ')})`);
   }
+  const id = pillar as PillarId;
   const signals = scanFn({ home, cwd });
-  const subScore = subScores(signals)[pillar as PillarId];
-  return { pillar: pillar as PillarId, subScore, threshold: GATE_THRESHOLD, passed: subScore >= GATE_THRESHOLD };
+  const subScore = subScores(signals)[id];
+  const gateable = isGateable(id);
+  if (!gateable) {
+    return { pillar: id, subScore, threshold: GATE_THRESHOLD, passed: false, gateable: false, recommendOnly: true };
+  }
+  return { pillar: id, subScore, threshold: GATE_THRESHOLD, passed: subScore >= GATE_THRESHOLD, gateable: true };
 }

@@ -15,6 +15,10 @@ export interface Pillar {
   id: PillarId;
   label: string;
   weight: number;
+  // Whether this pillar can be machine-verified from disk and thus gated.
+  // automation is false: Claude-native schedules leave no on-disk marker, so the
+  // gate would always fail — it is recommend-only advice, never a gated step.
+  gateable: boolean;
 }
 
 // --- scan signals (hard facts on disk) -------------------------------------
@@ -92,6 +96,9 @@ export interface Recommendation {
   basis: RecommendationBasis;
   hoursPerWeek?: number | null;
   evidence?: string;
+  // Mirrors the pillar's gateability so callers can tell advice (automation)
+  // from a gated step without re-deriving it.
+  gateable?: boolean;
 }
 
 export interface RecommendOptions {
@@ -119,6 +126,11 @@ export interface GateResult {
   subScore: number;
   threshold: number;
   passed: boolean;
+  // Whether the pillar is machine-verifiable from disk. A non-gateable pillar
+  // (automation) is forced passed:false + recommendOnly:true with a message.
+  gateable: boolean;
+  recommendOnly?: boolean;
+  message?: string;
 }
 
 export interface Block {

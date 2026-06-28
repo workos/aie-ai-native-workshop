@@ -27,6 +27,14 @@ describe('recommend', () => {
     expect(recs.length > 0).toBeTruthy();
     expect(recs.every((r) => r.basis === 'capability-gap' && typeof r.action === 'string')).toBeTruthy();
   });
+
+  test('recommendations carry their pillar gateability (automation false, others true)', () => {
+    const recs = recommend({}); // every pillar weak -> all five recs present
+    const automation = recs.find((r) => r.pillar === 'automation');
+    const verification = recs.find((r) => r.pillar === 'verification');
+    expect(automation!.gateable).toBe(false);
+    expect(verification!.gateable).toBe(true);
+  });
 });
 
 // --- append to native/src/recommend.test.ts ---

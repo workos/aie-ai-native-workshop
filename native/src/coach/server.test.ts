@@ -257,34 +257,45 @@ describe('tools/list mvp', () => {
 // --- Phase 4: navigation-layer guidance tools ----------------------------
 
 describe('tools/list full', () => {
-  test('exposes all nine tools after the engine layer lands', async () => {
+  test('exposes exactly the seven active tools (navigation layer is dormant)', async () => {
     const { lines } = await run([{ jsonrpc: '2.0', id: 11, method: 'tools/list', params: {} }]);
     const msg = JSON.parse(lines[0]);
     expect(msg.id).toBe(11);
 
     const names = (msg.result.tools as ListedTool[]).map((t) => t.name).sort();
+    // coach_status / coach_checkpoint are dormant — not on the live tool surface.
     expect(names).toEqual(
-      ['coach_card', 'coach_checkin', 'coach_checkpoint', 'coach_gate', 'coach_next', 'coach_scan', 'coach_status', 'coach_submit_checkin', 'coach_submit_score'],
+      ['coach_card', 'coach_checkin', 'coach_gate', 'coach_next', 'coach_scan', 'coach_submit_checkin', 'coach_submit_score'],
     );
-
-    // The two navigation tools carry valid object schemas too.
-    const status = (msg.result.tools as ListedTool[]).find((t) => t.name === 'coach_status')!;
-    const checkpoint = (msg.result.tools as ListedTool[]).find((t) => t.name === 'coach_checkpoint')!;
-    expect(status.inputSchema.type).toBe('object');
-    expect(status.inputSchema.additionalProperties).toBe(false);
-    expect(checkpoint.inputSchema.required).toEqual(['block']);
-    expect(checkpoint.inputSchema.properties!.block.minimum).toBe(1);
-    expect(checkpoint.inputSchema.properties!.block.maximum).toBe(4);
   });
 });
 
-describe('coach_status', () => {
-  test('fresh marker (pre): no participantId, currentBlock null, nextAction is the opening check-in', async () => {
-    const cwd = freshCwd(); // no marker -> detect() returns { phase:'pre' }
-    const { lines } = await run([call(1, 'coach_status')], { cwd });
-    const { parsed, isError } = toolResult(lines, 1);
+// The navigation tools (coach_status, coach_checkpoint) are DORMANT: kept built +
+// tested but removed from the live MCP surface, so they are NOT callable over the
+// protocol. These tests drive the handlers IN-PROCESS via `dormantTools`, using the
+// chdir-to-temp pattern so the shared marker (.aie-coach-state.json, resolved via
+// process.cwd()) is isolated per test.
+describe('coach_status (dormant, in-process)', () => {
+  let prevCwd: string;
+  let dir: string;
 
-    expect(isError).toBe(false);
+  beforeEach(() => {
+    prevCwd = process.cwd();
+    dir = mkdtempSync(join(tmpdir(), 'coach-status-'));
+    mkdirSync(join(dir, 'skills', 'coach-checkin', 'scripts'), { recursive: true });
+    writeFileSync(join(dir, 'skills', 'coach-checkin', 'scripts', 'submit.ts'), '');
+    process.chdir(dir);
+  });
+
+  afterEach(() => {
+    process.chdir(prevCwd);
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  test('fresh marker (pre): no participantId, currentBlock null, nextAction is the opening check-in', async () => {
+    // no marker -> detect() returns { phase:'pre' }
+    const parsed: any = await dormantTools.get('coach_status')!.handler({});
+
     expect(parsed.phase).toBe('pre');
     expect(parsed.participantId).toBe(undefined);
     expect(parsed.currentBlock).toBe(null);
@@ -293,18 +304,15 @@ describe('coach_status', () => {
   });
 
   test('after two checkpoints: blocksDone [1,2] and a sensible block-3 nextAction', async () => {
-    const cwd = freshCwd();
     // Seed a participantId so status is past the opening-check-in branch and the
     // first-action hint (not the opening check-in) is exercised.
     writeFileSync(
-      join(cwd, '.aie-coach-state.json'),
+      join(process.cwd(), '.aie-coach-state.json'),
       JSON.stringify({ participantId: 'fixed-id', role: 'Backend / Go', preSubmittedAt: new Date().toISOString() }),
     );
-    const { lines } = await run(
-      [call(1, 'coach_checkpoint', { block: 1 }), call(2, 'coach_checkpoint', { block: 2 }), call(3, 'coach_status')],
-      { cwd },
-    );
-    const { parsed } = toolResult(lines, 3);
+    await dormantTools.get('coach_checkpoint')!.handler({ block: 1 });
+    await dormantTools.get('coach_checkpoint')!.handler({ block: 2 });
+    const parsed: any = await dormantTools.get('coach_status')!.handler({});
 
     expect(parsed.phase).toBe('post');
     expect(parsed.blocksDone).toEqual([1, 2]);
@@ -314,13 +322,27 @@ describe('coach_status', () => {
   });
 });
 
-describe('coach_checkpoint', () => {
-  test('block 1 with no participantId: congrats, advances to block 2, AND a soft nudge', async () => {
-    const cwd = freshCwd(); // no marker -> pre -> no participantId
-    const { lines } = await run([call(1, 'coach_checkpoint', { block: 1 })], { cwd });
-    const { parsed, isError } = toolResult(lines, 1);
+describe('coach_checkpoint (dormant, in-process)', () => {
+  let prevCwd: string;
+  let dir: string;
 
-    expect(isError).toBe(false);
+  beforeEach(() => {
+    prevCwd = process.cwd();
+    dir = mkdtempSync(join(tmpdir(), 'coach-checkpoint-'));
+    mkdirSync(join(dir, 'skills', 'coach-checkin', 'scripts'), { recursive: true });
+    writeFileSync(join(dir, 'skills', 'coach-checkin', 'scripts', 'submit.ts'), '');
+    process.chdir(dir);
+  });
+
+  afterEach(() => {
+    process.chdir(prevCwd);
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  test('block 1 with no participantId: congrats, advances to block 2, AND a soft nudge', async () => {
+    // no marker -> pre -> no participantId
+    const parsed: any = await dormantTools.get('coach_checkpoint')!.handler({ block: 1 });
+
     expect(parsed.congrats).toMatch(/Block 1/);
     expect(parsed.done).toBe(false);
     expect(parsed.nextBlock.n).toBe(2);
@@ -330,23 +352,19 @@ describe('coach_checkpoint', () => {
   });
 
   test('block 1 WITH a participantId: no nudge', async () => {
-    const cwd = freshCwd();
     // Fabricate a pre marker so detect() reports post (has participantId).
     writeFileSync(
-      join(cwd, '.aie-coach-state.json'),
+      join(process.cwd(), '.aie-coach-state.json'),
       JSON.stringify({ participantId: 'fixed-id', role: 'PM', preSubmittedAt: new Date().toISOString() }),
     );
-    const { lines } = await run([call(2, 'coach_checkpoint', { block: 1 })], { cwd });
-    const { parsed } = toolResult(lines, 2);
+    const parsed: any = await dormantTools.get('coach_checkpoint')!.handler({ block: 1 });
 
     expect(parsed.nextBlock.n).toBe(2);
     expect(parsed.nudge).toBe(undefined);
   });
 
   test('block 4: done true, no nextBlock, a closing-check-in prompt', async () => {
-    const cwd = freshCwd();
-    const { lines } = await run([call(3, 'coach_checkpoint', { block: 4 })], { cwd });
-    const { parsed } = toolResult(lines, 3);
+    const parsed: any = await dormantTools.get('coach_checkpoint')!.handler({ block: 4 });
 
     expect(parsed.done).toBe(true);
     expect(parsed.nextBlock).toBe(undefined);
@@ -355,9 +373,8 @@ describe('coach_checkpoint', () => {
   });
 
   test('the recorded block survives into coach_status (shared marker)', async () => {
-    const cwd = freshCwd();
-    const { lines } = await run([call(1, 'coach_checkpoint', { block: 1 }), call(2, 'coach_status')], { cwd });
-    const { parsed } = toolResult(lines, 2);
+    await dormantTools.get('coach_checkpoint')!.handler({ block: 1 });
+    const parsed: any = await dormantTools.get('coach_status')!.handler({});
     expect(parsed.blocksDone).toEqual([1]);
     expect(parsed.currentBlock).toBe(2);
   });
@@ -492,7 +509,7 @@ describe('outbox', () => {
 // across describe blocks, so the imports are consolidated at the top of the file.
 import { beforeEach, afterEach } from "bun:test";
 import { mkdirSync, rmSync } from 'node:fs';
-import { tools } from './server.ts';
+import { tools, dormantTools } from './server.ts';
 
 // Call a tool exactly as the server would: look it up in the registry, run the
 // handler with the given args, and return the parsed result (handlers return
@@ -529,9 +546,15 @@ describe('engine-backed coach tools', () => {
       expect(entry.schema.name).toBe(name);
       expect(entry.schema.inputSchema.additionalProperties).toBe(false);
     }
-    // The four pre-existing tools must still be present (not broken/overwritten).
-    for (const name of ['coach_checkin', 'coach_submit_checkin', 'coach_status', 'coach_checkpoint']) {
+    // The two board-layer tools must still be live (not broken/overwritten).
+    for (const name of ['coach_checkin', 'coach_submit_checkin']) {
       expect(tools.get(name)).toBeTruthy();
+    }
+    // The navigation tools are dormant: present in dormantTools, absent from the
+    // live `tools` surface.
+    for (const name of ['coach_status', 'coach_checkpoint']) {
+      expect(dormantTools.get(name)).toBeTruthy();
+      expect(tools.get(name)).toBeUndefined();
     }
   });
 

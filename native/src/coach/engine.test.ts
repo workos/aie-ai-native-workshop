@@ -55,6 +55,14 @@ describe('nextStep', () => {
   test('null when every pillar already clears the bar', () => {
     expect(nextStep({ scanFn: strongSignals, observeFn: noObs })).toBe(null);
   });
+
+  test('never returns the automation pillar (recommend-only, not a gated step)', () => {
+    // automation is the weakest here (everything but verification is 0), but it is
+    // not gateable -> nextStep must skip it and pick a gateable pillar instead.
+    const step = nextStep({ scanFn: weakSignals, observeFn: noObs });
+    expect(step).not.toBe(null);
+    expect(step!.pillar).not.toBe('automation');
+  });
 });
 
 describe('gateResult', () => {
@@ -68,20 +76,28 @@ describe('gateResult', () => {
   });
 
   test('fails when the scan does NOT see the pillar (cannot be faked)', () => {
-    // automation is absent in weakSignals -> gate must refuse to advance.
-    const r = gateResult('automation', { scanFn: weakSignals });
+    // orchestration is absent in weakSignals -> gate must refuse to advance.
+    const r = gateResult('orchestration', { scanFn: weakSignals });
     expect(r.passed).toBe(false);
     expect(r.subScore < GATE_THRESHOLD).toBeTruthy();
+  });
+
+  test('automation is non-gateable: passed:false even when scheduled jobs appear', () => {
+    // automation can never be machine-verified from disk, so a scan that "sees"
+    // scheduled jobs still does NOT pass — it is recommend-only.
+    const r = gateResult('automation', { scanFn: () => ({ scheduledJobs: 2 }) });
+    expect(r.gateable).toBe(false);
+    expect(r.passed).toBe(false);
   });
 
   test('re-scans every call: a now-present pillar flips from fail to pass', () => {
     let installed = false;
     const scanFn = (): ScoreInput => (installed
-      ? { scheduledJobs: 2 }          // after "installing" the recurring job
+      ? { worktrees: 2 }              // after "installing" parallel worktrees
       : { hooks: { lintTest: true } }); // before
-    expect(gateResult('automation', { scanFn }).passed).toBe(false);
+    expect(gateResult('orchestration', { scanFn }).passed).toBe(false);
     installed = true; // the attendee actually set it up; disk changed
-    expect(gateResult('automation', { scanFn }).passed).toBe(true);
+    expect(gateResult('orchestration', { scanFn }).passed).toBe(true);
   });
 
   test('unknown pillar throws (surfaced as a readable tool error upstream)', () => {

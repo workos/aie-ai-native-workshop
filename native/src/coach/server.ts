@@ -89,6 +89,12 @@ interface ToolEntry {
 // the tool and returns a JSON-serializable result (or throws to signal failure).
 export const tools = new Map<string, ToolEntry>();
 
+// DORMANT — section-navigation layer (coach_status, coach_checkpoint). NOT exposed
+// via tools/list or callable over the protocol. Kept built + tested for the future
+// self-guided "unlock sections" version; re-enable by moving these entries into
+// `tools`.
+export const dormantTools = new Map<string, ToolEntry>();
+
 // --- board-layer tools (Phase 2) -----------------------------------------
 // Two thin adapters over submit.ts. `coach_checkin` reads the marker via
 // detect() and returns the ordered questions; `coach_submit_checkin` delegates
@@ -178,7 +184,7 @@ export function nextActionFor(
 }
 
 // coach_status: read-only "where am I". Composes phase/identity with progress.
-tools.set('coach_status', {
+dormantTools.set('coach_status', {
   schema: {
     name: 'coach_status',
     description: 'Return where the attendee is: phase, current block, blocks done, and the next action.',
@@ -209,7 +215,7 @@ tools.set('coach_status', {
 // the one behavioral nuance from the design review (Block-1 done gates on the
 // opening check-in, the board money shot) reconciled with "checkpoints must be
 // skippable."
-tools.set('coach_checkpoint', {
+dormantTools.set('coach_checkpoint', {
   schema: {
     name: 'coach_checkpoint',
     description: "Mark a block done; advance and return the next block's goal + first action.",
@@ -290,7 +296,12 @@ tools.set('coach_next', {
   handler: () => {
     const step = nextStep();
     if (step === null) {
-      return { done: true, message: "Every pillar clears the bar — you're AI-native. Run coach_card." };
+      return {
+        done: true,
+        message:
+          'Every machine-verifiable pillar clears the bar — run coach_card. ' +
+          '(Automation is advice-only: schedule the work you built to keep the habit.)',
+      };
     }
     return step; // { pillar, action, basis, subScore }
   },
@@ -317,7 +328,20 @@ tools.set('coach_gate', {
     },
   },
   handler: ({ pillar }: { pillar: PillarId }) => {
-    const gate = gateResult(pillar); // { pillar, subScore, threshold, passed } — re-scans
+    const gate = gateResult(pillar); // { pillar, subScore, threshold, passed, gateable } — re-scans
+    // Recommend-only pillars (automation) can't be machine-verified from disk, so
+    // gating them is never a failure — it's honest advice. Handle that first.
+    if (gate.gateable === false) {
+      return {
+        ...gate,
+        advanced: false,
+        recommendOnly: true,
+        message:
+          "Automation isn't machine-verifiable from disk — Claude-native schedules leave no marker. " +
+          "It's recommend-only: schedule the work you built and keep the habit. " +
+          "It won't move your score, but it's the highest-leverage thing you'll do.",
+      };
+    }
     if (!gate.passed) {
       return {
         ...gate,

@@ -5,6 +5,7 @@
 // rec exists; here it is a capability gap. Plan 2 re-bases the highest-value recs
 // on observed waste (real hours/week from JSONL).
 import { subScores } from './score.ts';
+import { isGateable } from './pillars.ts';
 import { applyEvidence } from './evidence.ts';
 import type {
   PillarId,
@@ -26,10 +27,18 @@ export function recommend(
   { threshold = 0.8, observations = [] }: RecommendOptions = {},
 ): Recommendation[] {
   const subs = subScores(signals);
+  // `gateable` mirrors the pillar so callers can tell advice (automation) from a
+  // gated step. It does NOT change ordering or the threshold-drop: automation is
+  // still surfaced as advice when weak; only the flag is added.
   const gaps: Recommendation[] = Object.entries(subs)
     .filter(([, value]) => value < threshold)
     .sort((a, b) => a[1] - b[1])
-    .map(([pillar]) => ({ pillar: pillar as PillarId, action: ACTIONS[pillar as PillarId], basis: 'capability-gap' }));
+    .map(([pillar]) => ({
+      pillar: pillar as PillarId,
+      action: ACTIONS[pillar as PillarId],
+      basis: 'capability-gap',
+      gateable: isGateable(pillar as PillarId),
+    }));
   // Evidence only re-bases/justifies the gap recs we already chose — it never adds
   // a rec for a strong pillar and never re-orders the score-derived priority.
   return applyEvidence(gaps, observations);
