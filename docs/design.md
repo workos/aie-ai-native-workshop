@@ -21,10 +21,13 @@ talking-at-people, every time.**
    the before→after is the emotional payload. (This is the same insight that made the
    GHX glossary/RAG work: surface what people *volunteer*, beautifully.)
 
-4. **Privacy is non-negotiable.** The coach interview only ever sends what a person
-   typed and confirmed. **No machine scanning** — no reading repos, `git log`, or
-   transcripts and shipping it to our server. We *encourage* volunteering through good
-   questions; we never fetch. This is a hard line, not a guideline.
+4. **Privacy is non-negotiable.** Anything that *leaves* the machine is volunteered-only —
+   the coach sends only what a person typed and confirmed. **No machine scanning** — we
+   never read repos, `git log`, or transcripts and ship them to our server; we *encourage*
+   volunteering through good questions, we never fetch. Reading your *own* usage with a
+   tool that **never transmits** is a different thing — that's the
+   [`loop-analyzer`](../skills/loop-analyzer/), whose output stays local. The line is about
+   data leaving the machine, not what a local tool may read. A hard line, not a guideline.
 
 5. **Conference-proof.** Local-first where possible: Handy runs on-device; the board
    keeps the last good frame when Wi-Fi flaps; the interview skill writes to an outbox
@@ -41,8 +44,12 @@ See [`../board/README.md`](../board/README.md).
 
 ## Open questions / roadmap
 
-- **MCP coach.** Graduate `coach-checkin` into a live in-session MCP coach (`mcp-coach/`)
-  that guides step-to-step and runs the interview through the question tool.
+- **MCP coach.** Graduate `coach-checkin` into a live in-session MCP coach
+  (`native/src/coach/`, booted via `bun native/src/cli.ts --mcp`) that guides
+  step-to-step and runs the interview through the question tool. *Decided:*
+  the coach (transmits → volunteered-only) and the
+  [`loop-analyzer`](../skills/loop-analyzer/) (reads local data → never transmits) are
+  **two separate artifacts**, two data rules — see [`../skills/README.md`](../skills/README.md).
 - **The fun artifact.** Decide the compelling, slightly-playful thing the repo builds
   (the meme-generator energy from workshop #1) so the journey has joy, not just utility.
 - **Post-workshop RAG.** A small endpoint that answers "how do I do X from the workshop"

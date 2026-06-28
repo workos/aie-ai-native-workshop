@@ -1,4 +1,6 @@
 node_modules/
+# This project uses Bun (bun.lock); npm's lockfile is not used.
+package-lock.json
 board/public/
 board/.wrangler/
 .dev.vars

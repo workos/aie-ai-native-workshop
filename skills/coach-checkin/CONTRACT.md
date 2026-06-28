@@ -15,7 +15,7 @@ POST https://aie-board.workos-internal.workers.dev/api/response
 Live board: `https://aie-board.workos-internal.workers.dev/`
 
 The client reads `WORKER_URL` from its environment, falling back to the
-`DEFAULT_WORKER_URL` constant in `scripts/submit.mjs`. **Set both `WORKER_URL`
+`DEFAULT_WORKER_URL` constant in `scripts/submit.ts`. **Set both `WORKER_URL`
 and `WORKER_TOKEN` once the board is deployed** (the placeholders ship unset).
 
 ## Headers

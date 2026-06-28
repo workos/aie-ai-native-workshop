@@ -11,6 +11,13 @@
   "enabledPlugins": {
     "ideation@ideation": true
   },
+  "mcpServers": {
+    "aie-coach": {
+      "command": "bun",
+      "args": ["${CLAUDE_PROJECT_DIR}/native/src/cli.ts", "--mcp"],
+      "cwd": "${CLAUDE_PROJECT_DIR}"
+    }
+  },
   "permissions": {
     "allow": [
       "Bash(node:*)",

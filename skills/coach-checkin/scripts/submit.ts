@@ -1,0 +1,465 @@
+// Deterministic mechanics for the coach-checkin skill: marker state, payload
+// assembly, schema validation, the opt-in consent guard, POST + one retry, and
+// the local outbox fallback. The SKILL.md agent runs the conversation; this
+// script owns everything that must not drift.
+//
+// Privacy: only volunteered answers are ever sent. Nothing is scanned off the
+// machine — the agent gathers answers in conversation and passes them in.
+//
+//   bun submit.ts detect
+//     -> stdout JSON: { phase: "pre" } | { phase: "post", participantId, role }
+//
+//   bun submit.ts submit         (reads JSON on stdin)
+//     stdin:  { role?, answers: { <questionKey>: <answer> }, confirmed }
+//     stdout: { sent, phase, participantId, outbox? } | { sent: false, reason: "unconfirmed" }
+
+import { randomUUID } from 'node:crypto';
+import {
+  readFileSync,
+  writeFileSync,
+  existsSync,
+  mkdirSync,
+  realpathSync,
+} from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+const SCHEMA_PATH = join(__dirname, 'feedback-contract.schema.json');
+const MARKER = '.aie-coach-state.json';
+const OUTBOX_DIR = '.aie-coach-outbox';
+
+// Live board on the WorkOS Internal Cloudflare account. WORKER_URL / WORKER_TOKEN
+// env vars override (the facilitator may rotate the token between dry-run and the
+// real session). NOTE: this hostname is currently behind Cloudflare Access SSO —
+// add a public-bypass Access app before the workshop so attendee POSTs get through.
+const DEFAULT_WORKER_URL = 'https://aie-board.workos-internal.workers.dev/api/response';
+const DEFAULT_WORKER_TOKEN = 'aie-5dd089340329c20856985a43';
+// Cloudflare 403s missing/default bot UAs — always send an explicit one.
+const USER_AGENT = 'aie-coach/1.0';
+const POST_TIMEOUT_MS = 4000;
+
+// --- board payload types (local to this module; the board contract, not the
+// scorer's Signals) -------------------------------------------------------
+export type Phase = 'pre' | 'post';
+
+export interface Answer {
+  questionKey: string;
+  answer: string;
+}
+
+export interface FeedbackPayload {
+  participantId: string;
+  phase: Phase;
+  role: string;
+  answers: Answer[];
+}
+
+export interface AiNativeScore {
+  before: number;
+  after: number;
+  delta: number;
+  pillarsPassed?: string[];
+}
+
+export interface ScorePayload {
+  participantId: string;
+  aiNativeScore: AiNativeScore;
+}
+
+// The coach state marker on disk: identity fields written by the pre check-in,
+// plus any progress fields the coach server may have written (read-merge-write
+// keeps them alive). Typed loosely because callers spread it through.
+export interface Marker {
+  participantId?: string;
+  role?: string;
+  preSubmittedAt?: string;
+  [key: string]: unknown;
+}
+
+export type DetectResult =
+  | { phase: 'pre' }
+  | { phase: 'post'; participantId: string | undefined; role: string | undefined };
+
+// A recursive JSON Schema node, covering exactly the keywords this contract uses.
+export interface JSONSchema {
+  const?: unknown;
+  enum?: unknown[];
+  type?: string;
+  required?: string[];
+  properties?: Record<string, JSONSchema>;
+  additionalProperties?: boolean;
+  items?: JSONSchema;
+  allOf?: JSONSchema[];
+  if?: JSONSchema;
+  then?: JSONSchema;
+  else?: JSONSchema;
+}
+
+// The exact question keys the backend expects, in order, per phase.
+export const QUESTION_KEYS: Record<Phase, string[]> = {
+  pre: ['time_sink', 'friction', 'goal'],
+  post: ['built', 'next'],
+};
+
+// Canonical prompt wording, transcribed verbatim from SKILL.md (the agent prose
+// mirrors these by eye). The MCP server imports these so its surfaced questions
+// can never silently drift from the skill. The parity test in submit.test.ts
+// guards that every QUESTION_KEYS entry has a non-empty prompt here.
+export const QUESTION_PROMPTS: Record<string, string> = {
+  time_sink: 'What dev task eats the most of your week?',
+  friction: "What's the most repetitive thing you still do by hand?",
+  goal: 'What would you most love to automate or speed up today?',
+  built: 'What did you wire up today — a hook, a skill, a scheduled task?',
+  next: 'What are you going to automate next?',
+};
+export const ROLE_PROMPT = "What's your role and main stack?";
+
+const workerUrl = (): string => process.env.WORKER_URL || DEFAULT_WORKER_URL;
+const authToken = (): string => process.env.WORKER_TOKEN || DEFAULT_WORKER_TOKEN;
+const markerPath = (): string => join(process.cwd(), MARKER);
+const outboxDir = (): string => join(process.cwd(), OUTBOX_DIR);
+
+export function readMarker(): Marker | null {
+  const p = markerPath();
+  if (!existsSync(p)) return null;
+  try {
+    return JSON.parse(readFileSync(p, 'utf8')) as Marker;
+  } catch {
+    // Unparseable marker: treat as no marker. Better a fresh pre than a crash.
+    return null;
+  }
+}
+
+export function detect(): DetectResult {
+  const m = readMarker();
+  if (m && m.participantId) {
+    return { phase: 'post', participantId: m.participantId, role: m.role };
+  }
+  return { phase: 'pre' };
+}
+
+export function loadSchema(): JSONSchema {
+  return JSON.parse(readFileSync(SCHEMA_PATH, 'utf8')) as JSONSchema;
+}
+
+// Turn the agent's { questionKey: answer } object into the contract's ordered
+// answers array, enforcing exactly the keys this phase expects.
+export function buildAnswers(
+  phase: Phase,
+  answers: Record<string, unknown> | undefined,
+): Answer[] {
+  const keys = QUESTION_KEYS[phase];
+  if (!keys) throw new Error(`unknown phase: ${phase}`);
+  return keys.map((questionKey) => {
+    const answer = answers?.[questionKey];
+    if (typeof answer !== 'string' || answer.trim() === '') {
+      throw new Error(`missing or empty answer for "${questionKey}" (phase ${phase})`);
+    }
+    return { questionKey, answer };
+  });
+}
+
+export function buildPayload({
+  phase,
+  participantId,
+  role,
+  answers,
+}: {
+  phase: Phase;
+  participantId: string;
+  role: string;
+  answers: Record<string, unknown> | undefined;
+}): FeedbackPayload {
+  return {
+    participantId,
+    phase,
+    role,
+    answers: buildAnswers(phase, answers),
+  };
+}
+
+// Build the opt-in AI-Native score body — an ADDITIVE block on the existing
+// POST /api/response contract. Only derived integers + the pillar id list ever
+// go on the wire; raw signals never leave the machine. Throws loudly on a
+// missing id or a non-finite score so a never-scanned attendee (no real
+// baseline) can't post a phantom 0->0 that would understate the room delta.
+export function buildScorePayload(
+  {
+    participantId,
+    before,
+    after,
+    pillarsPassed,
+  }: {
+    participantId?: unknown;
+    before?: unknown;
+    after?: unknown;
+    pillarsPassed?: unknown;
+  } = {},
+): ScorePayload {
+  if (typeof participantId !== 'string' || participantId.trim() === '') {
+    throw new Error('participantId is required to post an AI-Native score');
+  }
+  if (!Number.isFinite(before) || !Number.isFinite(after)) {
+    throw new Error('before/after score must each be a finite number');
+  }
+  const b = Math.round(before as number);
+  const a = Math.round(after as number);
+  const aiNativeScore: AiNativeScore = { before: b, after: a, delta: a - b };
+  if (Array.isArray(pillarsPassed) && pillarsPassed.length > 0) {
+    aiNativeScore.pillarsPassed = pillarsPassed.filter((p): p is string => typeof p === 'string' && Boolean(p));
+  }
+  return { participantId: participantId.trim(), aiNativeScore };
+}
+
+function jsonType(v: unknown): string {
+  if (v === null) return 'null';
+  if (Array.isArray(v)) return 'array';
+  if (Number.isInteger(v)) return 'integer';
+  return typeof v;
+}
+
+// Minimal JSON Schema validator covering exactly the keywords this contract
+// uses: type, enum, const, required, properties, additionalProperties (false),
+// items, allOf, and if/then. Returns an array of error strings (empty = valid).
+export function validateAgainstSchema(value: unknown, schema: JSONSchema, path = '$'): string[] {
+  const errors: string[] = [];
+
+  if (schema.const !== undefined && value !== schema.const) {
+    errors.push(`${path}: expected const ${JSON.stringify(schema.const)}`);
+  }
+  if (schema.enum && !schema.enum.includes(value)) {
+    errors.push(`${path}: ${JSON.stringify(value)} not in enum ${JSON.stringify(schema.enum)}`);
+  }
+  if (schema.type) {
+    const t = jsonType(value);
+    const ok = schema.type === 'number' ? t === 'number' || t === 'integer' : t === schema.type;
+    if (!ok) errors.push(`${path}: expected type ${schema.type}, got ${t}`);
+  }
+
+  const isObj = jsonType(value) === 'object';
+  if (isObj && schema.required) {
+    for (const key of schema.required) {
+      if (!(key in (value as object))) errors.push(`${path}.${key}: required property missing`);
+    }
+  }
+  if (isObj && schema.properties) {
+    for (const [key, sub] of Object.entries(schema.properties)) {
+      if (key in (value as object)) {
+        errors.push(...validateAgainstSchema((value as Record<string, unknown>)[key], sub, `${path}.${key}`));
+      }
+    }
+  }
+  if (isObj && schema.additionalProperties === false && schema.properties) {
+    const allowed = new Set(Object.keys(schema.properties));
+    for (const key of Object.keys(value as object)) {
+      if (!allowed.has(key)) errors.push(`${path}.${key}: additional property not allowed`);
+    }
+  }
+  if (Array.isArray(value) && schema.items) {
+    const items = schema.items;
+    value.forEach((el, i) => errors.push(...validateAgainstSchema(el, items, `${path}[${i}]`)));
+  }
+  if (schema.allOf) {
+    for (const sub of schema.allOf) errors.push(...validateAgainstSchema(value, sub, path));
+  }
+  if (schema.if) {
+    const matches = validateAgainstSchema(value, schema.if, path).length === 0;
+    if (matches && schema.then) errors.push(...validateAgainstSchema(value, schema.then, path));
+    if (!matches && schema.else) errors.push(...validateAgainstSchema(value, schema.else, path));
+  }
+
+  return errors;
+}
+
+async function postWithRetry(url: string, payload: unknown): Promise<{ ok: boolean; status?: number }> {
+  const body = JSON.stringify(payload);
+  const headers = {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${authToken()}`,
+    'User-Agent': USER_AGENT,
+  };
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), POST_TIMEOUT_MS);
+      let res: Response;
+      try {
+        res = await fetch(url, { method: 'POST', headers, body, signal: ctrl.signal });
+      } finally {
+        clearTimeout(timer);
+      }
+      if (res.ok) return { ok: true, status: res.status };
+      // Non-2xx: fall through to retry, then outbox.
+    } catch {
+      // Network error / timeout: fall through to retry, then outbox.
+    }
+  }
+  return { ok: false };
+}
+
+function writeOutbox(payload: { phase: string; participantId: string }): string {
+  const dir = outboxDir();
+  mkdirSync(dir, { recursive: true });
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const file = join(dir, `${payload.phase}-${payload.participantId}-${stamp}.json`);
+  writeFileSync(file, JSON.stringify(payload, null, 2));
+  return file;
+}
+
+// Result shapes for submit(). Split out so an overload can narrow a confirmed
+// call (confirmed:true can never return the unconfirmed shape) without callers
+// having to re-narrow the union by hand.
+export type SubmitUnconfirmed = { sent: false; reason: 'unconfirmed' };
+export type SubmitSent = { sent: true; phase: Phase; participantId: string };
+export type SubmitOutbox = { sent: false; phase: Phase; participantId: string; outbox: string };
+export type SubmitResult = SubmitUnconfirmed | SubmitSent | SubmitOutbox;
+
+// input: { role?, answers: { <questionKey>: <answer> }, confirmed }
+// A confirmed:true call passes the consent guard, so its result is always a
+// sent/outbox shape — the unconfirmed shape is unreachable and dropped from the type.
+export async function submit(
+  input: { role?: unknown; answers?: Record<string, unknown>; confirmed: true },
+): Promise<SubmitSent | SubmitOutbox>;
+export async function submit(
+  input: { role?: unknown; answers?: Record<string, unknown>; confirmed?: unknown },
+): Promise<SubmitResult>;
+export async function submit(input: {
+  role?: unknown;
+  answers?: Record<string, unknown>;
+  confirmed?: unknown;
+}): Promise<SubmitResult> {
+  const det = detect();
+  const phase = det.phase;
+  let participantId: string;
+  let role: string | undefined;
+
+  if (phase === 'pre') {
+    if (!input.role || String(input.role).trim() === '') {
+      throw new Error('role (job title) is required for the pre run');
+    }
+    participantId = randomUUID();
+    role = String(input.role).trim();
+  } else {
+    participantId = det.participantId as string;
+    role = det.role; // identity + role come from the marker, never stdin
+  }
+
+  const payload = buildPayload({ phase, participantId, role: role as string, answers: input.answers });
+
+  const errors = validateAgainstSchema(payload, loadSchema());
+  if (errors.length) {
+    const err = new Error(`payload failed schema validation: ${errors.join('; ')}`) as Error & {
+      schemaErrors?: string[];
+    };
+    err.schemaErrors = errors;
+    throw err; // loud — a code defect, never silently sent
+  }
+
+  // Consent guard: without explicit confirmation, nothing persists or leaves.
+  if (input.confirmed !== true) {
+    return { sent: false, reason: 'unconfirmed' };
+  }
+
+  // Write the marker before the POST so the next run is recognised as `post`
+  // even when this submission falls back to the outbox. Read-merge-write (not a
+  // fresh object) so any progress fields the coach server wrote (currentBlock,
+  // blocksDone) survive a check-in that runs after some checkpoints.
+  if (phase === 'pre') {
+    const existing = readMarker() ?? {};
+    writeFileSync(
+      markerPath(),
+      JSON.stringify(
+        { ...existing, participantId, role, preSubmittedAt: new Date().toISOString() },
+        null,
+        2,
+      ),
+    );
+  }
+
+  const res = await postWithRetry(workerUrl(), payload);
+  if (res.ok) return { sent: true, phase, participantId };
+
+  const outbox = writeOutbox(payload);
+  return { sent: false, phase, participantId, outbox };
+}
+
+// input: { participantId, before, after, pillarsPassed?, confirmed }
+// The opt-in AI-Native score send. Same consent gate, same retry, same outbox as
+// submit() — only the payload differs (a derived-integers conclusion, sourced
+// from the coach marker by the caller, never a live scan). No marker write here:
+// identity already exists (the pre check-in minted it); this only adds a score.
+export async function submitScore(input: {
+  participantId?: unknown;
+  before?: unknown;
+  after?: unknown;
+  pillarsPassed?: unknown;
+  confirmed?: unknown;
+}): Promise<
+  | { sent: false; reason: 'unconfirmed' }
+  | { sent: true; participantId: string }
+  | { sent: false; participantId: string; outbox: string }
+> {
+  const payload = buildScorePayload(input); // throws loudly on a bad/empty score
+
+  // Consent guard — identical to submit(): without explicit confirmation,
+  // nothing leaves the machine. Strict === true; anything else blocks.
+  if (input.confirmed !== true) {
+    return { sent: false, reason: 'unconfirmed' };
+  }
+
+  const res = await postWithRetry(workerUrl(), payload);
+  if (res.ok) return { sent: true, participantId: payload.participantId };
+
+  const outbox = writeOutbox({ phase: 'score', ...payload });
+  return { sent: false, participantId: payload.participantId, outbox };
+}
+
+function readStdin(): Promise<string> {
+  return new Promise((resolve) => {
+    if (process.stdin.isTTY) {
+      resolve('');
+      return;
+    }
+    let data = '';
+    process.stdin.setEncoding('utf8');
+    process.stdin.on('data', (chunk) => {
+      data += chunk;
+    });
+    process.stdin.on('end', () => resolve(data));
+  });
+}
+
+async function main(): Promise<void> {
+  const cmd = process.argv[2];
+  if (cmd === 'detect') {
+    console.log(JSON.stringify(detect()));
+    return;
+  }
+  if (cmd === 'submit') {
+    const raw = await readStdin();
+    const input = JSON.parse(raw || '{}');
+    console.log(JSON.stringify(await submit(input)));
+    return;
+  }
+  if (cmd === 'submit-score') {
+    const raw = await readStdin();
+    const input = JSON.parse(raw || '{}');
+    console.log(JSON.stringify(await submitScore(input)));
+    return;
+  }
+  console.error(
+    JSON.stringify({ status: 'error', message: `unknown command: ${cmd ?? '(none)'} (expected detect|submit|submit-score)` }),
+  );
+  process.exit(2);
+}
+
+// Run main() only when invoked directly, not when imported by tests.
+const invokedPath = process.argv[1] ? realpathSync(process.argv[1]) : '';
+if (invokedPath === fileURLToPath(import.meta.url)) {
+  main().catch((err) => {
+    console.error(JSON.stringify({ status: 'error', message: err.message, schemaErrors: err.schemaErrors }));
+    process.exit(1);
+  });
+}
