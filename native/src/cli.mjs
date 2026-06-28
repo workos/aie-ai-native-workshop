@@ -19,9 +19,11 @@ export function run(argv = process.argv.slice(2), { scanFn = scan, observeFn = c
   if (cmd === 'scan') {
     // Evidence is best-effort: a missing/huge/hostile corpus must never crash the
     // scan or move the score. On any failure we fall back to gap-only recs.
+    // Hook-gate the evidence: a verify hook makes the thrash signal 0 (anti-sandbag),
+    // matching the coach engine. The corpus is read with the real homedir default.
     let observations = [];
     try {
-      observations = observeFn() ?? [];
+      observations = observeFn({ hasVerifyHook: signals?.hooks?.lintTest === true }) ?? [];
     } catch {
       observations = [];
     }

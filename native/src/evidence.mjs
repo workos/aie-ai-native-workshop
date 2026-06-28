@@ -1,10 +1,15 @@
 // native/src/evidence.mjs
 // The behavioral (evidence) layer. Reads the LOCAL transcript corpus and turns it
 // into OBSERVED COUNTS, then uses those counts to JUSTIFY recommendations — it
-// NEVER feeds score.mjs. Every path/field here is verified on disk; anything we
-// cannot see degrades to 0/empty and is surfaced in the plan's "Needs dry-run"
-// section, never guessed. All functions are total: bad input yields 0/empty,
-// never a throw (JSONL fields vary by CLI version, so every field is optional).
+// NEVER feeds score.mjs. Two honesty rules govern the counts:
+//   1. Only the human's own time is ever translated to hours (re-pasting context).
+//      Agent behavior (it re-running tests) is COUNT-ONLY — no hours are claimed,
+//      because there is no defensible human-hours number for work the agent did.
+//   2. A signal is hook-GATED off when the matching machinery already exists, so
+//      we never manufacture a gap to pad the pitch (anti-sandbagging).
+// Every path/field here is verified on disk; anything we cannot see degrades to
+// 0/empty (surfaced as "no observation"), never guessed. All functions are total:
+// bad input yields 0/empty, never a throw (JSONL fields vary by CLI version).
 
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
@@ -22,7 +27,7 @@ export function isRealUserTurn(line) {
   return !/^\s*<(local-command|command-name|command-message)/.test(content);
 }
 
-// Commands that mean "I'm verifying by hand" — the work a hook should be doing.
+// Commands that mean "verifying via the test/lint runner" — the work a hook does.
 const TEST_LINT = /\b(tsc|typecheck|type-check|eslint|prettier|jest|vitest|pytest|rspec|mocha|ava|(?:npm|pnpm|yarn|bun)\s+(?:run\s+)?(?:test|lint)|node\s+--check|go\s+test|cargo\s+test)\b/;
 
 function* toolUses(lines, name) {
@@ -36,16 +41,33 @@ function* toolUses(lines, name) {
   }
 }
 
-// Count by-hand test/lint runs: assistant Bash tool_use whose command matches a
-// known runner. Each invocation counts (repeats are the signal — a hook would
-// have removed them). Total: skips non-assistant / non-array / non-Bash silently.
-export function countManualTestRuns(lines) {
-  let n = 0;
+// Detect THRASH LOOPS: the SAME test/lint command run >= minRuns times within ONE
+// session. The repetition — not the run — is the signal: a verify hook catches the
+// failure at the edit instead of on the Nth manual re-run. We count the agent's
+// Bash runs (it is the agent that re-runs), but ONLY the pathological repeat, never
+// a single legitimate run, and we make NO hours claim from it. Returns one entry
+// per thrashed command (usually zero or one). Total: bad input -> [].
+export function detectThrashLoops(lines, { minRuns = 3 } = {}) {
+  const counts = new Map(); // normalized command -> times run this session
   for (const b of toolUses(lines, 'Bash')) {
     const cmd = b.input?.command;
-    if (typeof cmd === 'string' && TEST_LINT.test(cmd)) n += 1;
+    if (typeof cmd !== 'string' || !TEST_LINT.test(cmd)) continue;
+    const norm = cmd.trim().replace(/\s+/g, ' ');
+    counts.set(norm, (counts.get(norm) ?? 0) + 1);
   }
-  return n;
+  const loops = [];
+  for (const [command, runs] of counts) if (runs >= minRuns) loops.push({ command, runs });
+  return loops;
+}
+
+// Trim a captured command to its meaningful HEAD for human display: drop shell
+// plumbing (redirects, pipes, chained echos) and cap length. Presentation only —
+// detectThrashLoops still dedups on the full normalized command, so two commands
+// that merely share a head are never conflated; this just keeps the example clean.
+export function displayCommand(cmd, { max = 60 } = {}) {
+  if (typeof cmd !== 'string') return '';
+  const head = cmd.trim().split(/\s+\d*[<>]|\s*[|;&]+\s*/)[0].trim() || cmd.trim();
+  return head.length > max ? head.slice(0, max - 1) + '…' : head;
 }
 
 // Count re-pasted contexts: a contentHash that appears under >= 2 DISTINCT
@@ -83,63 +105,88 @@ export function summarizeDelegation(lines) {
   return { taskCalls, realUserTurns };
 }
 
-// Minutes PER EVENT used to translate an observed COUNT into time. These are
-// ESTIMATES (a deliberate calibration surface), NOT measured per-event durations
-// — that is why every observation is flagged `estimated:true` and rendered "est.".
-// The COUNT is measured; only this multiplier is assumed.
+// Minutes PER EVENT used to translate an observed COUNT into time — ONLY for kinds
+// where the human genuinely spends that time (re-pasting context IS human time).
+// These are ESTIMATES (a calibration surface), NOT measured per-event durations,
+// which is why such observations are flagged `estimated:true` and rendered "est.".
+// Kinds ABSENT here are COUNT-ONLY: we report the count and make NO hours claim
+// (e.g. thrash loops — the agent does the re-running, so no honest human-hours number).
 export const PER_EVENT_MINUTES = Object.freeze({
-  'manual-test-runs': 4,   // a by-hand lint/test cycle the user waited on
-  'repasted-context': 3,   // re-finding + re-pasting the same context blob
+  'repasted-context': 3,   // re-finding + re-pasting the same context blob (human time)
 });
 
 // Which pillar each observation justifies (the seam into recommend()).
 const OBSERVATION_PILLAR = Object.freeze({
-  'manual-test-runs': 'verification',
+  'thrash-loop': 'verification',
   'repasted-context': 'context',
 });
 
 const round2 = (n) => Math.round(n * 100) / 100;
 
-// Build one observation from a measured count. Returns null at count 0 so we
-// never manufacture waste. `now` is accepted for symmetry with windowed callers
-// and to keep this deterministic under test (unused in the math itself).
-export function buildObservation(kind, count, { windowDays = 30 } = {}) {
+// Build one observation from a measured count. Returns null at count 0 so we never
+// manufacture waste. Two shapes, chosen by whether the kind has a PER_EVENT_MINUTES
+// entry:
+//   - hours-quantified: the waste is genuine human time -> an ESTIMATED hours/week
+//     (estimated:true, rendered "est.").
+//   - count-only (no entry, e.g. thrash loops): the COUNT is the whole claim;
+//     hoursPerWeek is null and estimated is false. We deliberately make NO hours
+//     claim where one would be indefensible.
+// `now` is accepted for symmetry with windowed callers / determinism (unused in the
+// math). `sample` is an optional example command for the count-only human detail.
+export function buildObservation(kind, count, { windowDays = 30, now = 0, sample = null } = {}) {
   if (!count || count <= 0) return null;
-  const perEventMinutes = PER_EVENT_MINUTES[kind];
   const pillar = OBSERVATION_PILLAR[kind];
-  if (perEventMinutes == null || pillar == null) return null;
+  if (pillar == null) return null;
+  const perEventMinutes = PER_EVENT_MINUTES[kind] ?? null;
+  const plural = count === 1 ? '' : 's';
+
+  if (perEventMinutes == null) {
+    const detail =
+      kind === 'thrash-loop'
+        ? (sample
+            ? `re-ran \`${sample}\` 3+ times chasing a failure across ${count} session${plural} — no verify hook caught it`
+            : `re-ran the same test/lint command 3+ times across ${count} session${plural} — no verify hook caught it`)
+        : `observed ${count}x in the last ${windowDays}d`;
+    return { kind, count, windowDays, perEventMinutes: null, hoursPerWeek: null, estimated: false, pillar, detail };
+  }
+
   const weeks = windowDays / 7;
   const hoursPerWeek = round2((count * perEventMinutes) / 60 / weeks);
-  const detail =
-    kind === 'manual-test-runs'
-      ? `ran tests/lint by hand ${count}x in the last ${windowDays}d`
-      : `re-pasted the same context across sessions ${count}x in the last ${windowDays}d`;
+  const detail = `re-pasted the same context across sessions ${count}x in the last ${windowDays}d`;
   return { kind, count, windowDays, perEventMinutes, hoursPerWeek, estimated: true, pillar, detail };
 }
 
-// Upgrade recs IN PLACE-style (returns a new array): a rec whose pillar matches
-// an observation becomes basis:'observed-waste' with the observed hours + a human
-// `evidence` string. Observations with no matching rec are dropped — evidence
-// JUSTIFIES gap-based recs, it does not create new ones. If several observations
-// hit one pillar, the largest (by hoursPerWeek) wins.
+// Upgrade recs IN PLACE-style (returns a new array): a rec whose pillar matches an
+// observation becomes basis:'observed-waste' with a human `evidence` string.
+// Hours-quantified observations add an "~Xh/wk (est.)" tail; count-only ones (thrash)
+// carry the count in the detail and assert NO hours. Observations with no matching
+// rec are dropped — evidence JUSTIFIES gap recs, it never creates one. If several
+// observations hit one pillar, prefer the hours-bearing one, then the larger count.
 export function applyEvidence(recs, observations) {
   const best = new Map(); // pillar -> observation
   for (const o of observations ?? []) {
     if (!o) continue;
     const cur = best.get(o.pillar);
-    if (!cur || o.hoursPerWeek > cur.hoursPerWeek) best.set(o.pillar, o);
+    best.set(o.pillar, cur ? preferObservation(cur, o) : o);
   }
   return (recs ?? []).map((rec) => {
     const o = best.get(rec.pillar);
     if (!o) return rec;
-    const est = o.estimated ? ' (est.)' : '';
-    return {
-      ...rec,
-      basis: 'observed-waste',
-      hoursPerWeek: o.hoursPerWeek,
-      evidence: `${o.detail} — ~${o.hoursPerWeek}h/wk${est}`,
-    };
+    const hasHours = typeof o.hoursPerWeek === 'number';
+    const evidence = hasHours
+      ? `${o.detail} — ~${o.hoursPerWeek}h/wk${o.estimated ? ' (est.)' : ''}`
+      : o.detail;
+    return { ...rec, basis: 'observed-waste', hoursPerWeek: hasHours ? o.hoursPerWeek : null, evidence };
   });
+}
+
+// Prefer the more compelling observation when two hit the same pillar: a real hours
+// number beats a count-only one; otherwise the larger count wins.
+function preferObservation(a, b) {
+  const ah = typeof a.hoursPerWeek === 'number' ? a.hoursPerWeek : -1;
+  const bh = typeof b.hoursPerWeek === 'number' ? b.hoursPerWeek : -1;
+  if (ah !== bh) return ah > bh ? a : b;
+  return (b.count ?? 0) > (a.count ?? 0) ? b : a;
 }
 
 // --- corpus IO -------------------------------------------------------------
@@ -192,30 +239,45 @@ function withinWindow(path, now, windowDays) {
   }
 }
 
-// Walk the LOCAL corpus and return observations for the kinds with non-zero
-// counts. mtime is a cheap pre-filter so we don't parse ancient sessions. Every
-// layer is total: a bad file/line/dir yields fewer observations, never a throw.
-export function collectObservations({ home = homedir(), now = Date.now(), windowDays = 30 } = {}) {
+// Walk the LOCAL corpus and return observations for the kinds with non-zero counts.
+// mtime is a cheap pre-filter so we don't parse ancient sessions. Every layer is
+// total: a bad file/line/dir yields fewer observations, never a throw.
+//
+// `hasVerifyHook` HOOK-GATES the thrash signal: when a verify hook is already
+// installed we emit nothing for it — you've automated that pillar, so we refuse to
+// manufacture a nudge (anti-sandbagging). recommend()'s threshold-drop is the
+// backstop (a hook makes verification strong, dropping the rec), but gating here
+// keeps the raw observation honest too: the signal is genuinely 0.
+export function collectObservations({ home = homedir(), now = Date.now(), windowDays = 30, hasVerifyHook = false } = {}) {
   const claude = join(home, '.claude');
 
-  // (1) transcripts -> manual test/lint loops
-  let manualTestRuns = 0;
-  for (const file of listJsonl(join(claude, 'projects'))) {
-    if (!withinWindow(file, now, windowDays)) continue;
-    manualTestRuns += countManualTestRuns(parseJsonl(file));
+  // (1) transcripts -> verify-hook THRASH loops (count-only, hook-gated). A session
+  // counts once if it re-ran the same test/lint command 3+ times; we keep one example
+  // command for the human detail. No hours are claimed (the agent does the re-running).
+  let thrashSessions = 0;
+  let sampleCmd = null;
+  if (!hasVerifyHook) {
+    for (const file of listJsonl(join(claude, 'projects'))) {
+      if (!withinWindow(file, now, windowDays)) continue;
+      const loops = detectThrashLoops(parseJsonl(file));
+      if (loops.length > 0) {
+        thrashSessions += 1;
+        if (!sampleCmd) sampleCmd = displayCommand(loops[0].command);
+      }
+    }
   }
 
-  // (2) history.jsonl -> re-pasted context across sessions, WINDOWED by each row's
-  // timestamp so the count's period matches buildObservation's divisor (otherwise an
-  // all-time count over a 30d denominator inflates hoursPerWeek). Rows without a
-  // numeric timestamp are dropped — conservative: never overstate.
+  // (2) history.jsonl -> re-pasted context across sessions (hours-quantified human
+  // time), WINDOWED by each row's timestamp so the count's period matches
+  // buildObservation's divisor (an all-time count over a 30d denominator would
+  // inflate hoursPerWeek). Rows without a numeric timestamp are dropped — never overstate.
   const historyRows = parseJsonl(join(claude, 'history.jsonl')).filter(
     (r) => typeof r?.timestamp === 'number' && now - r.timestamp <= windowDays * DAY_MS,
   );
   const repasted = countRepastedContexts(historyRows);
 
   const observations = [
-    buildObservation('manual-test-runs', manualTestRuns, { windowDays, now }),
+    buildObservation('thrash-loop', thrashSessions, { windowDays, now, sample: sampleCmd }),
     buildObservation('repasted-context', repasted, { windowDays, now }),
   ];
   return observations.filter(Boolean);

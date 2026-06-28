@@ -31,16 +31,17 @@ import { buildObservation } from './evidence.mjs';
 
 describe('run with evidence', () => {
   const fakeScanWeakVerify = () => ({ claudeMd: true }); // verification weak (0)
-  const fakeObserve = () => [buildObservation('manual-test-runs', 30, { windowDays: 30, now: 0 })];
+  const fakeObserve = () => [buildObservation('thrash-loop', 4, { windowDays: 30, now: 0, sample: 'npm test' })];
 
-  test('scan merges observations: a rec becomes observed-waste, score unchanged', () => {
+  test('scan merges observations: a rec becomes observed-waste (count-only), score unchanged', () => {
     const result = run(['scan'], { scanFn: fakeScanWeakVerify, observeFn: fakeObserve });
     const baseline = run(['scan'], { scanFn: fakeScanWeakVerify, observeFn: () => [] });
     // evidence does not move the number
     assert.equal(result.total, baseline.total);
     const v = result.recommendations.find((r) => r.pillar === 'verification');
     assert.equal(v.basis, 'observed-waste');
-    assert.ok(v.hoursPerWeek > 0);
+    assert.equal(v.hoursPerWeek, null); // count-only: no fabricated hours
+    assert.doesNotMatch(v.evidence, /h\/wk/);
     assert.ok(Array.isArray(result.observations));
   });
 

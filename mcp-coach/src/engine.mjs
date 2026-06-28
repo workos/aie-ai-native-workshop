@@ -24,10 +24,13 @@ export const GATE_THRESHOLD = 0.8;
 export const PILLAR_IDS = ['verification', 'automation', 'context', 'orchestration', 'delegation'];
 
 // Best-effort evidence: a missing/huge/hostile corpus must never throw or move
-// the score. Mirrors native/src/cli.mjs.
-function observeSafely(observeFn, home) {
+// the score. Mirrors native/src/cli.mjs. `hasVerifyHook` gates the thrash signal
+// off when a verify hook already exists (anti-sandbagging).
+function observeSafely(observeFn, { home, hasVerifyHook } = {}) {
   try {
-    return observeFn(home === undefined ? undefined : { home }) ?? [];
+    const opts = { hasVerifyHook };
+    if (home !== undefined) opts.home = home;
+    return observeFn(opts) ?? [];
   } catch {
     return [];
   }
@@ -37,7 +40,7 @@ function observeSafely(observeFn, home) {
 // observations. The exact composition native/src/cli.mjs prints, but returned.
 export function coachScan({ scanFn = scan, observeFn = collectObservations, home, cwd } = {}) {
   const signals = scanFn({ home, cwd });
-  const observations = observeSafely(observeFn, home);
+  const observations = observeSafely(observeFn, { home, hasVerifyHook: signals?.hooks?.lintTest === true });
   return {
     signals,
     ...score(signals),
@@ -51,7 +54,7 @@ export function coachScan({ scanFn = scan, observeFn = collectObservations, home
 // sub-score. null when every pillar already clears the bar ("you're good here").
 export function nextStep({ scanFn = scan, observeFn = collectObservations, home, cwd } = {}) {
   const signals = scanFn({ home, cwd });
-  const observations = observeSafely(observeFn, home);
+  const observations = observeSafely(observeFn, { home, hasVerifyHook: signals?.hooks?.lintTest === true });
   const recs = recommend(signals, { threshold: GATE_THRESHOLD, observations });
   if (recs.length === 0) return null;
   const top = recs[0];
