@@ -53,17 +53,26 @@ toil is, what to automate, and how many hours/week we're all about to reclaim. �
 
 ---
 
-## 🧰 Before you start (2 minutes)
+## 🧰 Setup — everything you need (~5 min)
 
-You'll need just three things:
+Works on **macOS or Windows**. Everything below is what you'll use across the full set of
+exercises — get these in place and you're ready for every block.
 
-1. **A laptop** (macOS or Windows) 💻
-2. **[Claude Code](https://claude.com/claude-code)** installed and signed in
-3. **[Bun](https://bun.sh)** — the check-in tool runs on it. Install with
-   `curl -fsSL https://bun.sh/install | bash`, or just ask Claude: *"install Bun for me."*
+> ⚡ **Fast path:** open this repo in Claude Code, **trust it**, then say
+> *"set me up for the workshop"* — Claude installs whatever's missing and checks each item.
+> Prefer to do it yourself? The table is the full manual list.
 
-Then, **open this repo in Claude Code and trust it.** That one step auto-loads the workshop
-skills and the `ideation` plugin — no manual setup. ✅
+| What | Why you need it | How to get it |
+|------|-----------------|---------------|
+| **[Claude Code](https://claude.com/claude-code)** | Runs the entire workshop | Install it and sign in |
+| **Trust this repo** | Auto-loads the workshop skills + the `ideation` plugin — no manual config | Open this folder in Claude Code → **trust** when prompted |
+| **[Bun](https://bun.sh)** | The check-in tool and skills run on it (Blocks 1 & 4) | `curl -fsSL https://bun.sh/install \| bash` · or *"install Bun for me"* |
+| **[Codex CLI](https://github.com/openai/codex)** | The adversarial-review gate in **Block 3** | `npm i -g @openai/codex` then `codex login` · or *"set up the Codex CLI"* |
+| **[Handy](https://handy.computer)** | Voice coding (**Block 1**) — free, fully local | Say *"set up Handy for me"* — a skill installs it in under 5 min |
+| **Git** | Worktrees for parallel agents (**Block 2**) | Already on most dev machines — check with `git --version` |
+
+✅ Once Claude Code is trusting the repo and Bun is installed, you can start. The rest
+(Codex, Handy) you can set up at the top of their block — or all at once now via the fast path.
 
 > 💬 Throughout this guide, text in quotes like *"set up Handy"* is something you literally
 > **say or type to Claude**. Go ahead — talk to it.
