@@ -7,6 +7,7 @@ installs as a plugin (see [`../.claude/settings.json`](../.claude/settings.json)
 
 | Skill | What it does | When it fires |
 |-------|--------------|---------------|
+| [`setup-workshop`](setup-workshop/) | The fast path: installs + verifies **everything** an attendee needs (Bun, Codex CLI, Handy, git), confirms the repo is wired, and hands off to the opening check-in. | "set me up for the workshop" / "workshop setup" / start of workshop |
 | [`setup-handy`](setup-handy/) | Installs **Handy** (free, local, push-to-talk voice dictation) and proves it works in under 5 minutes. The on-ramp to voice coding. | "set up Handy" / "set up voice coding" / start of workshop |
 | [`coach-checkin`](coach-checkin/) | The opt-in, anonymous workflow interview — run once walking in, once at the close. Feeds the [live room board](../board/). **Volunteered answers only; nothing is scanned off the machine.** | "check in" / "workshop check-in" / "share my workflow" |
 | [`loop-analyzer`](loop-analyzer/) *(planned)* | The **personal** half of the coach: a fully-local skill an attendee builds to analyze their *own* agent usage (last ~30 days of Claude transcripts) and surface the hooks / scheduled tasks that'd buy back the most time. **Reads local data, never transmits** — the mirror image of `coach-checkin`'s rule. | "analyze my loop" / "what hooks should I build" / before Blocks 3–4 |

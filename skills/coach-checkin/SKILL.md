@@ -1,13 +1,13 @@
 ---
 name: coach-checkin
-description: Run the opt-in AI-Native Engineer workshop check-in interview. Use at the start of the workshop and again at the close to share an anonymous pulse on your workflow. Auto-detects whether this is the opening or closing check-in, then posts your answers (anonymously) to the live room board. Triggers on "check in", "coach check-in", "workshop check-in", "start/closing interview", or "share my workflow".
+description: Run the opt-in AI-Native Engineer workshop check-in. Use at the start of the workshop and again at the close. Auto-detects opening vs closing, runs the short interview, records your AI-Native score from a LOCAL scan at the open, and at the close posts your answers and your before→after score (anonymously) to the live room board. Triggers on "check in", "coach check-in", "workshop check-in", "run my workshop check-in", "closing check-in", or "share my workflow".
 ---
 
 # Coach Check-in
 
-A short, **opt-in** workflow interview for *The AI-Native Engineer* workshop. You run it twice — once walking in, once at the close — and your answers feed the live room board: where the room's toil is, which hooks and scheduled tasks to build, and the total engineering-hours/week the room is about to reclaim.
+A short, **opt-in** check-in for *The AI-Native Engineer* workshop. You run it twice — once walking in, once at the close. Each run does two things: a quick **interview** (what's eating your week → what you built) and an **AI-Native score** read from your local setup. Together they feed the live room board: where the room's toil is, which hooks and scheduled tasks to build, the engineering-hours/week the room reclaims, and the room's **before→after AI-Native score**.
 
-**Privacy is the whole point.** Nothing is ever scanned off your machine. Only the answers you type and explicitly confirm are sent. Responses are anonymous: a random participant id plus your role/stack (used only to group by function) — no name, no email, no repo, no transcripts.
+**Privacy is the whole point.** The score is computed by a **local** scan of your Claude setup (do you have hooks? a CLAUDE.md? worktrees? scheduled jobs?) that **never leaves your machine** — only the derived score *numbers* and the answers you explicitly confirm are sent. No file contents, no `git log`, no transcripts are ever transmitted. Responses are anonymous: a random participant id plus your role/stack — no name, no email.
 
 ## How it works
 
@@ -54,7 +54,12 @@ The skill auto-detects which check-in to run using a marker file (`.aie-coach-st
      | bun skills/coach-checkin/scripts/submit.ts submit
    ```
 
-5. **Report the result** plainly from the command's JSON output:
+5. **Record / send the AI-Native score** using the `aie-coach` MCP tools (loaded when the repo is trusted). The score is read from a local scan — see the privacy note above.
+   - **Opening (`pre`):** after the answers are sent, call the **`coach_scan`** tool (no args). This records the opening baseline. Tell the participant their starting score out of 100 and the weakest pillar, framed as an invitation: *"That's your starting line — pick one of these to actually try today."*
+   - **Closing (`post`):** after the answers are sent, confirm consent (the same Send confirmation covers it) and call **`coach_submit_score`** with `{ "confirmed": true }`. This sends the **before→after** to the board. Report the delta: *"You went from X → Y — that's now on the board."*
+     - If it returns `{"sent":false,"reason":"no_baseline"}`, the opening scan never ran — call `coach_scan` once, then retry `coach_submit_score`.
+
+6. **Report the result** plainly from the command's JSON output:
    - `{"sent":true,...}` → "Sent — thanks, your pulse is on the board."
    - `{"sent":false,"outbox":"..."}` → "Saved locally (the board was unreachable) — a facilitator can flush it later." Your pre/post state is still recorded.
 
@@ -63,4 +68,4 @@ The skill auto-detects which check-in to run using a marker file (`.aie-coach-st
 - All commands run from the workshop repo root; the marker (`.aie-coach-state.json`) and any outbox files land there.
 - The board URL and auth token are baked into `scripts/submit.ts`; set the `WORKER_URL` / `WORKER_TOKEN` environment variables to override them (the facilitator sets these once the board is deployed).
 - The payload contract is defined in `scripts/feedback-contract.schema.json` and described in [`CONTRACT.md`](CONTRACT.md).
-- Never collect or send anything the participant didn't type and confirm. No file scans, no `git log`, no transcript reads — volunteered answers only.
+- Never **send** anything the participant didn't confirm. The AI-Native score is read by a **local** scan (`coach_scan`) of their Claude setup, but only the derived score numbers leave the machine — never file contents, `git log`, or transcripts. Interview answers are volunteered-only.

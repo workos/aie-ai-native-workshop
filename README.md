@@ -8,19 +8,30 @@
   <img alt="Guides · Zack Proser & Nick Nisi" src="https://img.shields.io/badge/guides-Zack_Proser_%26_Nick_Nisi-30363D?style=for-the-badge&labelColor=0d1117" />
 </p>
 
+### ▸ Open these now
+
+**[🖥&#65039; Slides](https://aie-deck.workos-internal.workers.dev)** &nbsp;·&nbsp; **[📊 Live board](https://aie-board.workos-internal.workers.dev)** &nbsp;·&nbsp; **[📖 Glossary — ask it anything](https://aie-glossary.workos-internal.workers.dev)**
+
 </div>
 
-<img src="docs/images/sec-live-links.png" alt="Live links — Slides, Live board, Glossary" width="100%" />
-
-<p align="center">
-  <a href="https://aie-deck.workos-internal.workers.dev"><b>Slides</b></a> &nbsp;·&nbsp;
-  <a href="https://aie-board.workos-internal.workers.dev"><b>Live board</b></a> &nbsp;·&nbsp;
-  <a href="https://aie-glossary.workos-internal.workers.dev"><b>Glossary</b></a> — ask it anything
-</p>
+---
 
 <img src="docs/images/sec-what-you-do.png" alt="What you'll do today — four moves, one repo: voice coding, loops & goals, verification gates, scheduled tasks. Each builds on the last." width="100%" />
 
+<p align="center"><sub>Your check-ins light up the <b><a href="https://aie-board.workos-internal.workers.dev">live board</a></b> — where the room's toil is, the hooks &amp; scheduled tasks worth building, and the engineering-hours a week we're about to reclaim.</sub></p>
+
+---
+
 <img src="docs/images/sec-setup.png" alt="Setup, ~5 min — fast path: open the repo in Claude Code, trust it, say 'set me up for the workshop'. Tools: Claude Code, Bun, Codex CLI, Handy, Git." width="100%" />
+
+<p align="center">
+  <b>Get each tool →</b>
+  <a href="https://claude.com/claude-code">Claude Code</a> &nbsp;·&nbsp;
+  <a href="https://bun.sh">Bun</a> &nbsp;·&nbsp;
+  <a href="https://github.com/openai/codex">Codex CLI</a> &nbsp;·&nbsp;
+  <a href="https://handy.computer">Handy</a>
+  &nbsp; — or just say <b><em>"set me up for the workshop"</em></b> and Claude installs what's missing.
+</p>
 
 <details>
 <summary><b>Prefer to install by hand?</b></summary>
@@ -36,30 +47,51 @@ npm i -g @openai/codex && codex login
 # Git — check you have it:  git --version
 ```
 
-Then **trust this repo in Claude Code** — that auto-loads the workshop skills and the `ideation` plugin.
+Then **trust this repo in Claude Code** — that auto-loads the workshop skills, the `ideation` plugin, and the coach.
 
 </details>
+
+---
 
 <img src="docs/images/sec-journey.png" alt="Your journey — Block 01 Voice coding, Block 02 Loops & goals, Block 03 Verification gates, Block 04 Scheduled tasks, each with the exact prompts to say to Claude." width="100%" />
 
 <p align="center">
-  <b>Deeper notes:</b>
-  <a href="curriculum/01-voice-coding.md">Block 1</a> &nbsp;·&nbsp;
-  <a href="curriculum/02-loops-and-goals.md">Block 2</a> &nbsp;·&nbsp;
-  <a href="curriculum/03-verification-gates.md">Block 3</a> &nbsp;·&nbsp;
-  <a href="curriculum/04-scheduled-tasks.md">Block 4</a>
+  <b>Deeper notes →</b>
+  <a href="curriculum/01-voice-coding.md">Block 1 · Voice</a> &nbsp;·&nbsp;
+  <a href="curriculum/02-loops-and-goals.md">Block 2 · Loops &amp; goals</a> &nbsp;·&nbsp;
+  <a href="curriculum/03-verification-gates.md">Block 3 · Gates</a> &nbsp;·&nbsp;
+  <a href="curriculum/04-scheduled-tasks.md">Block 4 · Schedules</a>
 </p>
 
-<img src="docs/images/sec-leave-with.png" alt="What you leave with — voice coding working, a repo with hooks and gates, a scheduled task running, the full stack, and a number on the board." width="100%" />
+> 🛠️ **The hands-on runs on a repo you bring** — a side project or work repo (no good one handy? clone any small project you like). The patterns apply to any stack; today's repo is just the launchpad.
 
-> 🔒 **Your privacy.** The check-in only ever sends **what you type and confirm** — anonymous, with a random id. Nothing is scanned off your machine: no repos, no `git log`, no transcripts. Skip it and still do every exercise.
+---
+
+## 🤖 Meet your coach — the room is the content
+
+An **opt-in** coach rides along in your terminal. It runs a short [**check-in**](skills/coach-checkin/) and reads your **AI-Native score** — once walking in, once at the close — so the [**live board**](https://aie-board.workos-internal.workers.dev) shows your *before → after* alongside the whole room's. It's for fun, and it quietly powers the data viz.
+
+> 🔒 **Privacy.** The score comes from a **local** scan of your *own* Claude setup (hooks? a `CLAUDE.md`? worktrees? scheduled jobs?). Only the score **numbers** and the answers you **confirm** ever leave your machine — never your files, `git log`, or transcripts. Skip it entirely and still do every block.
+
+---
+
+<img src="docs/images/sec-leave-with.png" alt="What you leave with — voice coding working, a repo with hooks and gates, a scheduled task running, the full stack, and a number on the board." width="100%" />
 
 ---
 
 <div align="center">
 
-<sub><code>●</code>&nbsp; Now stop reading and go talk to your computer. &nbsp;🎙️</sub>
+<sub><code>●</code>&nbsp; Now stop reading and go talk to your computer. &nbsp;🎙&#65039;</sub>
 
-<sub>Running this workshop? → <a href="docs/facilitator.md">docs/facilitator.md</a> &nbsp;·&nbsp; Code → <a href="board/">board</a> · <a href="glossary/">glossary</a> · <a href="skills/">skills</a> &nbsp;·&nbsp; <a href="curriculum/">curriculum</a></sub>
+<sub>
+  <a href="https://aie-deck.workos-internal.workers.dev">Slides</a> ·
+  <a href="https://aie-board.workos-internal.workers.dev">Board</a> ·
+  <a href="https://aie-glossary.workos-internal.workers.dev">Glossary</a> &nbsp;|&nbsp;
+  <a href="curriculum/">Curriculum</a> ·
+  <a href="skills/">Skills</a> ·
+  <a href="board/">Board code</a> ·
+  <a href="glossary/">Glossary code</a> &nbsp;|&nbsp;
+  Running this workshop? → <a href="docs/facilitator.md">Facilitator guide</a>
+</sub>
 
 </div>
