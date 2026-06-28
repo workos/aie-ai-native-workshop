@@ -17,6 +17,33 @@ import glossary from './glossary.json'
 export interface Env {
   ASSETS: Fetcher
   ANTHROPIC_API_KEY?: string
+  // BYOK via Cloudflare AI Gateway: the gateway stores the Anthropic key and
+  // injects it, so we send NO x-api-key — only cf-aig-authorization.
+  AI_GATEWAY_URL?: string // e.g. https://gateway.ai.cloudflare.com/v1/<acct>/<gateway>/anthropic
+  CF_AIG_TOKEN?: string
+}
+
+// AI is on with either a direct Anthropic key or an authenticated/BYOK AI Gateway.
+function aiEnabled(env: Env): boolean {
+  return Boolean(env.ANTHROPIC_API_KEY || (env.AI_GATEWAY_URL && env.CF_AIG_TOKEN))
+}
+
+// Build the Anthropic provider. Prefer the BYOK gateway: route through it and
+// strip x-api-key (the gateway injects the stored key — sending any x-api-key
+// makes the gateway forward it instead, which 401s).
+function makeAnthropic(env: Env) {
+  if (env.AI_GATEWAY_URL && env.CF_AIG_TOKEN) {
+    const baseURL = env.AI_GATEWAY_URL.replace(/\/$/, '') + '/v1'
+    const token = env.CF_AIG_TOKEN
+    const gatewayFetch: typeof fetch = (input, init) => {
+      const headers = new Headers(init?.headers)
+      headers.delete('x-api-key')
+      headers.set('cf-aig-authorization', `Bearer ${token}`)
+      return fetch(input, { ...(init ?? {}), headers })
+    }
+    return createAnthropic({ baseURL, apiKey: 'byok-via-gateway', fetch: gatewayFetch })
+  }
+  return createAnthropic({ apiKey: env.ANTHROPIC_API_KEY! })
 }
 
 // Soft per-IP limit — resets on cold start, which is fine: this guards against
@@ -103,12 +130,12 @@ async function handleChat(req: Request, env: Env): Promise<Response> {
   // Signal capture: every question is a data point about where the room is confused.
   console.log(`[chat] q: ${String(lastUser?.content ?? '').slice(0, 300)}`)
 
-  if (!env.ANTHROPIC_API_KEY) {
-    // The page must render without a key; the chat errors gracefully.
+  if (!aiEnabled(env)) {
+    // The page must render without AI configured; the chat errors gracefully.
     return new Response('The assistant is not configured yet — ask a facilitator.', { status: 503 })
   }
 
-  const anthropic = createAnthropic({ apiKey: env.ANTHROPIC_API_KEY })
+  const anthropic = makeAnthropic(env)
 
   const result = streamText({
     model: anthropic('claude-haiku-4-5'),
