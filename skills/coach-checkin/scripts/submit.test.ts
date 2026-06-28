@@ -1,5 +1,4 @@
-import { test, describe } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, describe, expect } from 'bun:test';
 import { mkdtempSync, existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -14,7 +13,7 @@ import {
   QUESTION_KEYS,
   QUESTION_PROMPTS,
   ROLE_PROMPT,
-} from './submit.mjs';
+} from './submit.ts';
 
 const UNREACHABLE = 'http://127.0.0.1:1'; // refuses immediately, no hanging timeout
 const PRE_ANSWERS = {
@@ -25,15 +24,15 @@ const PRE_ANSWERS = {
 const POST_ANSWERS = { built: 'a service scaffolder', next: 'wire it into CI' };
 
 // Run `fn` with cwd set to a fresh temp dir so marker/outbox writes never touch
-// the repo. Restores cwd afterwards. node:test runs tests in this file
+// the repo. Restores cwd afterwards. bun:test runs tests in this file
 // sequentially, so the process-global chdir is safe.
-function inTempDir(fn) {
+function inTempDir(fn: () => unknown): Promise<void> {
   const orig = process.cwd();
   const dir = mkdtempSync(join(tmpdir(), 'coach-'));
   process.chdir(dir);
   return Promise.resolve()
     .then(fn)
-    .finally(() => process.chdir(orig));
+    .finally(() => process.chdir(orig)) as Promise<void>;
 }
 
 test('writes marker', () =>
@@ -45,14 +44,14 @@ test('writes marker', () =>
       confirmed: true,
     });
 
-    assert.equal(result.phase, 'pre');
-    assert.ok(result.participantId, 'a uuid is generated');
-    assert.ok(existsSync('.aie-coach-state.json'), 'marker file exists');
+    expect(result.phase).toBe('pre');
+    expect(result.participantId).toBeTruthy(); // a uuid is generated
+    expect(existsSync('.aie-coach-state.json')).toBeTruthy(); // marker file exists
 
     const marker = JSON.parse(readFileSync('.aie-coach-state.json', 'utf8'));
-    assert.equal(marker.participantId, result.participantId);
-    assert.equal(marker.role, 'Backend / Go');
-    assert.ok(marker.preSubmittedAt);
+    expect(marker.participantId).toBe(result.participantId);
+    expect(marker.role).toBe('Backend / Go');
+    expect(marker.preSubmittedAt).toBeTruthy();
   }));
 
 test('merge: pre submit preserves pre-existing progress fields', () =>
@@ -74,12 +73,12 @@ test('merge: pre submit preserves pre-existing progress fields', () =>
 
     const marker = JSON.parse(readFileSync('.aie-coach-state.json', 'utf8'));
     // identity was written
-    assert.equal(marker.participantId, result.participantId);
-    assert.equal(marker.role, 'Backend / Go');
-    assert.ok(marker.preSubmittedAt);
+    expect(marker.participantId).toBe(result.participantId);
+    expect(marker.role).toBe('Backend / Go');
+    expect(marker.preSubmittedAt).toBeTruthy();
     // progress fields survived the read-merge-write
-    assert.equal(marker.currentBlock, 3, 'currentBlock not clobbered');
-    assert.deepEqual(marker.blocksDone, [1, 2], 'blocksDone not clobbered');
+    expect(marker.currentBlock).toBe(3); // currentBlock not clobbered
+    expect(marker.blocksDone).toEqual([1, 2]); // blocksDone not clobbered
   }));
 
 test('reuses uuid', () =>
@@ -88,17 +87,19 @@ test('reuses uuid', () =>
     const pre = await submit({ role: 'PM', answers: PRE_ANSWERS, confirmed: true });
 
     const det = detect();
-    assert.equal(det.phase, 'post', 'second run is detected as post');
-    assert.equal(det.participantId, pre.participantId, 'detect reuses the pre uuid');
-    assert.equal(det.role, 'PM', 'detect reuses the role');
+    expect(det.phase).toBe('post'); // second run is detected as post
+    // Narrow off the discriminant so the post-only identity fields are in view.
+    if (det.phase !== 'post') throw new Error('expected the post phase after a pre submit');
+    expect(det.participantId).toBe(pre.participantId); // detect reuses the pre uuid
+    expect(det.role).toBe('PM'); // detect reuses the role
 
     const post = await submit({
       // role intentionally omitted — must come from the marker
       answers: POST_ANSWERS,
       confirmed: true,
     });
-    assert.equal(post.phase, 'post');
-    assert.equal(post.participantId, pre.participantId, 'post payload reuses the pre uuid');
+    expect(post.phase).toBe('post');
+    expect(post.participantId).toBe(pre.participantId); // post payload reuses the pre uuid
   }));
 
 test('outbox', () =>
@@ -110,19 +111,23 @@ test('outbox', () =>
       confirmed: true,
     });
 
-    assert.equal(result.sent, false);
-    assert.ok(result.outbox, 'an outbox path is returned');
+    expect(result.sent).toBe(false);
+    // The unreachable board forces the outbox fallback; narrow to that shape so
+    // the outbox field is in view (a sent result would have failed the assert above).
+    if (result.sent) throw new Error('expected the outbox fallback, got a sent result');
+    expect(result.outbox).toBeTruthy(); // an outbox path is returned
 
     const files = readdirSync('.aie-coach-outbox');
-    assert.equal(files.length, 1);
+    expect(files.length).toBe(1);
     const saved = JSON.parse(readFileSync(join('.aie-coach-outbox', files[0]), 'utf8'));
-    assert.equal(saved.phase, 'pre');
-    assert.equal(saved.role, 'Director of Sales');
-    assert.equal(saved.participantId, result.participantId);
-    assert.deepEqual(
-      saved.answers.map((a) => a.questionKey),
-      ['time_sink', 'friction', 'goal'],
-    );
+    expect(saved.phase).toBe('pre');
+    expect(saved.role).toBe('Director of Sales');
+    expect(saved.participantId).toBe(result.participantId);
+    expect(saved.answers.map((a: { questionKey: string }) => a.questionKey)).toEqual([
+      'time_sink',
+      'friction',
+      'goal',
+    ]);
   }));
 
 test('schema', () => {
@@ -134,7 +139,7 @@ test('schema', () => {
     role: 'Engineer',
     answers: PRE_ANSWERS,
   });
-  assert.deepEqual(validateAgainstSchema(goodPre, schema), [], 'valid pre payload passes');
+  expect(validateAgainstSchema(goodPre, schema)).toEqual([]); // valid pre payload passes
 
   const goodPost = buildPayload({
     phase: 'post',
@@ -142,15 +147,15 @@ test('schema', () => {
     role: 'Engineer',
     answers: POST_ANSWERS,
   });
-  assert.deepEqual(validateAgainstSchema(goodPost, schema), [], 'valid post payload passes');
+  expect(validateAgainstSchema(goodPost, schema)).toEqual([]); // valid post payload passes
 
   // bad phase enum is rejected
   const badPhase = { participantId: 'abc', phase: 'middle', role: 'x', answers: [] };
-  assert.ok(validateAgainstSchema(badPhase, schema).length >= 1, 'bad phase enum rejected');
+  expect(validateAgainstSchema(badPhase, schema).length >= 1).toBeTruthy(); // bad phase enum rejected
 
   // missing required top-level key is rejected
   const missing = { participantId: 'abc', phase: 'pre', answers: [] }; // no role
-  assert.ok(validateAgainstSchema(missing, schema).length >= 1, 'missing role rejected');
+  expect(validateAgainstSchema(missing, schema).length >= 1).toBeTruthy(); // missing role rejected
 
   // malformed answers item (extra key + wrong type) is rejected
   const badItem = {
@@ -159,7 +164,7 @@ test('schema', () => {
     role: 'x',
     answers: [{ questionKey: 'time_sink', answer: 5, sneaky: 'z' }],
   };
-  assert.ok(validateAgainstSchema(badItem, schema).length >= 2, 'malformed answer item rejected');
+  expect(validateAgainstSchema(badItem, schema).length >= 2).toBeTruthy(); // malformed answer item rejected
 });
 
 test('no send without confirmation', () =>
@@ -169,8 +174,10 @@ test('no send without confirmation', () =>
       hit = true;
       res.end('ok');
     });
-    await new Promise((r) => server.listen(0, '127.0.0.1', r));
-    process.env.WORKER_URL = `http://127.0.0.1:${server.address().port}`;
+    await new Promise<void>((r) => server.listen(0, '127.0.0.1', () => r()));
+    const addr = server.address();
+    const port = typeof addr === 'object' && addr ? addr.port : 0;
+    process.env.WORKER_URL = `http://127.0.0.1:${port}`;
 
     try {
       const result = await submit({
@@ -179,11 +186,11 @@ test('no send without confirmation', () =>
         confirmed: false,
       });
 
-      assert.equal(result.sent, false);
-      assert.equal(result.reason, 'unconfirmed');
-      assert.equal(hit, false, 'no POST was made');
-      assert.equal(existsSync('.aie-coach-state.json'), false, 'no marker written');
-      assert.equal(existsSync('.aie-coach-outbox'), false, 'no outbox written');
+      expect(result.sent).toBe(false);
+      expect((result as { reason?: string }).reason).toBe('unconfirmed');
+      expect(hit).toBe(false); // no POST was made
+      expect(existsSync('.aie-coach-state.json')).toBe(false); // no marker written
+      expect(existsSync('.aie-coach-outbox')).toBe(false); // no outbox written
     } finally {
       server.close();
     }
@@ -196,76 +203,75 @@ test('prompts: every question key has a non-empty prompt', () => {
   const keys = QUESTION_KEYS.pre.concat(QUESTION_KEYS.post);
   for (const k of keys) {
     const prompt = QUESTION_PROMPTS[k];
-    assert.equal(typeof prompt, 'string', `prompt for "${k}" is a string`);
-    assert.ok(prompt.trim().length > 0, `prompt for "${k}" is non-empty`);
+    expect(typeof prompt).toBe('string'); // prompt for "k" is a string
+    expect(prompt.trim().length > 0).toBeTruthy(); // prompt for "k" is non-empty
   }
   // No orphan prompts: every prompt key maps to a known question key.
   for (const k of Object.keys(QUESTION_PROMPTS)) {
-    assert.ok(keys.includes(k), `prompt key "${k}" maps to a known question key`);
+    expect(keys.includes(k)).toBeTruthy(); // prompt key "k" maps to a known question key
   }
   // The pre run also surfaces a role prompt.
-  assert.equal(typeof ROLE_PROMPT, 'string');
-  assert.ok(ROLE_PROMPT.trim().length > 0, 'ROLE_PROMPT is non-empty');
+  expect(typeof ROLE_PROMPT).toBe('string');
+  expect(ROLE_PROMPT.trim().length > 0).toBeTruthy(); // ROLE_PROMPT is non-empty
 });
 
 // --- AI-Native score payload (Plan 4) ---------------------------------------
-import { buildScorePayload } from './submit.mjs';
+import { buildScorePayload } from './submit.ts';
 
 describe('buildScorePayload', () => {
   test('builds the additive aiNativeScore block and computes delta', () => {
     const p = buildScorePayload({ participantId: 'abc', before: 31, after: 68 });
-    assert.equal(p.participantId, 'abc');
-    assert.equal(p.aiNativeScore.before, 31);
-    assert.equal(p.aiNativeScore.after, 68);
-    assert.equal(p.aiNativeScore.delta, 37);
-    assert.ok(!('pillarsPassed' in p.aiNativeScore)); // omitted when not given
+    expect(p.participantId).toBe('abc');
+    expect(p.aiNativeScore.before).toBe(31);
+    expect(p.aiNativeScore.after).toBe(68);
+    expect(p.aiNativeScore.delta).toBe(37);
+    expect(!('pillarsPassed' in p.aiNativeScore)).toBeTruthy(); // omitted when not given
   });
 
   test('includes pillarsPassed only when a non-empty string array', () => {
     const withPillars = buildScorePayload({
       participantId: 'abc', before: 0, after: 40, pillarsPassed: ['verification', 'context'],
     });
-    assert.deepEqual(withPillars.aiNativeScore.pillarsPassed, ['verification', 'context']);
+    expect(withPillars.aiNativeScore.pillarsPassed).toEqual(['verification', 'context']);
     const emptyPillars = buildScorePayload({ participantId: 'abc', before: 0, after: 40, pillarsPassed: [] });
-    assert.ok(!('pillarsPassed' in emptyPillars.aiNativeScore));
+    expect(!('pillarsPassed' in emptyPillars.aiNativeScore)).toBeTruthy();
   });
 
   test('coerces to integers (the board stores INTEGER columns)', () => {
     const p = buildScorePayload({ participantId: 'abc', before: 30.6, after: 67.4 });
-    assert.equal(p.aiNativeScore.before, 31);
-    assert.equal(p.aiNativeScore.after, 67);
-    assert.equal(p.aiNativeScore.delta, 36);
+    expect(p.aiNativeScore.before).toBe(31);
+    expect(p.aiNativeScore.after).toBe(67);
+    expect(p.aiNativeScore.delta).toBe(36);
   });
 
   test('throws on a missing participantId (loud, never silently sent)', () => {
-    assert.throws(() => buildScorePayload({ before: 10, after: 20 }), /participantId/);
+    expect(() => buildScorePayload({ before: 10, after: 20 })).toThrow(/participantId/);
   });
 
   test('throws when a score is not a finite number (no phantom baseline)', () => {
-    assert.throws(() => buildScorePayload({ participantId: 'abc', before: null, after: 20 }), /score/);
-    assert.throws(() => buildScorePayload({ participantId: 'abc', before: 10, after: NaN }), /score/);
+    expect(() => buildScorePayload({ participantId: 'abc', before: null, after: 20 })).toThrow(/score/);
+    expect(() => buildScorePayload({ participantId: 'abc', before: 10, after: NaN })).toThrow(/score/);
   });
 });
 
 // --- submitScore consent gate (Plan 4) -------------------------------------
-import { submitScore } from './submit.mjs';
+import { submitScore } from './submit.ts';
 
 describe('submitScore consent gate', () => {
   test('does not send when unconfirmed', async () => {
     const res = await submitScore({ participantId: 'abc', before: 10, after: 50, confirmed: false });
-    assert.deepEqual(res, { sent: false, reason: 'unconfirmed' });
+    expect(res).toEqual({ sent: false, reason: 'unconfirmed' });
   });
 
   test('a missing confirmed is treated as not-confirmed (strict === true)', async () => {
     const res = await submitScore({ participantId: 'abc', before: 10, after: 50 });
-    assert.equal(res.sent, false);
-    assert.equal(res.reason, 'unconfirmed');
+    expect(res.sent).toBe(false);
+    expect((res as { reason?: string }).reason).toBe('unconfirmed');
   });
 
   test('validation runs before the gate: a bad payload throws even when unconfirmed', async () => {
-    await assert.rejects(
-      () => submitScore({ before: 10, after: 50, confirmed: false }), // no participantId
-      /participantId/,
-    );
+    await expect(
+      submitScore({ before: 10, after: 50, confirmed: false }), // no participantId
+    ).rejects.toThrow(/participantId/);
   });
 });

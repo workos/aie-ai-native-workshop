@@ -13,8 +13,8 @@
   },
   "mcpServers": {
     "aie-coach": {
-      "command": "node",
-      "args": ["${CLAUDE_PROJECT_DIR}/mcp-coach/src/server.mjs"],
+      "command": "bun",
+      "args": ["${CLAUDE_PROJECT_DIR}/native/src/cli.ts", "--mcp"],
       "cwd": "${CLAUDE_PROJECT_DIR}"
     }
   },

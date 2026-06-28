@@ -1,48 +1,78 @@
 // Smoke harness for the stdio JSON-RPC MCP server. Drives the server's *real*
-// stdio — no mocks: spawn `node server.mjs`, write newline-delimited JSON-RPC
+// stdio — no mocks: spawn `bun server.ts`, write newline-delimited JSON-RPC
 // requests to its stdin, collect the framed JSON lines it writes to stdout, and
 // assert the parsed responses. This proves the framing path end-to-end:
 // `initialize` -> `tools/list` -> `tools/call`, plus the transport edge cases
 // (split/coalesced messages, malformed lines, notifications) that are the most
 // common bugs in a hand-rolled line protocol.
 
-import { test, describe } from 'node:test';
-import assert from 'node:assert/strict';
+import { test, describe, expect } from "bun:test";
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { mkdtempSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { createServer } from 'node:http';
+import type { AddressInfo } from 'node:net';
+
+// A parsed JSON-RPC line off the server's framed stdout. `JSON.parse` is `any`,
+// so annotating the parsed shape here is what gives the .map/.find callbacks a
+// real parameter type instead of an implicit any.
+interface RpcLine {
+  jsonrpc?: string;
+  id?: number | string | null;
+  result?: any;
+  error?: { code: number; message: string };
+}
+
+// A tool descriptor as surfaced by tools/list (the subset the smoke tests read).
+interface ListedTool {
+  name: string;
+  description: string;
+  inputSchema: {
+    type: string;
+    additionalProperties: boolean;
+    required?: string[];
+    properties?: Record<string, any>;
+  };
+}
+
+// A surfaced check-in question (coach_checkin result item).
+interface CheckinQuestion {
+  questionKey: string;
+  prompt: string;
+}
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const SERVER = join(__dirname, 'server.mjs');
-// Repo root is two levels up from mcp-coach/src — the server asserts it was
-// launched from here, so spawn with this cwd to keep stderr clean.
-const REPO_ROOT = join(__dirname, '..', '..');
+// The coach now boots through the unified CLI entry: `bun native/src/cli.ts --mcp`
+// dispatches to startServer() (the way `sessions --mcp` works). Repo root is three
+// levels up from native/src/coach — the server asserts it was launched from here,
+// so spawn with this cwd to keep stderr clean.
+const REPO_ROOT = join(__dirname, '..', '..', '..');
+const CLI = join(REPO_ROOT, 'native', 'src', 'cli.ts');
 
 // Spawn the server, write `requests` (array of objects -> compact JSON lines),
 // close stdin, and resolve once the child exits with { lines, stderr, code }.
 // `lines` is stdout split on newlines (blank trailing entry dropped). Closing
 // stdin is what ends the server's read loop, so every harness call terminates.
-function run(requests, { cwd = REPO_ROOT, env } = {}) {
+function run(requests: any[], { cwd = REPO_ROOT, env }: { cwd?: string; env?: Record<string, string> } = {}): Promise<any> {
   return new Promise((resolve, reject) => {
-    const child = spawn('node', [SERVER], {
+    const child = spawn('bun', [CLI, '--mcp'], {
       cwd,
       // Merge any overrides (e.g. WORKER_URL) onto the inherited env so the
-      // check-in tools delegate to submit.mjs against a local stub, not the
+      // check-in tools delegate to submit.ts against a local stub, not the
       // real board.
       env: env ? { ...process.env, ...env } : process.env,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
     let out = '';
     let err = '';
-    child.stdout.setEncoding('utf8');
-    child.stderr.setEncoding('utf8');
-    child.stdout.on('data', (c) => {
+    child.stdout!.setEncoding('utf8');
+    child.stderr!.setEncoding('utf8');
+    child.stdout!.on('data', (c) => {
       out += c;
     });
-    child.stderr.on('data', (c) => {
+    child.stderr!.on('data', (c) => {
       err += c;
     });
     child.on('error', reject);
@@ -54,9 +84,9 @@ function run(requests, { cwd = REPO_ROOT, env } = {}) {
     for (const req of requests) {
       // A pre-framed raw string (for the malformed-line case) is written as-is;
       // everything else is serialized to one compact line.
-      child.stdin.write(typeof req === 'string' ? req : JSON.stringify(req) + '\n');
+      child.stdin!.write(typeof req === 'string' ? req : JSON.stringify(req) + '\n');
     }
-    child.stdin.end();
+    child.stdin!.end();
   });
 }
 
@@ -65,24 +95,24 @@ const init = (id = 1, params = {}) => ({ jsonrpc: '2.0', id, method: 'initialize
 describe('handshake', () => {
   test('initialize returns a framed result echoing the id', async () => {
     const { lines } = await run([init(1, { protocolVersion: '2025-06-18' })]);
-    assert.equal(lines.length, 1, 'exactly one response line');
+    expect(lines.length).toBe(1);
 
     const msg = JSON.parse(lines[0]);
-    assert.equal(msg.jsonrpc, '2.0');
-    assert.equal(msg.id, 1, 'response id matches the request id');
-    assert.ok(msg.result, 'has a result, not an error');
-    assert.equal(msg.result.protocolVersion, '2025-06-18', 'echoes the client protocolVersion');
-    assert.ok(msg.result.capabilities.tools, 'advertises the tools capability');
-    assert.equal(msg.result.serverInfo.name, 'aie-coach');
-    assert.ok(msg.result.serverInfo.version, 'reports a version');
+    expect(msg.jsonrpc).toBe('2.0');
+    expect(msg.id).toBe(1);
+    expect(msg.result).toBeTruthy();
+    expect(msg.result.protocolVersion).toBe('2025-06-18');
+    expect(msg.result.capabilities.tools).toBeTruthy();
+    expect(msg.result.serverInfo.name).toBe('aie-coach');
+    expect(msg.result.serverInfo.version).toBeTruthy();
   });
 
   test('initialize pins a fallback protocolVersion when the client omits it', async () => {
     const { lines } = await run([init(7, {})]);
     const msg = JSON.parse(lines[0]);
-    assert.equal(msg.id, 7);
-    assert.equal(typeof msg.result.protocolVersion, 'string');
-    assert.ok(msg.result.protocolVersion.length > 0, 'pins a non-empty version');
+    expect(msg.id).toBe(7);
+    expect(typeof msg.result.protocolVersion).toBe('string');
+    expect(msg.result.protocolVersion.length > 0).toBe(true);
   });
 
   test('a notification (no id) produces no response line', async () => {
@@ -91,8 +121,8 @@ describe('handshake', () => {
       { jsonrpc: '2.0', method: 'notifications/initialized' }, // notification: no id
     ]);
     // Only the initialize reply — the notification is silent.
-    assert.equal(lines.length, 1, 'notification yields no extra line');
-    assert.equal(JSON.parse(lines[0]).id, 1);
+    expect(lines.length).toBe(1);
+    expect(JSON.parse(lines[0]).id).toBe(1);
   });
 
   test('two messages in one stdin write produce two correlated responses', async () => {
@@ -102,9 +132,9 @@ describe('handshake', () => {
       JSON.stringify(init(1)) + '\n' + JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list', params: {} }) + '\n';
     const { lines } = await run([raw]);
 
-    assert.equal(lines.length, 2, 'both messages answered');
-    const ids = lines.map((l) => JSON.parse(l).id).sort();
-    assert.deepEqual(ids, [1, 2], 'responses correlate to both request ids');
+    expect(lines.length).toBe(2);
+    const ids = lines.map((l: string) => JSON.parse(l).id).sort();
+    expect(ids).toEqual([1, 2]);
   });
 
   test('a non-JSON line yields a framed -32700 parse error and the loop survives', async () => {
@@ -114,21 +144,20 @@ describe('handshake', () => {
     ]);
 
     // The parse error response (id null) plus the later valid initialize reply.
-    assert.equal(lines.length, 2, 'parse error did not kill the read loop');
-    const parsed = lines.map((l) => JSON.parse(l));
-    const parseErr = parsed.find((m) => m.error && m.error.code === -32700);
-    assert.ok(parseErr, 'a -32700 parse error was framed');
-    assert.equal(parseErr.id, null, 'parse error uses a null id (request id unknowable)');
-    assert.ok(
-      parsed.find((m) => m.id === 2 && m.result),
-      'the valid message after the bad line was still served',
-    );
+    expect(lines.length).toBe(2);
+    const parsed = lines.map((l: string) => JSON.parse(l) as RpcLine);
+    const parseErr = parsed.find((m: RpcLine) => m.error && m.error.code === -32700);
+    expect(parseErr).toBeTruthy();
+    expect(parseErr!.id).toBe(null);
+    expect(
+      parsed.find((m: RpcLine) => m.id === 2 && m.result),
+    ).toBeTruthy();
   });
 
   test('stdout carries only JSON; diagnostics go to stderr', async () => {
     const { lines } = await run([init(1)]);
     for (const line of lines) {
-      assert.doesNotThrow(() => JSON.parse(line), `stdout line is valid JSON: ${line}`);
+      expect(() => JSON.parse(line)).not.toThrow();
     }
   });
 });
@@ -138,8 +167,8 @@ describe('tools/list', () => {
     // Framing contract only — the exact tool set is asserted by `tools/list mvp`.
     const { lines } = await run([{ jsonrpc: '2.0', id: 3, method: 'tools/list', params: {} }]);
     const msg = JSON.parse(lines[0]);
-    assert.equal(msg.id, 3);
-    assert.ok(Array.isArray(msg.result.tools), 'result.tools is an array');
+    expect(msg.id).toBe(3);
+    expect(Array.isArray(msg.result.tools)).toBeTruthy();
   });
 });
 
@@ -149,10 +178,10 @@ describe('tools/call', () => {
       { jsonrpc: '2.0', id: 4, method: 'tools/call', params: { name: 'nope', arguments: {} } },
     ]);
     const msg = JSON.parse(lines[0]);
-    assert.equal(msg.id, 4);
-    assert.ok(msg.error, 'returns an error, not a result');
-    assert.equal(msg.error.code, -32602, 'unknown tool is invalid-params');
-    assert.match(msg.error.message, /nope/, 'error names the offending tool');
+    expect(msg.id).toBe(4);
+    expect(msg.error).toBeTruthy();
+    expect(msg.error.code).toBe(-32602);
+    expect(msg.error.message).toMatch(/nope/);
   });
 });
 
@@ -160,25 +189,25 @@ describe('dispatch', () => {
   test('an unknown method yields a framed -32601 error', async () => {
     const { lines } = await run([{ jsonrpc: '2.0', id: 5, method: 'does/not/exist', params: {} }]);
     const msg = JSON.parse(lines[0]);
-    assert.equal(msg.id, 5);
-    assert.equal(msg.error.code, -32601, 'unknown method is method-not-found');
+    expect(msg.id).toBe(5);
+    expect(msg.error.code).toBe(-32601);
   });
 });
 
 describe('startup', () => {
   test('warns to stderr (not stdout) when launched outside the repo root', async () => {
-    const { lines, stderr } = await run([init(1)], { cwd: __dirname }); // mcp-coach/src is not the root
-    assert.match(stderr, /WARNING/, 'a loud cwd warning is written to stderr');
+    const { lines, stderr } = await run([init(1)], { cwd: __dirname }); // native/src/coach is not the root
+    expect(stderr).toMatch(/WARNING/);
     // The warning must not leak into the protocol channel.
-    assert.equal(lines.length, 1, 'stdout still carries only the protocol reply');
-    assert.ok(JSON.parse(lines[0]).result, 'the server still answers despite the wrong cwd');
+    expect(lines.length).toBe(1);
+    expect(JSON.parse(lines[0]).result).toBeTruthy();
   });
 });
 
 // --- Phase 2: board-layer check-in tools ---------------------------------
 
 // Build a tools/call request for `name` with `args`.
-const call = (id, name, args = {}) => ({
+const call = (id: number, name: string, args: Record<string, unknown> = {}) => ({
   jsonrpc: '2.0',
   id,
   method: 'tools/call',
@@ -187,10 +216,10 @@ const call = (id, name, args = {}) => ({
 
 // Find the response with `id` in the framed stdout lines and parse the tool
 // result out of its content[0].text (the server JSON-stringifies tool results).
-function toolResult(lines, id) {
+function toolResult(lines: string[], id: number) {
   const msg = lines.map((l) => JSON.parse(l)).find((m) => m.id === id);
-  assert.ok(msg, `a response for id ${id} was returned`);
-  assert.ok(msg.result, `id ${id} is a result, not an error: ${JSON.stringify(msg.error)}`);
+  expect(msg).toBeTruthy();
+  expect(msg.result).toBeTruthy();
   return { parsed: JSON.parse(msg.result.content[0].text), isError: msg.result.isError === true };
 }
 
@@ -204,24 +233,24 @@ describe('tools/list mvp', () => {
   test('exposes the two board-layer tools with valid schemas', async () => {
     const { lines } = await run([{ jsonrpc: '2.0', id: 10, method: 'tools/list', params: {} }]);
     const msg = JSON.parse(lines[0]);
-    assert.equal(msg.id, 10);
+    expect(msg.id).toBe(10);
 
-    const names = msg.result.tools.map((t) => t.name);
+    const names = (msg.result.tools as ListedTool[]).map((t) => t.name);
     // The two board-layer tools must be present with valid schemas. (The exact
     // four-tool set is asserted by `tools/list full` once Phase 4 lands the
     // navigation tools.)
-    assert.ok(names.includes('coach_checkin'), 'coach_checkin is registered');
-    assert.ok(names.includes('coach_submit_checkin'), 'coach_submit_checkin is registered');
+    expect(names.includes('coach_checkin')).toBeTruthy();
+    expect(names.includes('coach_submit_checkin')).toBeTruthy();
 
-    for (const t of msg.result.tools) {
-      assert.equal(typeof t.description, 'string');
-      assert.ok(t.description.length > 0, `${t.name} has a description`);
-      assert.equal(t.inputSchema.type, 'object', `${t.name} inputSchema is an object`);
-      assert.equal(t.inputSchema.additionalProperties, false, `${t.name} disallows extra props`);
+    for (const t of msg.result.tools as ListedTool[]) {
+      expect(typeof t.description).toBe('string');
+      expect(t.description.length > 0).toBeTruthy();
+      expect(t.inputSchema.type).toBe('object');
+      expect(t.inputSchema.additionalProperties).toBe(false);
     }
 
-    const submitTool = msg.result.tools.find((t) => t.name === 'coach_submit_checkin');
-    assert.deepEqual(submitTool.inputSchema.required, ['answers', 'confirmed'], 'submit requires answers+confirmed');
+    const submitTool = (msg.result.tools as ListedTool[]).find((t) => t.name === 'coach_submit_checkin')!;
+    expect(submitTool.inputSchema.required).toEqual(['answers', 'confirmed']);
   });
 });
 
@@ -231,23 +260,21 @@ describe('tools/list full', () => {
   test('exposes all nine tools after the engine layer lands', async () => {
     const { lines } = await run([{ jsonrpc: '2.0', id: 11, method: 'tools/list', params: {} }]);
     const msg = JSON.parse(lines[0]);
-    assert.equal(msg.id, 11);
+    expect(msg.id).toBe(11);
 
-    const names = msg.result.tools.map((t) => t.name).sort();
-    assert.deepEqual(
-      names,
+    const names = (msg.result.tools as ListedTool[]).map((t) => t.name).sort();
+    expect(names).toEqual(
       ['coach_card', 'coach_checkin', 'coach_checkpoint', 'coach_gate', 'coach_next', 'coach_scan', 'coach_status', 'coach_submit_checkin', 'coach_submit_score'],
-      'all nine tools (+ coach_submit_score)',
     );
 
     // The two navigation tools carry valid object schemas too.
-    const status = msg.result.tools.find((t) => t.name === 'coach_status');
-    const checkpoint = msg.result.tools.find((t) => t.name === 'coach_checkpoint');
-    assert.equal(status.inputSchema.type, 'object', 'coach_status inputSchema is an object');
-    assert.equal(status.inputSchema.additionalProperties, false, 'coach_status disallows extra props');
-    assert.deepEqual(checkpoint.inputSchema.required, ['block'], 'coach_checkpoint requires a block');
-    assert.equal(checkpoint.inputSchema.properties.block.minimum, 1, 'block is constrained >= 1');
-    assert.equal(checkpoint.inputSchema.properties.block.maximum, 4, 'block is constrained <= 4');
+    const status = (msg.result.tools as ListedTool[]).find((t) => t.name === 'coach_status')!;
+    const checkpoint = (msg.result.tools as ListedTool[]).find((t) => t.name === 'coach_checkpoint')!;
+    expect(status.inputSchema.type).toBe('object');
+    expect(status.inputSchema.additionalProperties).toBe(false);
+    expect(checkpoint.inputSchema.required).toEqual(['block']);
+    expect(checkpoint.inputSchema.properties!.block.minimum).toBe(1);
+    expect(checkpoint.inputSchema.properties!.block.maximum).toBe(4);
   });
 });
 
@@ -257,12 +284,12 @@ describe('coach_status', () => {
     const { lines } = await run([call(1, 'coach_status')], { cwd });
     const { parsed, isError } = toolResult(lines, 1);
 
-    assert.equal(isError, false, 'not an error result');
-    assert.equal(parsed.phase, 'pre');
-    assert.equal(parsed.participantId, undefined, 'pre has no participantId');
-    assert.equal(parsed.currentBlock, null, 'no progress yet -> currentBlock null');
-    assert.deepEqual(parsed.blocksDone, [], 'no blocks done yet');
-    assert.match(parsed.nextAction, /opening check-in/i, 'fresh attendee is pointed at the opening check-in');
+    expect(isError).toBe(false);
+    expect(parsed.phase).toBe('pre');
+    expect(parsed.participantId).toBe(undefined);
+    expect(parsed.currentBlock).toBe(null);
+    expect(parsed.blocksDone).toEqual([]);
+    expect(parsed.nextAction).toMatch(/opening check-in/i);
   });
 
   test('after two checkpoints: blocksDone [1,2] and a sensible block-3 nextAction', async () => {
@@ -279,11 +306,11 @@ describe('coach_status', () => {
     );
     const { parsed } = toolResult(lines, 3);
 
-    assert.equal(parsed.phase, 'post', 'a seeded participantId reads as post');
-    assert.deepEqual(parsed.blocksDone, [1, 2], 'both checkpoints recorded');
-    assert.equal(parsed.currentBlock, 3, 'advanced to block 3');
-    assert.match(parsed.nextAction, /Block 3/, 'nextAction names the current block');
-    assert.match(parsed.nextAction, /lint\/typecheck\/test hook/, "nextAction is block 3's first action");
+    expect(parsed.phase).toBe('post');
+    expect(parsed.blocksDone).toEqual([1, 2]);
+    expect(parsed.currentBlock).toBe(3);
+    expect(parsed.nextAction).toMatch(/Block 3/);
+    expect(parsed.nextAction).toMatch(/lint\/typecheck\/test hook/);
   });
 });
 
@@ -293,13 +320,13 @@ describe('coach_checkpoint', () => {
     const { lines } = await run([call(1, 'coach_checkpoint', { block: 1 })], { cwd });
     const { parsed, isError } = toolResult(lines, 1);
 
-    assert.equal(isError, false, 'not an error result');
-    assert.match(parsed.congrats, /Block 1/, 'congratulates on block 1');
-    assert.equal(parsed.done, false, 'block 1 is not the last');
-    assert.equal(parsed.nextBlock.n, 2, 'advances to block 2');
-    assert.ok(parsed.nextBlock.goal && parsed.nextBlock.firstAction && parsed.nextBlock.doneWhen, 'next-block guidance is present');
-    assert.ok(parsed.nudge, 'a soft nudge is present when there is no opening check-in');
-    assert.match(parsed.nudge, /opening check-in/i, 'the nudge points at the opening check-in');
+    expect(isError).toBe(false);
+    expect(parsed.congrats).toMatch(/Block 1/);
+    expect(parsed.done).toBe(false);
+    expect(parsed.nextBlock.n).toBe(2);
+    expect(parsed.nextBlock.goal && parsed.nextBlock.firstAction && parsed.nextBlock.doneWhen).toBeTruthy();
+    expect(parsed.nudge).toBeTruthy();
+    expect(parsed.nudge).toMatch(/opening check-in/i);
   });
 
   test('block 1 WITH a participantId: no nudge', async () => {
@@ -312,8 +339,8 @@ describe('coach_checkpoint', () => {
     const { lines } = await run([call(2, 'coach_checkpoint', { block: 1 })], { cwd });
     const { parsed } = toolResult(lines, 2);
 
-    assert.equal(parsed.nextBlock.n, 2, 'still advances to block 2');
-    assert.equal(parsed.nudge, undefined, 'no nudge once the opening check-in is done');
+    expect(parsed.nextBlock.n).toBe(2);
+    expect(parsed.nudge).toBe(undefined);
   });
 
   test('block 4: done true, no nextBlock, a closing-check-in prompt', async () => {
@@ -321,18 +348,18 @@ describe('coach_checkpoint', () => {
     const { lines } = await run([call(3, 'coach_checkpoint', { block: 4 })], { cwd });
     const { parsed } = toolResult(lines, 3);
 
-    assert.equal(parsed.done, true, 'block 4 is the last');
-    assert.equal(parsed.nextBlock, undefined, 'no next block after 4');
-    assert.ok(parsed.closing, 'a closing prompt is present');
-    assert.match(parsed.closing, /closing check-in/i, 'points at the closing check-in');
+    expect(parsed.done).toBe(true);
+    expect(parsed.nextBlock).toBe(undefined);
+    expect(parsed.closing).toBeTruthy();
+    expect(parsed.closing).toMatch(/closing check-in/i);
   });
 
   test('the recorded block survives into coach_status (shared marker)', async () => {
     const cwd = freshCwd();
     const { lines } = await run([call(1, 'coach_checkpoint', { block: 1 }), call(2, 'coach_status')], { cwd });
     const { parsed } = toolResult(lines, 2);
-    assert.deepEqual(parsed.blocksDone, [1], 'the checkpoint persisted to the shared marker');
-    assert.equal(parsed.currentBlock, 2, 'status reflects the advance');
+    expect(parsed.blocksDone).toEqual([1]);
+    expect(parsed.currentBlock).toBe(2);
   });
 });
 
@@ -342,18 +369,16 @@ describe('coach_checkin', () => {
     const { lines } = await run([call(1, 'coach_checkin')], { cwd });
     const { parsed, isError } = toolResult(lines, 1);
 
-    assert.equal(isError, false, 'not an error result');
-    assert.equal(parsed.phase, 'pre');
-    assert.equal(parsed.needsRole, true, 'pre asks for the role');
-    assert.ok(parsed.rolePrompt && parsed.rolePrompt.length > 0, 'a role prompt is provided');
+    expect(isError).toBe(false);
+    expect(parsed.phase).toBe('pre');
+    expect(parsed.needsRole).toBe(true);
+    expect(parsed.rolePrompt && parsed.rolePrompt.length > 0).toBeTruthy();
 
-    assert.deepEqual(
-      parsed.questions.map((q) => q.questionKey),
-      ['time_sink', 'friction', 'goal'],
-      'the three opening questions in order',
-    );
-    for (const q of parsed.questions) {
-      assert.ok(q.prompt && q.prompt.length > 0, `${q.questionKey} has a non-empty prompt`);
+    expect(
+      (parsed.questions as CheckinQuestion[]).map((q) => q.questionKey),
+    ).toEqual(['time_sink', 'friction', 'goal']);
+    for (const q of parsed.questions as CheckinQuestion[]) {
+      expect(q.prompt && q.prompt.length > 0).toBeTruthy();
     }
   });
 
@@ -367,14 +392,12 @@ describe('coach_checkin', () => {
     const { lines } = await run([call(2, 'coach_checkin')], { cwd });
     const { parsed } = toolResult(lines, 2);
 
-    assert.equal(parsed.phase, 'post');
-    assert.equal(parsed.needsRole, false, 'post reuses the marker role');
-    assert.equal(parsed.rolePrompt, undefined, 'no role prompt in post');
-    assert.deepEqual(
-      parsed.questions.map((q) => q.questionKey),
-      ['built', 'next'],
-      'the two closing questions in order',
-    );
+    expect(parsed.phase).toBe('post');
+    expect(parsed.needsRole).toBe(false);
+    expect(parsed.rolePrompt).toBe(undefined);
+    expect(
+      (parsed.questions as CheckinQuestion[]).map((q) => q.questionKey),
+    ).toEqual(['built', 'next']);
   });
 });
 
@@ -386,8 +409,8 @@ describe('consent', () => {
       hit = true;
       res.end('ok');
     });
-    await new Promise((r) => server.listen(0, '127.0.0.1', r));
-    const url = `http://127.0.0.1:${server.address().port}`;
+    await new Promise<void>((r) => server.listen(0, '127.0.0.1', () => r()));
+    const url = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 
     try {
       const { lines } = await run([call(3, 'coach_submit_checkin', { role: 'PM', answers: { time_sink: 'a', friction: 'b', goal: 'c' }, confirmed: false })], {
@@ -396,11 +419,11 @@ describe('consent', () => {
       });
       const { parsed } = toolResult(lines, 3);
 
-      assert.equal(parsed.sent, false);
-      assert.equal(parsed.reason, 'unconfirmed', 'the consent guard returns unconfirmed');
-      assert.equal(hit, false, 'no POST was made');
-      assert.equal(existsSync(join(cwd, '.aie-coach-state.json')), false, 'no marker written');
-      assert.equal(existsSync(join(cwd, '.aie-coach-outbox')), false, 'no outbox written');
+      expect(parsed.sent).toBe(false);
+      expect(parsed.reason).toBe('unconfirmed');
+      expect(hit).toBe(false);
+      expect(existsSync(join(cwd, '.aie-coach-state.json'))).toBe(false);
+      expect(existsSync(join(cwd, '.aie-coach-outbox'))).toBe(false);
     } finally {
       server.close();
     }
@@ -422,26 +445,25 @@ describe('malformed', () => {
     );
 
     const { parsed, isError } = toolResult(lines, 4);
-    assert.equal(isError, false, 'a caught validation error is a normal result, not a transport error');
-    assert.equal(parsed.error, 'invalid_answers', 'structured invalid_answers error');
-    assert.ok(parsed.detail && parsed.detail.length > 0, 'includes a human-readable detail');
+    expect(isError).toBe(false);
+    expect(parsed.error).toBe('invalid_answers');
+    expect(parsed.detail && parsed.detail.length > 0).toBeTruthy();
     // A missing key throws in buildAnswers (no schemaErrors); a schema-shape
     // violation throws from validateAgainstSchema (schemaErrors array). The
     // handler surfaces whichever the real cause was, defaulting to null.
-    assert.ok(
+    expect(
       parsed.schemaErrors === null || Array.isArray(parsed.schemaErrors),
-      'schemaErrors is an array or null',
-    );
-    assert.ok('schemaErrors' in parsed, 'the handler always includes a schemaErrors field');
+    ).toBeTruthy();
+    expect('schemaErrors' in parsed).toBeTruthy();
 
     // The follow-up request was answered -> the malformed payload did not crash
     // the server.
-    const after = lines.map((l) => JSON.parse(l)).find((m) => m.id === 5);
-    assert.ok(after && after.result, 'the server answered a request after the malformed one');
+    const after = lines.map((l: string) => JSON.parse(l) as RpcLine).find((m: RpcLine) => m.id === 5);
+    expect(after && after.result).toBeTruthy();
 
     // Nothing leaked to disk on the error path.
-    assert.equal(existsSync(join(cwd, '.aie-coach-state.json')), false, 'no marker on the error path');
-    assert.equal(existsSync(join(cwd, '.aie-coach-outbox')), false, 'no outbox on the error path');
+    expect(existsSync(join(cwd, '.aie-coach-state.json'))).toBe(false);
+    expect(existsSync(join(cwd, '.aie-coach-outbox'))).toBe(false);
   });
 });
 
@@ -454,37 +476,36 @@ describe('outbox', () => {
     );
     const { parsed } = toolResult(lines, 6);
 
-    assert.equal(parsed.sent, false);
-    assert.ok(parsed.outbox, 'an outbox path is returned');
-    assert.equal(parsed.phase, 'pre');
+    expect(parsed.sent).toBe(false);
+    expect(parsed.outbox).toBeTruthy();
+    expect(parsed.phase).toBe('pre');
 
     // The marker is written before the POST, and exactly one outbox file lands.
-    assert.ok(existsSync(join(cwd, '.aie-coach-state.json')), 'marker written before the POST');
+    expect(existsSync(join(cwd, '.aie-coach-state.json'))).toBeTruthy();
     const files = readdirSync(join(cwd, '.aie-coach-outbox'));
-    assert.equal(files.length, 1, 'exactly one outbox file');
+    expect(files.length).toBe(1);
   });
 });
 
-// server.test.mjs ALREADY imports test, describe, assert, mkdtempSync,
-// writeFileSync, tmpdir, and join at the top of the file. Re-importing any of
-// them here is an ESM "Identifier has already been declared" SyntaxError that
-// fails the WHOLE file. Import ONLY the new symbols; reuse the existing bindings.
-import { beforeEach, afterEach } from 'node:test';
+// The in-process tests below import the tool registry directly and drive the
+// handlers without spawning a child. bun:test has no "already declared" hazard
+// across describe blocks, so the imports are consolidated at the top of the file.
+import { beforeEach, afterEach } from "bun:test";
 import { mkdirSync, rmSync } from 'node:fs';
-import { tools } from './server.mjs';
+import { tools } from './server.ts';
 
 // Call a tool exactly as the server would: look it up in the registry, run the
 // handler with the given args, and return the parsed result (handlers return
 // JSON-serializable objects; here we read them directly).
-async function callTool(name, args = {}) {
+async function callTool(name: string, args: Record<string, unknown> = {}): Promise<any> {
   const entry = tools.get(name);
-  assert.ok(entry, `tool ${name} is registered`);
-  return entry.handler(args);
+  expect(entry).toBeTruthy();
+  return entry!.handler(args);
 }
 
 describe('engine-backed coach tools', () => {
-  let prevCwd;
-  let dir;
+  let prevCwd: string;
+  let dir: string;
 
   beforeEach(() => {
     prevCwd = process.cwd();
@@ -492,7 +513,7 @@ describe('engine-backed coach tools', () => {
     // resolved via process.cwd()) and the coach-checkin anchor both resolve here.
     dir = mkdtempSync(join(tmpdir(), 'aie-coach-engine-'));
     mkdirSync(join(dir, 'skills', 'coach-checkin', 'scripts'), { recursive: true });
-    writeFileSync(join(dir, 'skills', 'coach-checkin', 'scripts', 'submit.mjs'), '');
+    writeFileSync(join(dir, 'skills', 'coach-checkin', 'scripts', 'submit.ts'), '');
     process.chdir(dir);
   });
 
@@ -503,45 +524,45 @@ describe('engine-backed coach tools', () => {
 
   test('all four engine tools are registered and listed', () => {
     for (const name of ['coach_scan', 'coach_next', 'coach_gate', 'coach_card']) {
-      const entry = tools.get(name);
-      assert.ok(entry, `${name} registered`);
-      assert.equal(entry.schema.name, name);
-      assert.equal(entry.schema.inputSchema.additionalProperties, false);
+      const entry: any = tools.get(name);
+      expect(entry).toBeTruthy();
+      expect(entry.schema.name).toBe(name);
+      expect(entry.schema.inputSchema.additionalProperties).toBe(false);
     }
     // The four pre-existing tools must still be present (not broken/overwritten).
     for (const name of ['coach_checkin', 'coach_submit_checkin', 'coach_status', 'coach_checkpoint']) {
-      assert.ok(tools.get(name), `${name} still registered`);
+      expect(tools.get(name)).toBeTruthy();
     }
   });
 
   test('coach_scan returns the report and records the opening baseline', async () => {
     const r = await callTool('coach_scan');
-    assert.ok(typeof r.total === 'number');
-    assert.ok(r.pillars && typeof r.pillars.verification === 'number');
-    assert.ok(Array.isArray(r.recommendations));
-    assert.ok(Array.isArray(r.observations));
-    assert.equal(r.firstScan, true); // first scan in a fresh marker
+    expect(typeof r.total === 'number').toBeTruthy();
+    expect(r.pillars && typeof r.pillars.verification === 'number').toBeTruthy();
+    expect(Array.isArray(r.recommendations)).toBeTruthy();
+    expect(Array.isArray(r.observations)).toBeTruthy();
+    expect(r.firstScan).toBe(true); // first scan in a fresh marker
     // A second scan no longer claims firstScan (baseline already stored).
     const r2 = await callTool('coach_scan');
-    assert.equal(r2.firstScan, false);
+    expect(r2.firstScan).toBe(false);
   });
 
   test('coach_next returns a single next step or a done sentinel', async () => {
     const step = await callTool('coach_next');
     // On a fresh machine there is almost always at least one gap; tolerate both.
     if (step.done) {
-      assert.equal(step.done, true);
+      expect(step.done).toBe(true);
     } else {
-      assert.ok(typeof step.pillar === 'string');
-      assert.ok(typeof step.action === 'string');
-      assert.ok(typeof step.subScore === 'number');
+      expect(typeof step.pillar === 'string').toBeTruthy();
+      expect(typeof step.action === 'string').toBeTruthy();
+      expect(typeof step.subScore === 'number').toBeTruthy();
     }
   });
 
   test('coach_gate rejects an out-of-enum pillar via the input schema', () => {
     // The handler trusts the schema; enum membership is the contract we assert.
-    const props = tools.get('coach_gate').schema.inputSchema.properties;
-    assert.deepEqual([...props.pillar.enum].sort(), [
+    const props: any = tools.get('coach_gate')!.schema.inputSchema.properties;
+    expect([...props.pillar.enum].sort()).toEqual([
       'automation', 'context', 'delegation', 'orchestration', 'verification',
     ]);
   });
@@ -550,36 +571,36 @@ describe('engine-backed coach tools', () => {
     // verification is present on most dev machines via a lint/test hook; assert on
     // the SHAPE + the invariant rather than a machine-specific truth value.
     const r = await callTool('coach_gate', { pillar: 'verification' });
-    assert.equal(r.pillar, 'verification');
-    assert.equal(r.threshold, 0.8);
-    assert.equal(typeof r.passed, 'boolean');
-    assert.equal(r.advanced, r.passed); // advanced iff passed — the core invariant
-    if (r.passed) assert.ok(r.pillarsPassed.includes('verification'));
-    else assert.ok(typeof r.hint === 'string');
+    expect(r.pillar).toBe('verification');
+    expect(r.threshold).toBe(0.8);
+    expect(typeof r.passed === 'boolean').toBeTruthy();
+    expect(r.advanced).toBe(r.passed); // advanced iff passed — the core invariant
+    if (r.passed) expect(r.pillarsPassed.includes('verification')).toBeTruthy();
+    else expect(typeof r.hint === 'string').toBeTruthy();
   });
 
   test('coach_card renders a self-contained before/after card', async () => {
     await callTool('coach_scan'); // establish the opening baseline first
     const r = await callTool('coach_card', { name: 'Tester' });
-    assert.match(r.html, /<!doctype html>/i);
-    assert.ok(!/\bsrc=|\bhref=/.test(r.html)); // offline-safe
-    assert.match(r.html, /Tester/);
-    assert.ok(typeof r.scoreBefore === 'number');
-    assert.ok(typeof r.scoreAfter === 'number');
-    assert.equal(r.delta, r.scoreAfter - r.scoreBefore);
+    expect(r.html).toMatch(/<!doctype html>/i);
+    expect(!/\bsrc=|\bhref=/.test(r.html)).toBeTruthy(); // offline-safe
+    expect(r.html).toMatch(/Tester/);
+    expect(typeof r.scoreBefore === 'number').toBeTruthy();
+    expect(typeof r.scoreAfter === 'number').toBeTruthy();
+    expect(r.delta).toBe(r.scoreAfter - r.scoreBefore);
   });
 });
 
 // --- coach_submit_score (Plan 4) -------------------------------------------
 describe('coach_submit_score', () => {
   test('is registered with a confirmed flag in its input schema', () => {
-    const t = tools.get('coach_submit_score');
-    assert.ok(t, 'coach_submit_score should be registered');
-    assert.equal(t.schema.inputSchema.properties.confirmed.type, 'boolean');
+    const t: any = tools.get('coach_submit_score');
+    expect(t).toBeTruthy();
+    expect(t.schema.inputSchema.properties.confirmed.type).toBe('boolean');
   });
 
   test('never reports sent:true on an unconfirmed call (gate or no-baseline refusal)', async () => {
-    const res = await tools.get('coach_submit_score').handler({ confirmed: false });
-    assert.notEqual(res.sent, true); // either {sent:false,reason:'unconfirmed'} or a no_baseline/no_checkin refusal
+    const res: any = await tools.get('coach_submit_score')!.handler({ confirmed: false });
+    expect(res.sent).not.toBe(true); // either {sent:false,reason:'unconfirmed'} or a no_baseline/no_checkin refusal
   });
 });

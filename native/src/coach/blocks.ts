@@ -9,7 +9,9 @@
 // until the attendee has run the opening check-in (the board money shot), not
 // merely fixed a bug by voice. That was the design-review correction.
 
-export const BLOCKS = [
+import type { Block } from '../types.ts';
+
+export const BLOCKS: Block[] = [
   {
     n: 1,
     title: 'Voice coding',
@@ -45,6 +47,6 @@ export const BLOCKS = [
 // block N -> the next block's entry, or null when N is the last block (4) or
 // out of range. Pure: drives the coach_checkpoint advance and is the unit-tested
 // seam for the block ordering.
-export function nextBlock(n) {
+export function nextBlock(n: number): Block | null {
   return BLOCKS.find((b) => b.n === n + 1) ?? null;
 }

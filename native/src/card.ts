@@ -1,13 +1,15 @@
-// native/src/card.mjs
+// native/src/card.ts
 // Render a self-contained before/after "AI-Native" card as an HTML string. No
 // external assets (inline CSS only) so it is offline-safe and shareable. `after`
 // is optional: the opening card omits it and shows no delta.
-import { PILLARS } from './pillars.mjs';
-import { score } from './score.mjs';
+import { PILLARS } from './pillars.ts';
+import { score } from './score.ts';
+import type { Score, ScoreInput } from './types.ts';
 
-const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+const esc = (s: unknown): string =>
+  String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c] as string));
 
-function bars(sc) {
+function bars(sc: Score): string {
   return PILLARS.map((p) => {
     const pct = Math.round(sc.pillars[p.id] * 100);
     return `<div class="bar"><span>${esc(p.label)}</span>` +
@@ -15,7 +17,13 @@ function bars(sc) {
   }).join('');
 }
 
-export function renderCard({ before, after = null, name = 'You' } = {}) {
+export interface RenderCardOptions {
+  before: ScoreInput;
+  after?: ScoreInput | null;
+  name?: string;
+}
+
+export function renderCard({ before, after = null, name = 'You' }: RenderCardOptions = { before: {} }): string {
   const b = score(before);
   const a = after ? score(after) : null;
   const shown = a ?? b;

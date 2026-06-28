@@ -6,10 +6,10 @@
 // Privacy: only volunteered answers are ever sent. Nothing is scanned off the
 // machine — the agent gathers answers in conversation and passes them in.
 //
-//   node submit.mjs detect
+//   bun submit.ts detect
 //     -> stdout JSON: { phase: "pre" } | { phase: "post", participantId, role }
 //
-//   node submit.mjs submit         (reads JSON on stdin)
+//   bun submit.ts submit         (reads JSON on stdin)
 //     stdin:  { role?, answers: { <questionKey>: <answer> }, confirmed }
 //     stdout: { sent, phase, participantId, outbox? } | { sent: false, reason: "unconfirmed" }
 
@@ -40,17 +40,74 @@ const DEFAULT_WORKER_TOKEN = 'aie-5dd089340329c20856985a43';
 const USER_AGENT = 'aie-coach/1.0';
 const POST_TIMEOUT_MS = 4000;
 
+// --- board payload types (local to this module; the board contract, not the
+// scorer's Signals) -------------------------------------------------------
+export type Phase = 'pre' | 'post';
+
+export interface Answer {
+  questionKey: string;
+  answer: string;
+}
+
+export interface FeedbackPayload {
+  participantId: string;
+  phase: Phase;
+  role: string;
+  answers: Answer[];
+}
+
+export interface AiNativeScore {
+  before: number;
+  after: number;
+  delta: number;
+  pillarsPassed?: string[];
+}
+
+export interface ScorePayload {
+  participantId: string;
+  aiNativeScore: AiNativeScore;
+}
+
+// The coach state marker on disk: identity fields written by the pre check-in,
+// plus any progress fields the coach server may have written (read-merge-write
+// keeps them alive). Typed loosely because callers spread it through.
+export interface Marker {
+  participantId?: string;
+  role?: string;
+  preSubmittedAt?: string;
+  [key: string]: unknown;
+}
+
+export type DetectResult =
+  | { phase: 'pre' }
+  | { phase: 'post'; participantId: string | undefined; role: string | undefined };
+
+// A recursive JSON Schema node, covering exactly the keywords this contract uses.
+export interface JSONSchema {
+  const?: unknown;
+  enum?: unknown[];
+  type?: string;
+  required?: string[];
+  properties?: Record<string, JSONSchema>;
+  additionalProperties?: boolean;
+  items?: JSONSchema;
+  allOf?: JSONSchema[];
+  if?: JSONSchema;
+  then?: JSONSchema;
+  else?: JSONSchema;
+}
+
 // The exact question keys the backend expects, in order, per phase.
-export const QUESTION_KEYS = {
+export const QUESTION_KEYS: Record<Phase, string[]> = {
   pre: ['time_sink', 'friction', 'goal'],
   post: ['built', 'next'],
 };
 
 // Canonical prompt wording, transcribed verbatim from SKILL.md (the agent prose
 // mirrors these by eye). The MCP server imports these so its surfaced questions
-// can never silently drift from the skill. The parity test in submit.test.mjs
+// can never silently drift from the skill. The parity test in submit.test.ts
 // guards that every QUESTION_KEYS entry has a non-empty prompt here.
-export const QUESTION_PROMPTS = {
+export const QUESTION_PROMPTS: Record<string, string> = {
   time_sink: 'What dev task eats the most of your week?',
   friction: "What's the most repetitive thing you still do by hand?",
   goal: 'What would you most love to automate or speed up today?',
@@ -59,23 +116,23 @@ export const QUESTION_PROMPTS = {
 };
 export const ROLE_PROMPT = "What's your role and main stack?";
 
-const workerUrl = () => process.env.WORKER_URL || DEFAULT_WORKER_URL;
-const authToken = () => process.env.WORKER_TOKEN || DEFAULT_WORKER_TOKEN;
-const markerPath = () => join(process.cwd(), MARKER);
-const outboxDir = () => join(process.cwd(), OUTBOX_DIR);
+const workerUrl = (): string => process.env.WORKER_URL || DEFAULT_WORKER_URL;
+const authToken = (): string => process.env.WORKER_TOKEN || DEFAULT_WORKER_TOKEN;
+const markerPath = (): string => join(process.cwd(), MARKER);
+const outboxDir = (): string => join(process.cwd(), OUTBOX_DIR);
 
-export function readMarker() {
+export function readMarker(): Marker | null {
   const p = markerPath();
   if (!existsSync(p)) return null;
   try {
-    return JSON.parse(readFileSync(p, 'utf8'));
+    return JSON.parse(readFileSync(p, 'utf8')) as Marker;
   } catch {
     // Unparseable marker: treat as no marker. Better a fresh pre than a crash.
     return null;
   }
 }
 
-export function detect() {
+export function detect(): DetectResult {
   const m = readMarker();
   if (m && m.participantId) {
     return { phase: 'post', participantId: m.participantId, role: m.role };
@@ -83,13 +140,16 @@ export function detect() {
   return { phase: 'pre' };
 }
 
-export function loadSchema() {
-  return JSON.parse(readFileSync(SCHEMA_PATH, 'utf8'));
+export function loadSchema(): JSONSchema {
+  return JSON.parse(readFileSync(SCHEMA_PATH, 'utf8')) as JSONSchema;
 }
 
 // Turn the agent's { questionKey: answer } object into the contract's ordered
 // answers array, enforcing exactly the keys this phase expects.
-export function buildAnswers(phase, answers) {
+export function buildAnswers(
+  phase: Phase,
+  answers: Record<string, unknown> | undefined,
+): Answer[] {
   const keys = QUESTION_KEYS[phase];
   if (!keys) throw new Error(`unknown phase: ${phase}`);
   return keys.map((questionKey) => {
@@ -101,7 +161,17 @@ export function buildAnswers(phase, answers) {
   });
 }
 
-export function buildPayload({ phase, participantId, role, answers }) {
+export function buildPayload({
+  phase,
+  participantId,
+  role,
+  answers,
+}: {
+  phase: Phase;
+  participantId: string;
+  role: string;
+  answers: Record<string, unknown> | undefined;
+}): FeedbackPayload {
   return {
     participantId,
     phase,
@@ -115,23 +185,35 @@ export function buildPayload({ phase, participantId, role, answers }) {
 // go on the wire; raw signals never leave the machine. Throws loudly on a
 // missing id or a non-finite score so a never-scanned attendee (no real
 // baseline) can't post a phantom 0->0 that would understate the room delta.
-export function buildScorePayload({ participantId, before, after, pillarsPassed } = {}) {
+export function buildScorePayload(
+  {
+    participantId,
+    before,
+    after,
+    pillarsPassed,
+  }: {
+    participantId?: unknown;
+    before?: unknown;
+    after?: unknown;
+    pillarsPassed?: unknown;
+  } = {},
+): ScorePayload {
   if (typeof participantId !== 'string' || participantId.trim() === '') {
     throw new Error('participantId is required to post an AI-Native score');
   }
   if (!Number.isFinite(before) || !Number.isFinite(after)) {
     throw new Error('before/after score must each be a finite number');
   }
-  const b = Math.round(before);
-  const a = Math.round(after);
-  const aiNativeScore = { before: b, after: a, delta: a - b };
+  const b = Math.round(before as number);
+  const a = Math.round(after as number);
+  const aiNativeScore: AiNativeScore = { before: b, after: a, delta: a - b };
   if (Array.isArray(pillarsPassed) && pillarsPassed.length > 0) {
-    aiNativeScore.pillarsPassed = pillarsPassed.filter((p) => typeof p === 'string' && p);
+    aiNativeScore.pillarsPassed = pillarsPassed.filter((p): p is string => typeof p === 'string' && Boolean(p));
   }
   return { participantId: participantId.trim(), aiNativeScore };
 }
 
-function jsonType(v) {
+function jsonType(v: unknown): string {
   if (v === null) return 'null';
   if (Array.isArray(v)) return 'array';
   if (Number.isInteger(v)) return 'integer';
@@ -141,8 +223,8 @@ function jsonType(v) {
 // Minimal JSON Schema validator covering exactly the keywords this contract
 // uses: type, enum, const, required, properties, additionalProperties (false),
 // items, allOf, and if/then. Returns an array of error strings (empty = valid).
-export function validateAgainstSchema(value, schema, path = '$') {
-  const errors = [];
+export function validateAgainstSchema(value: unknown, schema: JSONSchema, path = '$'): string[] {
+  const errors: string[] = [];
 
   if (schema.const !== undefined && value !== schema.const) {
     errors.push(`${path}: expected const ${JSON.stringify(schema.const)}`);
@@ -159,22 +241,25 @@ export function validateAgainstSchema(value, schema, path = '$') {
   const isObj = jsonType(value) === 'object';
   if (isObj && schema.required) {
     for (const key of schema.required) {
-      if (!(key in value)) errors.push(`${path}.${key}: required property missing`);
+      if (!(key in (value as object))) errors.push(`${path}.${key}: required property missing`);
     }
   }
   if (isObj && schema.properties) {
     for (const [key, sub] of Object.entries(schema.properties)) {
-      if (key in value) errors.push(...validateAgainstSchema(value[key], sub, `${path}.${key}`));
+      if (key in (value as object)) {
+        errors.push(...validateAgainstSchema((value as Record<string, unknown>)[key], sub, `${path}.${key}`));
+      }
     }
   }
   if (isObj && schema.additionalProperties === false && schema.properties) {
     const allowed = new Set(Object.keys(schema.properties));
-    for (const key of Object.keys(value)) {
+    for (const key of Object.keys(value as object)) {
       if (!allowed.has(key)) errors.push(`${path}.${key}: additional property not allowed`);
     }
   }
   if (Array.isArray(value) && schema.items) {
-    value.forEach((el, i) => errors.push(...validateAgainstSchema(el, schema.items, `${path}[${i}]`)));
+    const items = schema.items;
+    value.forEach((el, i) => errors.push(...validateAgainstSchema(el, items, `${path}[${i}]`)));
   }
   if (schema.allOf) {
     for (const sub of schema.allOf) errors.push(...validateAgainstSchema(value, sub, path));
@@ -188,7 +273,7 @@ export function validateAgainstSchema(value, schema, path = '$') {
   return errors;
 }
 
-async function postWithRetry(url, payload) {
+async function postWithRetry(url: string, payload: unknown): Promise<{ ok: boolean; status?: number }> {
   const body = JSON.stringify(payload);
   const headers = {
     'Content-Type': 'application/json',
@@ -199,7 +284,7 @@ async function postWithRetry(url, payload) {
     try {
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), POST_TIMEOUT_MS);
-      let res;
+      let res: Response;
       try {
         res = await fetch(url, { method: 'POST', headers, body, signal: ctrl.signal });
       } finally {
@@ -214,7 +299,7 @@ async function postWithRetry(url, payload) {
   return { ok: false };
 }
 
-function writeOutbox(payload) {
+function writeOutbox(payload: { phase: string; participantId: string }): string {
   const dir = outboxDir();
   mkdirSync(dir, { recursive: true });
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -223,12 +308,32 @@ function writeOutbox(payload) {
   return file;
 }
 
+// Result shapes for submit(). Split out so an overload can narrow a confirmed
+// call (confirmed:true can never return the unconfirmed shape) without callers
+// having to re-narrow the union by hand.
+export type SubmitUnconfirmed = { sent: false; reason: 'unconfirmed' };
+export type SubmitSent = { sent: true; phase: Phase; participantId: string };
+export type SubmitOutbox = { sent: false; phase: Phase; participantId: string; outbox: string };
+export type SubmitResult = SubmitUnconfirmed | SubmitSent | SubmitOutbox;
+
 // input: { role?, answers: { <questionKey>: <answer> }, confirmed }
-export async function submit(input) {
+// A confirmed:true call passes the consent guard, so its result is always a
+// sent/outbox shape — the unconfirmed shape is unreachable and dropped from the type.
+export async function submit(
+  input: { role?: unknown; answers?: Record<string, unknown>; confirmed: true },
+): Promise<SubmitSent | SubmitOutbox>;
+export async function submit(
+  input: { role?: unknown; answers?: Record<string, unknown>; confirmed?: unknown },
+): Promise<SubmitResult>;
+export async function submit(input: {
+  role?: unknown;
+  answers?: Record<string, unknown>;
+  confirmed?: unknown;
+}): Promise<SubmitResult> {
   const det = detect();
   const phase = det.phase;
-  let participantId;
-  let role;
+  let participantId: string;
+  let role: string | undefined;
 
   if (phase === 'pre') {
     if (!input.role || String(input.role).trim() === '') {
@@ -237,15 +342,17 @@ export async function submit(input) {
     participantId = randomUUID();
     role = String(input.role).trim();
   } else {
-    participantId = det.participantId;
+    participantId = det.participantId as string;
     role = det.role; // identity + role come from the marker, never stdin
   }
 
-  const payload = buildPayload({ phase, participantId, role, answers: input.answers });
+  const payload = buildPayload({ phase, participantId, role: role as string, answers: input.answers });
 
   const errors = validateAgainstSchema(payload, loadSchema());
   if (errors.length) {
-    const err = new Error(`payload failed schema validation: ${errors.join('; ')}`);
+    const err = new Error(`payload failed schema validation: ${errors.join('; ')}`) as Error & {
+      schemaErrors?: string[];
+    };
     err.schemaErrors = errors;
     throw err; // loud — a code defect, never silently sent
   }
@@ -283,7 +390,17 @@ export async function submit(input) {
 // submit() — only the payload differs (a derived-integers conclusion, sourced
 // from the coach marker by the caller, never a live scan). No marker write here:
 // identity already exists (the pre check-in minted it); this only adds a score.
-export async function submitScore(input) {
+export async function submitScore(input: {
+  participantId?: unknown;
+  before?: unknown;
+  after?: unknown;
+  pillarsPassed?: unknown;
+  confirmed?: unknown;
+}): Promise<
+  | { sent: false; reason: 'unconfirmed' }
+  | { sent: true; participantId: string }
+  | { sent: false; participantId: string; outbox: string }
+> {
   const payload = buildScorePayload(input); // throws loudly on a bad/empty score
 
   // Consent guard — identical to submit(): without explicit confirmation,
@@ -299,7 +416,7 @@ export async function submitScore(input) {
   return { sent: false, participantId: payload.participantId, outbox };
 }
 
-function readStdin() {
+function readStdin(): Promise<string> {
   return new Promise((resolve) => {
     if (process.stdin.isTTY) {
       resolve('');
@@ -314,7 +431,7 @@ function readStdin() {
   });
 }
 
-async function main() {
+async function main(): Promise<void> {
   const cmd = process.argv[2];
   if (cmd === 'detect') {
     console.log(JSON.stringify(detect()));

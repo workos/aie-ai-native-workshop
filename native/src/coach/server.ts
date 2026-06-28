@@ -11,7 +11,7 @@
 //   - stdout is the protocol channel: it must carry only compact JSON lines.
 //     Every diagnostic goes to stderr.
 //
-// Pattern followed: skills/coach-checkin/scripts/submit.mjs — named exports, sync
+// Pattern followed: skills/coach-checkin/scripts/submit.ts — named exports, sync
 // fs, the `import.meta.url` run-guard, loud-on-defect / graceful-on-operational
 // error handling.
 
@@ -19,6 +19,7 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import type { Readable, Writable } from 'node:stream';
 
 // Board-layer delegation target. The check-in tools are thin adapters over this
 // already-tested skill script — no board logic (validation, consent guard,
@@ -30,22 +31,23 @@ import {
   QUESTION_KEYS,
   QUESTION_PROMPTS,
   ROLE_PROMPT,
-} from '../../skills/coach-checkin/scripts/submit.mjs';
+} from '../../../skills/coach-checkin/scripts/submit.ts';
 
-// Navigation-layer collaborators (Phase 4). `state.mjs` owns the progress side of
-// the shared marker (read + checkpoint transitions); `blocks.mjs` is the
+// Navigation-layer collaborators (Phase 4). `state.ts` owns the progress side of
+// the shared marker (read + checkpoint transitions); `blocks.ts` is the
 // four-block guidance data + the `nextBlock` advance helper.
-import { readState, recordCheckpoint, writeProgress } from './state.mjs';
-import { BLOCKS, nextBlock } from './blocks.mjs';
+import { readState, recordCheckpoint, writeProgress } from './state.ts';
+import { BLOCKS, nextBlock } from './blocks.ts';
 
 // Engine-layer collaborators (Plan 3). The adapter composes the native engine
 // (scan -> score -> recommend) and owns the scan-backed gate; renderCard turns
 // raw signals into the shareable HTML card. These import the LIBRARY functions —
-// never native/src/cli.mjs's run(), which writes to stdout and would corrupt the
+// never native/src/cli.ts's run(), which writes to stdout and would corrupt the
 // protocol stream.
-import { coachScan, nextStep, gateResult, GATE_THRESHOLD } from './engine.mjs';
-import { renderCard } from '../../native/src/card.mjs';
-import { score } from '../../native/src/score.mjs';
+import { coachScan, nextStep, gateResult, GATE_THRESHOLD } from './engine.ts';
+import { renderCard } from '../card.ts';
+import { score } from '../score.ts';
+import type { PillarId, ScoreInput } from '../types.ts';
 
 const PROTOCOL_VERSION = '2025-06-18'; // pinned fallback when the client omits one
 const SERVER_INFO = { name: 'aie-coach', version: '1.0.0' };
@@ -60,24 +62,39 @@ const INTERNAL_ERROR = -32603;
 // Tool-handler *exceptions* are NOT RpcErrors — they become an isError result
 // (see handleToolsCall); RpcError is for invalid-params / bad-request shapes.
 export class RpcError extends Error {
-  constructor(code, message) {
+  code: number;
+  constructor(code: number, message: string) {
     super(message);
     this.name = 'RpcError';
     this.code = code;
   }
 }
 
+// A JSON-RPC tool descriptor as returned by tools/list.
+interface ToolSchema {
+  name: string;
+  description: string;
+  inputSchema: Record<string, unknown>;
+}
+
+// A registry entry: the tools/list descriptor plus the handler that runs it.
+// `handler(args)` returns a JSON-serializable result (or throws to signal failure).
+interface ToolEntry {
+  schema: ToolSchema;
+  handler: (args: any) => unknown;
+}
+
 // Tool registry — populated by later phases. name -> { schema, handler }.
 // `schema` is the tool descriptor returned by tools/list; `handler(args)` runs
 // the tool and returns a JSON-serializable result (or throws to signal failure).
-export const tools = new Map();
+export const tools = new Map<string, ToolEntry>();
 
 // --- board-layer tools (Phase 2) -----------------------------------------
-// Two thin adapters over submit.mjs. `coach_checkin` reads the marker via
+// Two thin adapters over submit.ts. `coach_checkin` reads the marker via
 // detect() and returns the ordered questions; `coach_submit_checkin` delegates
 // straight to submit() and surfaces its result (or a structured validation
 // error) verbatim. The consent guard, retry, outbox, and marker write all live
-// in submit.mjs and are untouched here.
+// in submit.ts and are untouched here.
 
 // coach_checkin: return the phase and its ordered questions. Reads state only;
 // never sends anything.
@@ -120,13 +137,13 @@ tools.set('coach_submit_checkin', {
       additionalProperties: false,
     },
   },
-  handler: async ({ role, answers, confirmed }) => {
+  handler: async ({ role, answers, confirmed }: { role?: string; answers: Record<string, unknown>; confirmed: boolean }) => {
     try {
       return await submit({ role, answers, confirmed });
       //  -> { sent:true, phase, participantId }
       //  -> { sent:false, phase, participantId, outbox }
       //  -> { sent:false, reason:'unconfirmed' }
-    } catch (err) {
+    } catch (err: any) {
       return {
         error: 'invalid_answers',
         detail: String(err?.message ?? err),
@@ -140,7 +157,7 @@ tools.set('coach_submit_checkin', {
 // The "where am I / what's next" layer. `coach_status` composes identity+phase
 // (detect) with progress (readState) into a read-only answer; `coach_checkpoint`
 // records a block done, advances, and returns the next block's guidance. Both
-// reuse the shared marker via state.mjs — no progress logic is reimplemented.
+// reuse the shared marker via state.ts — no progress logic is reimplemented.
 
 // Pick the single most useful next action for the attendee. Priority order:
 //   1. No participantId (detect() returns it only in `post`, i.e. they haven't
@@ -148,7 +165,11 @@ tools.set('coach_submit_checkin', {
 //   2. All four blocks done -> point at the closing check-in.
 //   3. Otherwise -> the current block's first action (default to Block 1).
 // Advisory only: `blocksDone` is the authoritative progress record; this is a hint.
-export function nextActionFor(d, currentBlock, blocksDone) {
+export function nextActionFor(
+  d: { participantId?: string },
+  currentBlock: number | null,
+  blocksDone: number[],
+): string {
   if (!d.participantId) return 'Run your opening check-in';
   const allDone = [1, 2, 3, 4].every((n) => blocksDone.includes(n));
   if (allDone) return 'Run your closing check-in';
@@ -165,14 +186,16 @@ tools.set('coach_status', {
   },
   handler: () => {
     const d = detect(); // { phase:'pre' } | { phase:'post', participantId, role }
+    const participantId = d.phase === 'post' ? d.participantId : undefined;
+    const role = d.phase === 'post' ? d.role : undefined;
     const { currentBlock = null, blocksDone = [] } = readState();
     return {
       phase: d.phase,
-      participantId: d.participantId,
-      role: d.role,
+      participantId,
+      role,
       currentBlock,
       blocksDone,
-      nextAction: nextActionFor(d, currentBlock, blocksDone),
+      nextAction: nextActionFor({ participantId }, currentBlock, blocksDone),
     };
   },
 });
@@ -197,11 +220,17 @@ tools.set('coach_checkpoint', {
       additionalProperties: false,
     },
   },
-  handler: ({ block }) => {
+  handler: ({ block }: { block: number }) => {
     recordCheckpoint(block);
     const done = block === 4;
     const next = nextBlock(block);
-    const res = {
+    const res: {
+      congrats: string;
+      done: boolean;
+      nextBlock?: { n: number; title: string; goal: string; firstAction: string; doneWhen: string };
+      nudge?: string;
+      closing?: string;
+    } = {
       congrats: `Nice — Block ${block} (${BLOCKS[block - 1].title}) done.`,
       done,
       nextBlock: next
@@ -223,7 +252,7 @@ tools.set('coach_checkpoint', {
 // coach_gate RE-SCANS and advances only if the pillar's machinery is now actually
 // on disk (no flag can fake it); coach_card renders the before/after card from the
 // stored opening scan + a fresh scan. Advancement + the opening baseline persist
-// through the shared marker via state.mjs (read-merge-write; identity/progress
+// through the shared marker via state.ts (read-merge-write; identity/progress
 // fields are untouched).
 
 // coach_scan: full report. The first scan with no stored baseline records the
@@ -287,7 +316,7 @@ tools.set('coach_gate', {
       additionalProperties: false,
     },
   },
-  handler: ({ pillar }) => {
+  handler: ({ pillar }: { pillar: PillarId }) => {
     const gate = gateResult(pillar); // { pillar, subScore, threshold, passed } — re-scans
     if (!gate.passed) {
       return {
@@ -297,8 +326,9 @@ tools.set('coach_gate', {
       };
     }
     // Record the pass on the shared marker (Set-dedup, stable order).
-    const { pillarsPassed = [] } = readState();
-    const merged = [...new Set([...pillarsPassed, pillar])].sort();
+    const { pillarsPassed } = readState();
+    const prior = Array.isArray(pillarsPassed) ? (pillarsPassed as string[]) : [];
+    const merged = [...new Set([...prior, pillar])].sort();
     writeProgress({ pillarsPassed: merged });
     return { ...gate, advanced: true, pillarsPassed: merged };
   },
@@ -317,10 +347,10 @@ tools.set('coach_card', {
       additionalProperties: false,
     },
   },
-  handler: ({ name = 'You' } = {}) => {
-    const after = coachScan().signals;            // fresh scan now
+  handler: ({ name = 'You' }: { name?: string } = {}) => {
+    const after: ScoreInput = coachScan().signals; // fresh scan now
     const { openingSignals } = readState();
-    const before = openingSignals ?? after;       // no baseline -> delta is 0
+    const before: ScoreInput = (openingSignals as ScoreInput | undefined) ?? after; // no baseline -> delta is 0
     const html = renderCard({ before, after, name });
     return {
       html,
@@ -351,39 +381,40 @@ tools.set('coach_submit_score', {
       additionalProperties: false,
     },
   },
-  handler: async ({ confirmed }) => {
+  handler: async ({ confirmed }: { confirmed: boolean; name?: string }) => {
     // Gate FIRST: on an unconfirmed call do NO local work at all — not even a
     // local scan runs before consent. submitScore re-checks the same gate, so
     // this is defense-in-depth, not the only guard.
     if (confirmed !== true) return { sent: false, reason: 'unconfirmed' };
     const d = detect(); // identity comes from the marker, never from args
-    if (!d.participantId) {
+    const participantId = d.phase === 'post' ? d.participantId : undefined;
+    if (!participantId) {
       return { sent: false, reason: 'no_checkin', message: 'Run your opening check-in first so you have an identity on the board.' };
     }
     const { openingSignals, pillarsPassed = [] } = readState();
     if (!openingSignals) {
       return { sent: false, reason: 'no_baseline', message: 'No opening scan on record — run coach_scan at the start so there is a real before.' };
     }
-    const before = score(openingSignals).total;     // stored baseline
-    const after = score(coachScan().signals).total; // fresh scan now
-    return submitScore({ participantId: d.participantId, before, after, pillarsPassed, confirmed });
+    const before = score(openingSignals as ScoreInput).total; // stored baseline
+    const after = score(coachScan().signals).total;           // fresh scan now
+    return submitScore({ participantId, before, after, pillarsPassed, confirmed });
     //  -> { sent:true, participantId } | { sent:false, reason:'unconfirmed' } | { sent:false, participantId, outbox }
   },
 });
 
 // --- framing -------------------------------------------------------------
 
-export function frame(id, result) {
+export function frame(id: string | number | null, result: unknown): string {
   return JSON.stringify({ jsonrpc: '2.0', id, result });
 }
 
-export function frameError(id, code, message) {
+export function frameError(id: string | number | null, code: number, message: string): string {
   return JSON.stringify({ jsonrpc: '2.0', id, error: { code, message } });
 }
 
 // --- method handlers -----------------------------------------------------
 
-function handleInitialize(params) {
+function handleInitialize(params: { protocolVersion?: string } | undefined): unknown {
   return {
     // Echo the client's protocolVersion for max compatibility; pin otherwise.
     protocolVersion: params?.protocolVersion ?? PROTOCOL_VERSION,
@@ -392,19 +423,19 @@ function handleInitialize(params) {
   };
 }
 
-function handleToolsList() {
+function handleToolsList(): unknown {
   return { tools: [...tools.values()].map((t) => t.schema) };
 }
 
-async function handleToolsCall(params) {
-  const entry = tools.get(params?.name);
+async function handleToolsCall(params: { name?: string; arguments?: unknown } | undefined): Promise<unknown> {
+  const entry = tools.get(params?.name as string);
   // Unknown tool is a protocol-level invalid-params error, distinct from a tool
   // that runs and fails (which is a readable isError result below).
   if (!entry) throw new RpcError(INVALID_PARAMS, `Unknown tool: ${params?.name}`);
   try {
     const result = await entry.handler(params?.arguments ?? {});
     return { content: [{ type: 'text', text: JSON.stringify(result) }] };
-  } catch (err) {
+  } catch (err: any) {
     // Tool-level failure is a result the model can read and recover from, not a
     // transport error that would desync the client.
     return { content: [{ type: 'text', text: String(err?.message ?? err) }], isError: true };
@@ -413,7 +444,7 @@ async function handleToolsCall(params) {
 
 // Dispatch table. A handler returns a `result` object (sent framed) or throws an
 // RpcError. The notification entry returns undefined and writes nothing.
-const METHODS = {
+const METHODS: Record<string, (params: any) => unknown> = {
   initialize: handleInitialize,
   'notifications/initialized': () => undefined, // notification: no reply
   'tools/list': handleToolsList,
@@ -422,10 +453,17 @@ const METHODS = {
 
 // --- dispatch ------------------------------------------------------------
 
+// A parsed JSON-RPC message. `id` is absent for notifications.
+interface RpcMessage {
+  id?: string | number | null;
+  method: string;
+  params?: unknown;
+}
+
 // Handle one already-parsed message. Returns the framed response string, or null
 // when nothing should be written (notifications). Throwing is not expected here —
 // handler errors are caught and framed.
-async function dispatch(msg) {
+async function dispatch(msg: RpcMessage): Promise<string | null> {
   const { id, method } = msg;
   // A message with no `id` is a notification: run any side effect, write nothing.
   const isNotification = id === undefined || id === null;
@@ -433,26 +471,26 @@ async function dispatch(msg) {
   const handler = METHODS[method];
   if (!handler) {
     if (isNotification) return null; // an unknown notification is simply ignored
-    return frameError(id, METHOD_NOT_FOUND, `Method not found: ${method}`);
+    return frameError(id ?? null, METHOD_NOT_FOUND, `Method not found: ${method}`);
   }
 
   try {
     const result = await handler(msg.params);
     if (isNotification) return null; // never reply to a notification
-    return frame(id, result);
-  } catch (err) {
+    return frame(id ?? null, result);
+  } catch (err: any) {
     if (isNotification) return null;
-    if (err instanceof RpcError) return frameError(id, err.code, err.message);
-    return frameError(id, INTERNAL_ERROR, String(err?.message ?? err));
+    if (err instanceof RpcError) return frameError(id ?? null, err.code, err.message);
+    return frameError(id ?? null, INTERNAL_ERROR, String(err?.message ?? err));
   }
 }
 
 // Process one raw stdin line. Empty/whitespace-only lines are skipped (they are
 // framing artifacts, not messages). A non-JSON line is a parse error framed with
 // a null id, since the request id is unknowable. Writes responses via `write`.
-async function handleLine(line, write) {
+async function handleLine(line: string, write: (line: string) => void): Promise<void> {
   if (line.trim() === '') return;
-  let msg;
+  let msg: RpcMessage;
   try {
     msg = JSON.parse(line);
   } catch {
@@ -466,15 +504,17 @@ async function handleLine(line, write) {
 // Wire stdin -> line framing -> dispatch -> stdout. Buffers until each `\n`,
 // retaining a trailing partial line across chunks. `write` appends the newline
 // framing so callers pass bare JSON strings.
-export function startServer({ input = process.stdin, output = process.stdout } = {}) {
-  const write = (line) => output.write(line + '\n');
+export function startServer(
+  { input = process.stdin, output = process.stdout }: { input?: Readable; output?: Writable } = {},
+): (line: string) => void {
+  const write = (line: string): boolean => output.write(line + '\n');
   let buffer = '';
   // Serialize line handling so out-of-order async dispatch can't interleave
   // writes or process a later line before an earlier one resolves.
   let chain = Promise.resolve();
 
   input.setEncoding('utf8');
-  input.on('data', (chunk) => {
+  input.on('data', (chunk: string) => {
     buffer += chunk;
     let nl;
     while ((nl = buffer.indexOf('\n')) !== -1) {
@@ -495,12 +535,12 @@ export function startServer({ input = process.stdin, output = process.stdout } =
   return write;
 }
 
-// On startup, verify the process was launched from the repo root. submit.mjs (which
+// On startup, verify the process was launched from the repo root. submit.ts (which
 // later phases delegate to) resolves the marker/outbox against process.cwd(), so a
 // wrong cwd would silently write shared state to the wrong place. Warn loudly to
 // stderr — a dead server is worse than a warning, so do NOT exit.
-export function assertCwd() {
-  const anchor = join(process.cwd(), 'skills', 'coach-checkin', 'scripts', 'submit.mjs');
+export function assertCwd(): void {
+  const anchor = join(process.cwd(), 'skills', 'coach-checkin', 'scripts', 'submit.ts');
   if (!existsSync(anchor)) {
     process.stderr.write(
       `[aie-coach] WARNING: cwd ${process.cwd()} does not look like the repo root; ` +

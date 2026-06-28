@@ -1,13 +1,14 @@
-// native/src/score.mjs
+// native/src/score.ts
 // The rubric: raw signals (facts on disk) -> a 0..1 sub-score per pillar, then a
 // weighted 0..100 total. Pure and deterministic — the same signals must always
 // produce the same number. The constants here are the calibration surface: tune
 // them in a dry-run so a typical room lands ~30 before / ~70 after.
-import { PILLARS } from './pillars.mjs';
+import { PILLARS } from './pillars.ts';
+import type { ScoreInput, SubScores, Score } from './types.ts';
 
-const clamp01 = (n) => Math.max(0, Math.min(1, n));
+const clamp01 = (n: number): number => Math.max(0, Math.min(1, n));
 
-export function subScores(signals) {
+export function subScores(signals: ScoreInput): SubScores {
   const s = signals ?? {};
   const scheduled = s.scheduledJobs ?? 0;
   const worktrees = s.worktrees ?? 0;
@@ -24,7 +25,7 @@ export function subScores(signals) {
   };
 }
 
-export function score(signals) {
+export function score(signals: ScoreInput): Score {
   const pillars = subScores(signals);
   const total = PILLARS.reduce((sum, p) => sum + pillars[p.id] * p.weight, 0);
   return { pillars, total: Math.round(total * 100) };

@@ -1,7 +1,7 @@
-// native/src/evidence.mjs
+// native/src/evidence.ts
 // The behavioral (evidence) layer. Reads the LOCAL transcript corpus and turns it
 // into OBSERVED COUNTS, then uses those counts to JUSTIFY recommendations — it
-// NEVER feeds score.mjs. Two honesty rules govern the counts:
+// NEVER feeds score.ts. Two honesty rules govern the counts:
 //   1. Only the human's own time is ever translated to hours (re-pasting context).
 //      Agent behavior (it re-running tests) is COUNT-ONLY — no hours are claimed,
 //      because there is no defensible human-hours number for work the agent did.
@@ -14,13 +14,49 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
+import type {
+  Observation,
+  ObservationKind,
+  PillarId,
+  Recommendation,
+  CollectOptions,
+} from './types.ts';
+
+// JSONL line shapes vary by CLI version, so transcript/history rows are modeled
+// loosely (optional, unknown) and narrowed at each use site.
+interface ToolUseBlock {
+  type?: string;
+  name?: string;
+  input?: { command?: unknown };
+}
+
+export interface TranscriptLine {
+  type?: string;
+  isMeta?: boolean;
+  message?: { content?: unknown };
+}
+
+interface PastedContent {
+  contentHash?: unknown;
+}
+
+interface HistoryRow {
+  sessionId?: unknown;
+  timestamp?: unknown;
+  pastedContents?: unknown;
+}
+
+interface ThrashLoop {
+  command: string;
+  runs: number;
+}
 
 // --- pure line classifiers --------------------------------------------------
 
 // A real user turn = a typed string prompt, not meta, not a tool_result wrapper,
 // not a slash/local-command echo. (Verified: array-content user lines are tool
 // results; isMeta marks injected context.)
-export function isRealUserTurn(line) {
+export function isRealUserTurn(line: TranscriptLine | null | undefined): boolean {
   if (!line || line.type !== 'user' || line.isMeta === true) return false;
   const content = line.message?.content;
   if (typeof content !== 'string') return false;
@@ -30,12 +66,15 @@ export function isRealUserTurn(line) {
 // Commands that mean "verifying via the test/lint runner" — the work a hook does.
 const TEST_LINT = /\b(tsc|typecheck|type-check|eslint|prettier|jest|vitest|pytest|rspec|mocha|ava|(?:npm|pnpm|yarn|bun)\s+(?:run\s+)?(?:test|lint)|node\s+--check|go\s+test|cargo\s+test)\b/;
 
-function* toolUses(lines, name) {
+function* toolUses(
+  lines: readonly TranscriptLine[] | null | undefined,
+  name: string,
+): Generator<ToolUseBlock> {
   for (const line of lines ?? []) {
     if (line?.type !== 'assistant') continue;
     const blocks = line.message?.content;
     if (!Array.isArray(blocks)) continue;
-    for (const b of blocks) {
+    for (const b of blocks as ToolUseBlock[]) {
       if (b?.type === 'tool_use' && b.name === name) yield b;
     }
   }
@@ -47,15 +86,18 @@ function* toolUses(lines, name) {
 // Bash runs (it is the agent that re-runs), but ONLY the pathological repeat, never
 // a single legitimate run, and we make NO hours claim from it. Returns one entry
 // per thrashed command (usually zero or one). Total: bad input -> [].
-export function detectThrashLoops(lines, { minRuns = 3 } = {}) {
-  const counts = new Map(); // normalized command -> times run this session
+export function detectThrashLoops(
+  lines: readonly TranscriptLine[] | null | undefined,
+  { minRuns = 3 }: { minRuns?: number } = {},
+): ThrashLoop[] {
+  const counts = new Map<string, number>(); // normalized command -> times run this session
   for (const b of toolUses(lines, 'Bash')) {
     const cmd = b.input?.command;
     if (typeof cmd !== 'string' || !TEST_LINT.test(cmd)) continue;
     const norm = cmd.trim().replace(/\s+/g, ' ');
     counts.set(norm, (counts.get(norm) ?? 0) + 1);
   }
-  const loops = [];
+  const loops: ThrashLoop[] = [];
   for (const [command, runs] of counts) if (runs >= minRuns) loops.push({ command, runs });
   return loops;
 }
@@ -64,7 +106,7 @@ export function detectThrashLoops(lines, { minRuns = 3 } = {}) {
 // plumbing (redirects, pipes, chained echos) and cap length. Presentation only —
 // detectThrashLoops still dedups on the full normalized command, so two commands
 // that merely share a head are never conflated; this just keeps the example clean.
-export function displayCommand(cmd, { max = 60 } = {}) {
+export function displayCommand(cmd: unknown, { max = 60 }: { max?: number } = {}): string {
   if (typeof cmd !== 'string') return '';
   const head = cmd.trim().split(/\s+\d*[<>]|\s*[|;&]+\s*/)[0].trim() || cmd.trim();
   return head.length > max ? head.slice(0, max - 1) + '…' : head;
@@ -73,17 +115,17 @@ export function displayCommand(cmd, { max = 60 } = {}) {
 // Count re-pasted contexts: a contentHash that appears under >= 2 DISTINCT
 // sessionIds in history.jsonl. (The literal text isn't stored; the hash is the
 // dedup key. Same hash in one session is not cross-session re-use.)
-export function countRepastedContexts(historyLines) {
-  const sessionsByHash = new Map();
+export function countRepastedContexts(historyLines: readonly HistoryRow[] | null | undefined): number {
+  const sessionsByHash = new Map<string, Set<unknown>>();
   for (const row of historyLines ?? []) {
     const sid = row?.sessionId;
     const pasted = row?.pastedContents;
     if (!sid || !pasted || typeof pasted !== 'object') continue;
-    for (const v of Object.values(pasted)) {
+    for (const v of Object.values(pasted as Record<string, PastedContent>)) {
       const h = v?.contentHash;
       if (typeof h !== 'string') continue;
       if (!sessionsByHash.has(h)) sessionsByHash.set(h, new Set());
-      sessionsByHash.get(h).add(sid);
+      sessionsByHash.get(h)!.add(sid);
     }
   }
   let repasted = 0;
@@ -91,13 +133,15 @@ export function countRepastedContexts(historyLines) {
   return repasted;
 }
 
-// --- append to native/src/evidence.mjs ---
+// --- append to native/src/evidence.ts ---
 
 // Count delegation (Task tool_use) vs real user turns. High real-turn count with
 // near-zero Task calls = babysitting; Task calls = real handoffs. (subagent
 // transcripts are SEPARATE session files on this CLI, not inline isSidechain
 // lines, so we count Task calls in the parent — not sidechain markers.)
-export function summarizeDelegation(lines) {
+export function summarizeDelegation(
+  lines: readonly TranscriptLine[] | null | undefined,
+): { taskCalls: number; realUserTurns: number } {
   let taskCalls = 0;
   for (const _ of toolUses(lines, 'Task')) taskCalls += 1;
   let realUserTurns = 0;
@@ -111,17 +155,17 @@ export function summarizeDelegation(lines) {
 // which is why such observations are flagged `estimated:true` and rendered "est.".
 // Kinds ABSENT here are COUNT-ONLY: we report the count and make NO hours claim
 // (e.g. thrash loops — the agent does the re-running, so no honest human-hours number).
-export const PER_EVENT_MINUTES = Object.freeze({
+export const PER_EVENT_MINUTES: Readonly<Partial<Record<ObservationKind, number>>> = Object.freeze({
   'repasted-context': 3,   // re-finding + re-pasting the same context blob (human time)
 });
 
 // Which pillar each observation justifies (the seam into recommend()).
-const OBSERVATION_PILLAR = Object.freeze({
+const OBSERVATION_PILLAR: Readonly<Record<ObservationKind, PillarId>> = Object.freeze({
   'thrash-loop': 'verification',
   'repasted-context': 'context',
 });
 
-const round2 = (n) => Math.round(n * 100) / 100;
+const round2 = (n: number): number => Math.round(n * 100) / 100;
 
 // Build one observation from a measured count. Returns null at count 0 so we never
 // manufacture waste. Two shapes, chosen by whether the kind has a PER_EVENT_MINUTES
@@ -133,7 +177,11 @@ const round2 = (n) => Math.round(n * 100) / 100;
 //     claim where one would be indefensible.
 // `now` is accepted for symmetry with windowed callers / determinism (unused in the
 // math). `sample` is an optional example command for the count-only human detail.
-export function buildObservation(kind, count, { windowDays = 30, now = 0, sample = null } = {}) {
+export function buildObservation(
+  kind: ObservationKind,
+  count: number,
+  { windowDays = 30, now = 0, sample = null }: { windowDays?: number; now?: number; sample?: string | null } = {},
+): Observation | null {
   if (!count || count <= 0) return null;
   const pillar = OBSERVATION_PILLAR[kind];
   if (pillar == null) return null;
@@ -162,14 +210,17 @@ export function buildObservation(kind, count, { windowDays = 30, now = 0, sample
 // carry the count in the detail and assert NO hours. Observations with no matching
 // rec are dropped — evidence JUSTIFIES gap recs, it never creates one. If several
 // observations hit one pillar, prefer the hours-bearing one, then the larger count.
-export function applyEvidence(recs, observations) {
-  const best = new Map(); // pillar -> observation
+export function applyEvidence(
+  recs: readonly Recommendation[] | null | undefined,
+  observations: readonly (Observation | null | undefined)[] | null | undefined,
+): Recommendation[] {
+  const best = new Map<PillarId, Observation>(); // pillar -> observation
   for (const o of observations ?? []) {
     if (!o) continue;
     const cur = best.get(o.pillar);
     best.set(o.pillar, cur ? preferObservation(cur, o) : o);
   }
-  return (recs ?? []).map((rec) => {
+  return (recs ?? []).map((rec): Recommendation => {
     const o = best.get(rec.pillar);
     if (!o) return rec;
     const hasHours = typeof o.hoursPerWeek === 'number';
@@ -182,7 +233,7 @@ export function applyEvidence(recs, observations) {
 
 // Prefer the more compelling observation when two hit the same pillar: a real hours
 // number beats a count-only one; otherwise the larger count wins.
-function preferObservation(a, b) {
+function preferObservation(a: Observation, b: Observation): Observation {
   const ah = typeof a.hoursPerWeek === 'number' ? a.hoursPerWeek : -1;
   const bh = typeof b.hoursPerWeek === 'number' ? b.hoursPerWeek : -1;
   if (ah !== bh) return ah > bh ? a : b;
@@ -194,8 +245,8 @@ function preferObservation(a, b) {
 const DAY_MS = 86_400_000;
 
 // Recursively list *.jsonl under a dir. Total: unreadable dirs are skipped.
-function listJsonl(dir) {
-  let out = [];
+function listJsonl(dir: string): string[] {
+  let out: string[] = [];
   let entries;
   try {
     entries = readdirSync(dir, { withFileTypes: true });
@@ -211,14 +262,14 @@ function listJsonl(dir) {
 }
 
 // Parse a JSONL file into objects, skipping blank/garbage lines. Never throws.
-function parseJsonl(path) {
+function parseJsonl(path: string): unknown[] {
   let text;
   try {
     text = readFileSync(path, 'utf8');
   } catch {
     return [];
   }
-  const objs = [];
+  const objs: unknown[] = [];
   for (const line of text.split('\n')) {
     const t = line.trim();
     if (!t) continue;
@@ -231,7 +282,7 @@ function parseJsonl(path) {
   return objs;
 }
 
-function withinWindow(path, now, windowDays) {
+function withinWindow(path: string, now: number, windowDays: number): boolean {
   try {
     return now - statSync(path).mtimeMs <= windowDays * DAY_MS;
   } catch {
@@ -248,18 +299,18 @@ function withinWindow(path, now, windowDays) {
 // manufacture a nudge (anti-sandbagging). recommend()'s threshold-drop is the
 // backstop (a hook makes verification strong, dropping the rec), but gating here
 // keeps the raw observation honest too: the signal is genuinely 0.
-export function collectObservations({ home = homedir(), now = Date.now(), windowDays = 30, hasVerifyHook = false } = {}) {
+export function collectObservations({ home = homedir(), now = Date.now(), windowDays = 30, hasVerifyHook = false }: CollectOptions = {}): Observation[] {
   const claude = join(home, '.claude');
 
   // (1) transcripts -> verify-hook THRASH loops (count-only, hook-gated). A session
   // counts once if it re-ran the same test/lint command 3+ times; we keep one example
   // command for the human detail. No hours are claimed (the agent does the re-running).
   let thrashSessions = 0;
-  let sampleCmd = null;
+  let sampleCmd: string | null = null;
   if (!hasVerifyHook) {
     for (const file of listJsonl(join(claude, 'projects'))) {
       if (!withinWindow(file, now, windowDays)) continue;
-      const loops = detectThrashLoops(parseJsonl(file));
+      const loops = detectThrashLoops(parseJsonl(file) as TranscriptLine[]);
       if (loops.length > 0) {
         thrashSessions += 1;
         if (!sampleCmd) sampleCmd = displayCommand(loops[0].command);
@@ -271,7 +322,7 @@ export function collectObservations({ home = homedir(), now = Date.now(), window
   // time), WINDOWED by each row's timestamp so the count's period matches
   // buildObservation's divisor (an all-time count over a 30d denominator would
   // inflate hoursPerWeek). Rows without a numeric timestamp are dropped — never overstate.
-  const historyRows = parseJsonl(join(claude, 'history.jsonl')).filter(
+  const historyRows = (parseJsonl(join(claude, 'history.jsonl')) as HistoryRow[]).filter(
     (r) => typeof r?.timestamp === 'number' && now - r.timestamp <= windowDays * DAY_MS,
   );
   const repasted = countRepastedContexts(historyRows);
@@ -280,5 +331,5 @@ export function collectObservations({ home = homedir(), now = Date.now(), window
     buildObservation('thrash-loop', thrashSessions, { windowDays, now, sample: sampleCmd }),
     buildObservation('repasted-context', repasted, { windowDays, now }),
   ];
-  return observations.filter(Boolean);
+  return observations.filter(Boolean) as Observation[];
 }

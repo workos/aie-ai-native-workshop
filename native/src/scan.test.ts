@@ -1,13 +1,12 @@
-// native/src/scan.test.mjs
-import { describe, test } from 'node:test';
-import assert from 'node:assert/strict';
+// native/src/scan.test.ts
+import { describe, test, expect } from 'bun:test';
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { scan, detectHooks } from './scan.mjs';
+import { scan, detectHooks } from './scan.ts';
 
 // Build a throwaway ~/.claude under a temp HOME; `setup` receives the .claude dir.
-function fakeHome(setup) {
+function fakeHome(setup: (claude: string) => void): string {
   const home = mkdtempSync(join(tmpdir(), 'aie-home-'));
   const claude = join(home, '.claude');
   mkdirSync(claude, { recursive: true });
@@ -18,20 +17,20 @@ function fakeHome(setup) {
 describe('detectHooks', () => {
   test('flags lint/test commands anywhere in hooks', () => {
     const r = detectHooks({ hooks: { PostToolUse: [{ hooks: [{ command: 'npm run lint && npm test' }] }] } });
-    assert.equal(r.any, true);
-    assert.equal(r.lintTest, true);
+    expect(r.any).toBe(true);
+    expect(r.lintTest).toBe(true);
   });
 
   test('hooks present but no lint/test -> any true, lintTest false', () => {
     const r = detectHooks({ hooks: { Stop: [{ hooks: [{ command: 'echo done' }] }] } });
-    assert.equal(r.any, true);
-    assert.equal(r.lintTest, false);
+    expect(r.any).toBe(true);
+    expect(r.lintTest).toBe(false);
   });
 
   test('no hooks -> all false', () => {
     const r = detectHooks({});
-    assert.equal(r.any, false);
-    assert.equal(r.lintTest, false);
+    expect(r.any).toBe(false);
+    expect(r.lintTest).toBe(false);
   });
 });
 
@@ -47,27 +46,27 @@ describe('scan', () => {
     });
     const cwd = mkdtempSync(join(tmpdir(), 'aie-cwd-'));
     const s = scan({ home, cwd });
-    assert.equal(s.hooks.lintTest, true);
-    assert.equal(s.skills, 2);
-    assert.equal(s.mcpServers, 2);
-    assert.equal(s.claudeMd, false);
-    assert.equal(s.worktrees, 0); // temp cwd is not a git repo
+    expect(s.hooks.lintTest).toBe(true);
+    expect(s.skills).toBe(2);
+    expect(s.mcpServers).toBe(2);
+    expect(s.claudeMd).toBe(false);
+    expect(s.worktrees).toBe(0); // temp cwd is not a git repo
   });
 
   test('empty home -> zeroed signals, never throws', () => {
     const home = fakeHome(() => {});
     const cwd = mkdtempSync(join(tmpdir(), 'aie-cwd-'));
     const s = scan({ home, cwd });
-    assert.equal(s.hooks.any, false);
-    assert.equal(s.skills, 0);
-    assert.equal(s.mcpServers, 0);
+    expect(s.hooks.any).toBe(false);
+    expect(s.skills).toBe(0);
+    expect(s.mcpServers).toBe(0);
   });
 });
 
-// --- append to native/src/scan.test.mjs ---
-import { countBackgroundJobs, detectDelegation } from './scan.mjs';
+// --- append to native/src/scan.test.ts ---
+import { countBackgroundJobs, detectDelegation } from './scan.ts';
 
-function jobsHome(setup) {
+function jobsHome(setup: (claude: string) => void): string {
   const home = mkdtempSync(join(tmpdir(), 'aie-jobs-'));
   const claude = join(home, '.claude');
   mkdirSync(claude, { recursive: true });
@@ -86,16 +85,16 @@ describe('countBackgroundJobs', () => {
       writeFileSync(join(b, 'state.json'), JSON.stringify({ template: 'bg', backend: 'daemon', state: 'failed' }));
       writeFileSync(join(claude, 'jobs', 'pins.json'), '[]'); // not a job dir
     });
-    assert.equal(countBackgroundJobs(home), 2);
+    expect(countBackgroundJobs(home)).toBe(2);
   });
   test('no jobs dir -> 0, never throws', () => {
-    assert.equal(countBackgroundJobs(mkdtempSync(join(tmpdir(), 'aie-nojobs-'))), 0);
+    expect(countBackgroundJobs(mkdtempSync(join(tmpdir(), 'aie-nojobs-')))).toBe(0);
   });
 });
 
 describe('detectDelegation', () => {
   const taskLine = { type: 'assistant', message: { content: [{ type: 'tool_use', name: 'Task', input: { description: 'd', prompt: 'p', subagent_type: 'Explore' } }] } };
-  function corpusHome(perSession) {
+  function corpusHome(perSession: Record<string, unknown[]>): string {
     const home = mkdtempSync(join(tmpdir(), 'aie-deleg-'));
     const proj = join(home, '.claude', 'projects', 'slug-a');
     mkdirSync(proj, { recursive: true });
@@ -107,20 +106,20 @@ describe('detectDelegation', () => {
   test('Task calls in >=2 distinct sessions -> reusable pattern true', () => {
     const home = corpusHome({ 's1.jsonl': [taskLine], 's2.jsonl': [taskLine] });
     const r = detectDelegation(home, { now: Date.now(), windowDays: 365 });
-    assert.equal(r.reusableDelegationPattern, true);
-    assert.equal(r.delegationSessions, 2);
-    assert.equal(r.taskCalls, 2);
+    expect(r.reusableDelegationPattern).toBe(true);
+    expect(r.delegationSessions).toBe(2);
+    expect(r.taskCalls).toBe(2);
   });
   test('a single Task call in one session is NOT a pattern', () => {
     const home = corpusHome({ 's1.jsonl': [taskLine] });
     const r = detectDelegation(home, { now: Date.now(), windowDays: 365 });
-    assert.equal(r.reusableDelegationPattern, false);
-    assert.equal(r.delegationSessions, 1);
+    expect(r.reusableDelegationPattern).toBe(false);
+    expect(r.delegationSessions).toBe(1);
   });
   test('no corpus -> false/0, never throws', () => {
     const r = detectDelegation(mkdtempSync(join(tmpdir(), 'aie-nodeleg-')), { now: Date.now() });
-    assert.equal(r.reusableDelegationPattern, false);
-    assert.equal(r.taskCalls, 0);
+    expect(r.reusableDelegationPattern).toBe(false);
+    expect(r.taskCalls).toBe(0);
   });
 });
 
@@ -133,8 +132,8 @@ describe('scan (evidence-layer additions)', () => {
     });
     const cwd = mkdtempSync(join(tmpdir(), 'aie-cwd-'));
     const s = scan({ home, cwd });
-    assert.equal(s.scheduledJobs, 0);                 // honest: no on-disk recurrence
-    assert.equal(s.behavior.backgroundJobs, 1);       // the real fact we DO have
-    assert.equal(typeof s.reusableDelegationPattern, 'boolean');
+    expect(s.scheduledJobs).toBe(0);                 // honest: no on-disk recurrence
+    expect(s.behavior.backgroundJobs).toBe(1);       // the real fact we DO have
+    expect(typeof s.reusableDelegationPattern).toBe('boolean');
   });
 });

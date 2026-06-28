@@ -11,7 +11,7 @@ A short, **opt-in** workflow interview for *The AI-Native Engineer* workshop. Yo
 
 ## How it works
 
-The skill auto-detects which check-in to run using a marker file (`.aie-coach-state.json`) in the repo root: no marker means this is the **opening** (`pre`) check-in; an existing marker means the **closing** (`post`) check-in. The same anonymous participant id is reused across both runs so the board can connect your before and after. All file state, payload assembly, and network I/O live in `scripts/submit.mjs` — do not write the marker, build the JSON, or POST by hand.
+The skill auto-detects which check-in to run using a marker file (`.aie-coach-state.json`) in the repo root: no marker means this is the **opening** (`pre`) check-in; an existing marker means the **closing** (`post`) check-in. The same anonymous participant id is reused across both runs so the board can connect your before and after. All file state, payload assembly, and network I/O live in `scripts/submit.ts` — do not write the marker, build the JSON, or POST by hand.
 
 **Run every command from the workshop repo root** (so the marker is written there, where detection looks for it).
 
@@ -20,7 +20,7 @@ The skill auto-detects which check-in to run using a marker file (`.aie-coach-st
 1. **Detect the phase.** Run:
 
    ```bash
-   node skills/coach-checkin/scripts/submit.mjs detect
+   bun skills/coach-checkin/scripts/submit.ts detect
    ```
 
    Read the `phase` field from its JSON output (`"pre"` or `"post"`).
@@ -44,14 +44,14 @@ The skill auto-detects which check-in to run using a marker file (`.aie-coach-st
 
    ```bash
    echo '{"role":"Backend / Go","answers":{"time_sink":"...","friction":"...","goal":"..."},"confirmed":true}' \
-     | node skills/coach-checkin/scripts/submit.mjs submit
+     | bun skills/coach-checkin/scripts/submit.ts submit
    ```
 
    For the post run, omit `role` (it comes from the marker):
 
    ```bash
    echo '{"answers":{"built":"...","next":"..."},"confirmed":true}' \
-     | node skills/coach-checkin/scripts/submit.mjs submit
+     | bun skills/coach-checkin/scripts/submit.ts submit
    ```
 
 5. **Report the result** plainly from the command's JSON output:
@@ -61,6 +61,6 @@ The skill auto-detects which check-in to run using a marker file (`.aie-coach-st
 ## Notes
 
 - All commands run from the workshop repo root; the marker (`.aie-coach-state.json`) and any outbox files land there.
-- The board URL and auth token are baked into `scripts/submit.mjs`; set the `WORKER_URL` / `WORKER_TOKEN` environment variables to override them (the facilitator sets these once the board is deployed).
+- The board URL and auth token are baked into `scripts/submit.ts`; set the `WORKER_URL` / `WORKER_TOKEN` environment variables to override them (the facilitator sets these once the board is deployed).
 - The payload contract is defined in `scripts/feedback-contract.schema.json` and described in [`CONTRACT.md`](CONTRACT.md).
 - Never collect or send anything the participant didn't type and confirm. No file scans, no `git log`, no transcript reads — volunteered answers only.
