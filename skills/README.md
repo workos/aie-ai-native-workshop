@@ -41,5 +41,5 @@ with nothing but Bun and the repo. It graduates into a small **MCP server**
 (in [`native/src/coach/`](../native/src/coach/), booted via `bun native/src/cli.ts --mcp`)
 that lives in the participant's Claude session as an interactive guide: it
 congratulates, advances them step to step, and runs the same opt-in interview
-through the question tool. Same privacy rule, richer experience. See
-[`../.claude/skills/aie-coach/README.md`](../.claude/skills/aie-coach/README.md).
+through the question tool. Same privacy rule, richer experience. It's registered for
+this repo in [`.claude/settings.json`](../.claude/settings.json) as the `aie-coach` MCP server.
