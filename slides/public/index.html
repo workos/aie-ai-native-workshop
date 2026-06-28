@@ -658,6 +658,35 @@
   .twoline .l1 { color: var(--t-mute); }
   .twoline .l2 { color: var(--t-hi); }
 
+  /* ---- Move chips (orientation: four moves in a row) ---- */
+  .chips-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 36px; margin-top: 8px; }
+  .move-chip {
+    background: var(--ink-600); border: 1px solid var(--line); border-radius: 18px;
+    padding: 40px 34px; display: flex; flex-direction: column; gap: 18px;
+    box-shadow: 0 1px 0 rgba(255,255,255,.03) inset, 0 28px 56px -28px rgba(0,0,0,.6);
+  }
+  .move-chip .mnum { font-family: var(--font-mono); font-size: 30px; color: var(--teal); letter-spacing: .14em; }
+  .move-chip .mname { font-family: var(--font-serif); font-weight: 700; font-size: 46px; line-height: 1.08; color: var(--t-hi); letter-spacing: -0.01em; }
+
+  /* ---- Resource cards (three QRs on white) ---- */
+  .res-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px; flex: 1; min-height: 0; align-items: stretch; }
+  .res-card {
+    background: var(--ink-600); border: 1px solid var(--line); border-radius: 20px;
+    padding: 44px 40px; display: flex; flex-direction: column; align-items: center; gap: 24px; text-align: center;
+    box-shadow: 0 1px 0 rgba(255,255,255,.03) inset, 0 28px 56px -28px rgba(0,0,0,.6);
+  }
+  .res-card .res-glyph { font-size: 52px; line-height: 1; }
+  .res-card .res-name { font-family: var(--font-serif); font-weight: 700; font-size: 40px; color: var(--t-hi); line-height: 1.1; }
+  .res-card .res-desc { font-size: 27px; color: var(--t-mute); line-height: 1.35; }
+  .res-card .qr-img { width: 200px; height: 200px; }
+  .res-card .res-url { font-family: var(--font-mono); font-size: 22px; color: var(--teal); word-break: break-all; line-height: 1.35; margin-top: auto; }
+
+  /* ---- Two-step cards (coach check-ins) ---- */
+  .step-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; margin-top: 8px; }
+  .step-card { background: var(--ink-600); border: 1px solid var(--line); border-left: 8px solid var(--teal); border-radius: 18px; padding: 44px 48px; display: flex; flex-direction: column; gap: 20px; }
+  .step-card .slabel { font-family: var(--font-mono); font-size: 28px; color: var(--teal); letter-spacing: .12em; text-transform: uppercase; }
+  .step-card .stext { font-size: 36px; line-height: 1.32; color: var(--t-hi); }
+
   /* ---- Mini cards (goal / loop) ---- */
   .mini-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; margin-top: 8px; }
   .mini-card { background: var(--ink-600); border: 1px solid var(--line); border-radius: 20px; padding: 52px 52px; display: flex; flex-direction: column; gap: 22px; }
@@ -899,7 +928,7 @@
   <!-- ============ 03 WHAT TODAY IS ============ -->
   <section data-label="Buffer pattern · What today is" class="grain">
     <div class="frame" style="justify-content: center;">
-      <div class="eyebrow" style="margin-bottom: 36px;">What today is</div>
+      <div class="eyebrow" style="margin-bottom: 36px;">Why it sticks</div>
       <div class="cols-3" style="flex: none; gap: 40px;">
         <div class="card">
           <span class="label">01</span>
@@ -956,6 +985,145 @@
     </div>
   </section>
 
+  <!-- ============ O1 DIVIDER · WHAT WE'RE DOING TODAY ============ -->
+  <section data-label="Section divider · Today" class="section-divider">
+    <div class="ghost" aria-hidden="true">00</div>
+    <div class="frame">
+      <div class="num">00</div>
+      <h2>What we're doing today.</h2>
+      <p class="sub">The plan, your tools, where to start.</p>
+    </div>
+  </section>
+
+  <!-- ============ O2 TODAY IN ONE SCREEN ============ -->
+  <section data-label="Buffer pattern · Today in one screen" class="grain">
+    <div class="frame">
+      <div class="eyebrow" style="margin-bottom: 24px;">The plan</div>
+      <h2 class="deck-h2" style="margin-bottom: 48px;">Four moves. One repo. One <span class="underline-accent">hour</span>.</h2>
+      <div class="chips-row">
+        <div class="move-chip card"><span class="mnum">01</span><span class="mname">Voice coding</span></div>
+        <div class="move-chip card"><span class="mnum">02</span><span class="mname">Loops &amp; goals</span></div>
+        <div class="move-chip card"><span class="mnum">03</span><span class="mname">Verification gates</span></div>
+        <div class="move-chip card"><span class="mnum">04</span><span class="mname">Scheduled tasks</span></div>
+      </div>
+      <p class="body muted" style="margin-top: 48px; font-size: 34px; max-width: 1660px;">
+        Each block: we show you, then you try it. You leave with all four <b class="lev">running on your machine</b>.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ O3 YOUR THREE RESOURCES ============ -->
+  <section data-label="Orientation · three resources" class="grain">
+    <div class="frame">
+      <div class="eyebrow" style="margin-bottom: 24px;">Keep these open</div>
+      <h2 class="deck-h2" style="margin-bottom: 48px;">Three things on your screen <span class="underline-accent">today</span>.</h2>
+      <div class="res-cards">
+        <div class="res-card">
+          <span class="res-glyph">&#128421;&#65039;</span>
+          <span class="res-name">These slides</span>
+          <span class="res-desc">Follow along on your phone.</span>
+          <img src="img/qr-deck.png" alt="Slides QR" class="qr-img" />
+          <span class="res-url">aie-deck.workos-internal.workers.dev</span>
+        </div>
+        <div class="res-card">
+          <span class="res-glyph">&#128202;</span>
+          <span class="res-name">The live board</span>
+          <span class="res-desc">The room, in real time.</span>
+          <img src="img/qr-board.png" alt="Live board QR" class="qr-img" />
+          <span class="res-url">aie-board.workos-internal.workers.dev</span>
+        </div>
+        <div class="res-card">
+          <span class="res-glyph">&#128214;</span>
+          <span class="res-name">The glossary</span>
+          <span class="res-desc">Ask it anything.</span>
+          <img src="img/qr-glossary.png" alt="Glossary QR" class="qr-img" />
+          <span class="res-url">aie-glossary.workos-internal.workers.dev</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ O4 MEET YOUR COACH ============ -->
+  <section data-label="Orientation · meet your coach" class="grain art-split text-right">
+    <div class="frame">
+      <div class="art-cols">
+        <div class="art-panel" aria-hidden="true"><img src="img/art/parallel-agents.jpg" alt="A coach riding along in the terminal" loading="lazy" /></div>
+        <div class="art-text">
+          <div class="eyebrow" style="margin-bottom: 28px;">Your guide today</div>
+          <h2 class="deck-h2" style="font-size: 80px; margin-bottom: 32px;">A coach rides along in your <span class="underline-accent">terminal</span>.</h2>
+          <p class="body" style="font-size: 36px; max-width: 760px;">
+            An opt-in companion that interviews you, can score how AI-native your setup is, and guides you block to block. It's <b class="lev">for fun</b> &mdash; and it quietly powers the board.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ O5 HOW THE COACH WORKS ============ -->
+  <section data-label="Orientation · how coach works" class="grain">
+    <div class="frame">
+      <div class="eyebrow" style="margin-bottom: 24px;">Opt-in &middot; anonymous &middot; for fun</div>
+      <h2 class="deck-h2" style="margin-bottom: 48px;">Two quick check-ins. You're in <span class="underline-accent">control</span>.</h2>
+      <div class="step-cards">
+        <div class="step-card">
+          <span class="slabel">Opening</span>
+          <p class="stext">Your role, your biggest time-sink, and what you'd love to automate.</p>
+        </div>
+        <div class="step-card">
+          <span class="slabel">Closing</span>
+          <p class="stext">What you wired up &mdash; and what you'll automate next.</p>
+        </div>
+      </div>
+      <p class="body muted" style="margin-top: 44px; font-size: 30px; max-width: 1660px;">
+        Only what you type and confirm is ever sent. Skip it entirely and still do every exercise.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ O6 THE LIVE BOARD ============ -->
+  <section data-label="Orientation · the live board" class="grain">
+    <div class="qr-corner">
+      <span>The live board &middot; open it on your phone</span>
+      <img src="img/qr-board.png" alt="Live board QR" class="qr-img" />
+    </div>
+    <div class="frame" style="justify-content: center;">
+      <div class="eyebrow" style="margin-bottom: 28px;">The room is the content</div>
+      <h2 class="deck-h2" style="font-size: 92px; margin-bottom: 40px; max-width: 1640px;">Your check-ins light up the <span class="underline-accent">board</span>.</h2>
+      <p class="lead" style="max-width: 1660px;">
+        It shows where the room's toil is, the top hooks and scheduled tasks worth building, and the engineering-hours a week we're about to reclaim. The <b class="lev">before&rarr;after</b> at the close is the payoff.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ O7 THE GLOSSARY ============ -->
+  <section data-label="Orientation · the glossary" class="grain">
+    <div class="qr-corner">
+      <span>The glossary &middot; scan to ask it anything</span>
+      <img src="img/qr-glossary.png" alt="Glossary QR" class="qr-img" />
+    </div>
+    <div class="frame" style="justify-content: center;">
+      <div class="eyebrow" style="margin-bottom: 28px;">No dumb questions</div>
+      <h2 class="deck-h2" style="font-size: 84px; margin-bottom: 40px; max-width: 1560px;">Every term behind today &mdash; ask it <span class="underline-accent">anything</span>.</h2>
+      <p class="lead" style="max-width: 1560px;">
+        Voice workflows, agentic loops, scheduled tasks, plus the fundamentals. A chat on the page answers in <b class="lev">plain language</b>.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ O8 WHERE TO START ============ -->
+  <section data-label="Orientation · where to start" class="grain">
+    <div class="frame">
+      <div class="eyebrow" style="margin-bottom: 24px;">First three moves</div>
+      <h2 class="deck-h2" style="margin-bottom: 44px;">Start <span class="underline-accent">here</span>.</h2>
+      <ol class="pts" style="gap: 26px;">
+        <li><span class="n">1</span><span class="t" style="font-size: 50px;">Trust this repo in Claude Code<small>Open it and let Claude Code work in the directory.</small></span></li>
+        <li><span class="n">2</span><span class="t" style="font-size: 50px;">Say &ldquo;set me up for the workshop&rdquo;<small>It installs what you need and gets you ready.</small></span></li>
+        <li><span class="n">3</span><span class="t" style="font-size: 50px;">Say &ldquo;run my workshop check-in&rdquo;<small>Anonymous, opt-in &mdash; puts your toil on the board.</small></span></li>
+      </ol>
+      <p class="body muted" style="margin-top: 40px; font-size: 32px;">Then we begin Block 1.</p>
+    </div>
+  </section>
+
   <!-- ============ 05 THE BOARD ============ -->
   <section data-label="The board" class="grain">
     <div class="qr-corner">
@@ -963,7 +1131,7 @@
       <img src="img/qr-board.png" alt="Live board QR" class="qr-img" />
     </div>
     <div class="frame" style="justify-content: center;">
-      <div class="eyebrow" style="margin-bottom: 28px;">The live board</div>
+      <div class="eyebrow" style="margin-bottom: 28px;">One promise before we start</div>
       <h2 class="deck-h2" style="font-size: 116px; margin-bottom: 36px;">The room is the <span class="underline-accent">content</span>.</h2>
       <p class="lead" style="max-width: 1620px;">
         Opt-in. Anonymous. <b class="lev">Nothing is ever scanned off your machine</b>.
@@ -1144,6 +1312,31 @@
           <p class="vtext">"Extract the auth client into its own module and fix every call site."</p>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- ============ DEPTH · WHAT GOOD VOICE PROMPTS SOUND LIKE ============ -->
+  <section data-label="Voice · good prompts examples" class="grain activity">
+    <div class="frame">
+      <div class="act-eyebrow">More examples</div>
+      <div class="act-head">
+        <h2 class="act-title">What good voice prompts sound like.</h2>
+      </div>
+      <div class="say-cards row">
+        <div class="say-card">
+          <span class="say-tag"><span class="mic">&#127908;</span> Fix</span>
+          <p class="say-text">&ldquo;Find the failing test and fix it &mdash; I'll only talk.&rdquo;</p>
+        </div>
+        <div class="say-card">
+          <span class="say-tag"><span class="mic">&#127908;</span> Refactor</span>
+          <p class="say-text">&ldquo;Refactor the auth client into its own module and update the call sites.&rdquo;</p>
+        </div>
+        <div class="say-card">
+          <span class="say-tag"><span class="mic">&#127908;</span> Non-code</span>
+          <p class="say-text">&ldquo;Draft release notes from this week's merges.&rdquo;</p>
+        </div>
+      </div>
+      <p class="act-hint">State the <b>outcome</b>. Let the agent choose the keystrokes.</p>
     </div>
   </section>
 
@@ -1343,6 +1536,20 @@
     </div>
   </section>
 
+  <!-- ============ DEPTH · /loop IN THE WILD ============ -->
+  <section data-label="Loops · loop in the wild" class="grain">
+    <div class="frame" style="justify-content: center;">
+      <div class="eyebrow" style="margin-bottom: 28px;"><code class="mono">/loop</code> in the wild</div>
+      <h2 class="deck-h2" style="font-size: 84px; margin-bottom: 48px; max-width: 1720px;">Keep going until a <span class="underline-accent">condition</span> is met.</h2>
+      <div class="codeblock" style="max-width: 1560px;">
+        <div><span class="prompt">/loop</span> until the suite is green</div>
+        <div><span class="prompt">/loop</span> processing each file in this list</div>
+        <div><span class="prompt">/loop</span> every 30s until the deploy is healthy</div>
+      </div>
+      <p class="body muted" style="margin-top: 40px; font-size: 32px; max-width: 1660px;">&ldquo;Done&rdquo; is a condition, not a count.</p>
+    </div>
+  </section>
+
   <!-- ============ 29 SCALE IT · MANY AGENTS NO COLLISIONS ============ -->
   <section data-label="Loops · scale it" class="grain art-split text-right">
     <div class="frame">
@@ -1464,6 +1671,21 @@
       <p class="body" style="max-width: 1660px; font-size: 40px;">
         Red fails the step &mdash; the agent <b class="lev">fixes itself</b> before it reaches you.
       </p>
+    </div>
+  </section>
+
+  <!-- ============ DEPTH · HOOKS WORTH STEALING ============ -->
+  <section data-label="Gates · hooks worth stealing" class="grain">
+    <div class="frame">
+      <div class="eyebrow" style="margin-bottom: 28px;">Hooks worth stealing</div>
+      <h2 class="deck-h2" style="font-size: 84px; margin-bottom: 48px; max-width: 1720px;">Cheap checks that <span class="underline-accent">never sleep</span>.</h2>
+      <ul class="pts check" style="gap: 30px;">
+        <li><span class="n">&#10003;</span><span class="t" style="font-size: 52px;">Lint + typecheck + test on every edit</span></li>
+        <li><span class="n">&#10003;</span><span class="t" style="font-size: 52px;">Block commits that don't build</span></li>
+        <li><span class="n">&#10003;</span><span class="t" style="font-size: 52px;">Auto-format on save</span></li>
+        <li><span class="n">&#10003;</span><span class="t" style="font-size: 52px;">Run the security linter pre-push</span></li>
+      </ul>
+      <p class="body muted" style="margin-top: 44px; font-size: 32px;">Steal one today. The agent has to pass it before you ever see the work.</p>
     </div>
   </section>
 
@@ -1678,6 +1900,132 @@
     </div>
   </section>
 
+  <!-- ============ Q DIVIDER · QUESTIONS THE ROOM ALWAYS ASKS ============ -->
+  <section data-label="Section divider · Questions" class="section-divider">
+    <div class="ghost" aria-hidden="true">Q</div>
+    <div class="frame">
+      <div class="num">Q</div>
+      <h2>Questions the room always asks.</h2>
+    </div>
+  </section>
+
+  <!-- ============ Q1 ============ -->
+  <section data-label="Q&amp;A · slower than typing" class="grain">
+    <div class="frame" style="justify-content: center;">
+      <div class="eyebrow" style="margin-bottom: 36px;">Q</div>
+      <h3 class="deck-h3" style="font-size: 72px; margin-bottom: 40px; max-width: 1700px;">Isn't talking slower than typing for code?</h3>
+      <p class="body" style="font-size: 40px; max-width: 1680px;">
+        You're not dictating syntax &mdash; you state the outcome and the agent writes it. You move at the speed of thought, <b class="lev">~150 wpm</b>, not ~60.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ Q2 ============ -->
+  <section data-label="Q&amp;A · talk whole time" class="grain">
+    <div class="frame" style="justify-content: center;">
+      <div class="eyebrow" style="margin-bottom: 36px;">Q</div>
+      <h3 class="deck-h3" style="font-size: 72px; margin-bottom: 40px; max-width: 1700px;">Do I have to talk the whole time?</h3>
+      <p class="body" style="font-size: 40px; max-width: 1680px;">
+        No. Voice is for <b class="lev">direction</b>; you still read, click, and type when that's faster. Most operators switch fluidly.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ Q3 ============ -->
+  <section data-label="Q&amp;A · off the rails" class="grain">
+    <div class="frame" style="justify-content: center;">
+      <div class="eyebrow" style="margin-bottom: 36px;">Q</div>
+      <h3 class="deck-h3" style="font-size: 72px; margin-bottom: 40px; max-width: 1700px;">What if the agent goes off the rails?</h3>
+      <p class="body" style="font-size: 40px; max-width: 1680px;">
+        That's what gates are for &mdash; a hook that must pass and a second model that reviews. The agent <b class="lev">can't ship past them</b>.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ Q4 ============ -->
+  <section data-label="Q&amp;A · data collected" class="grain">
+    <div class="frame" style="justify-content: center;">
+      <div class="eyebrow" style="margin-bottom: 36px;">Q</div>
+      <h3 class="deck-h3" style="font-size: 72px; margin-bottom: 40px; max-width: 1700px;">Is my data being collected?</h3>
+      <p class="body" style="font-size: 40px; max-width: 1680px;">
+        Only the check-in answers you type and confirm &mdash; anonymous, no scanning of your machine. <b class="lev">Skip it and lose nothing</b>.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ Q5 ============ -->
+  <section data-label="Q&amp;A · finish a block" class="grain">
+    <div class="frame" style="justify-content: center;">
+      <div class="eyebrow" style="margin-bottom: 36px;">Q</div>
+      <h3 class="deck-h3" style="font-size: 72px; margin-bottom: 40px; max-width: 1700px;">What if I don't finish a block?</h3>
+      <p class="body" style="font-size: 40px; max-width: 1680px;">
+        Totally fine. The repo is <b class="lev">yours to keep</b> &mdash; finish later. Today is about feeling each move once.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ Q6 ============ -->
+  <section data-label="Q&amp;A · my language codebase" class="grain">
+    <div class="frame" style="justify-content: center;">
+      <div class="eyebrow" style="margin-bottom: 36px;">Q</div>
+      <h3 class="deck-h3" style="font-size: 72px; margin-bottom: 40px; max-width: 1700px;">Will this work in my language / codebase?</h3>
+      <p class="body" style="font-size: 40px; max-width: 1680px;">
+        The moves are general &mdash; voice, loops, gates, schedules apply to <b class="lev">any stack</b>. Today's repo is just the sandbox.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ Q7 ============ -->
+  <section data-label="Q&amp;A · vs autocomplete" class="grain">
+    <div class="frame" style="justify-content: center;">
+      <div class="eyebrow" style="margin-bottom: 36px;">Q</div>
+      <h3 class="deck-h3" style="font-size: 72px; margin-bottom: 40px; max-width: 1700px;">How is this different from autocomplete / Copilot?</h3>
+      <p class="body" style="font-size: 40px; max-width: 1680px;">
+        Autocomplete finishes your line. This is <b class="lev">operating</b>: you direct several agents through whole jobs, with guardrails, on a schedule.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ Q8 ============ -->
+  <section data-label="Q&amp;A · strong engineer" class="grain">
+    <div class="frame" style="justify-content: center;">
+      <div class="eyebrow" style="margin-bottom: 36px;">Q</div>
+      <h3 class="deck-h3" style="font-size: 72px; margin-bottom: 40px; max-width: 1700px;">Do I need to be a strong engineer for this?</h3>
+      <p class="body" style="font-size: 40px; max-width: 1680px;">
+        No. The operator skill is describing outcomes and setting up gates &mdash; that's <b class="lev">leverage for any level</b>.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ Q9 ============ -->
+  <section data-label="Q&amp;A · after today" class="grain">
+    <div class="frame" style="justify-content: center;">
+      <div class="eyebrow" style="margin-bottom: 36px;">Q</div>
+      <h3 class="deck-h3" style="font-size: 72px; margin-bottom: 40px; max-width: 1700px;">What do I do after today?</h3>
+      <p class="body" style="font-size: 40px; max-width: 1680px;">
+        Keep the repo, keep the scheduled task running, keep the glossary. Re-run a check-in next week to see your <b class="lev">before&rarr;after</b>.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ A1 KEEP BUILDING ============ -->
+  <section data-label="After today · keep building" class="grain">
+    <div class="qr-corner">
+      <span>Keep these slides &middot; scan to take them home</span>
+      <img src="img/qr-deck.png" alt="Slide deck QR" class="qr-img" />
+    </div>
+    <div class="frame">
+      <div class="eyebrow" style="margin-bottom: 24px;">After today</div>
+      <h2 class="deck-h2" style="margin-bottom: 44px;">You keep <span class="underline-accent">all of it</span>.</h2>
+      <ul class="pts check" style="gap: 30px;">
+        <li><span class="n">&#10003;</span><span class="t" style="font-size: 52px;">The repo and the skills</span></li>
+        <li><span class="n">&#10003;</span><span class="t" style="font-size: 52px;">Your scheduled task &mdash; still running Monday</span></li>
+        <li><span class="n">&#10003;</span><span class="t" style="font-size: 52px;">The glossary &mdash; still answers</span></li>
+        <li><span class="n">&#10003;</span><span class="t" style="font-size: 52px;">Your before&rarr;after on the board</span></li>
+      </ul>
+    </div>
+  </section>
+
   <!-- ============ 52 CLOSE ============ -->
   <section data-label="Recap · Close" class="grain">
     <div class="qr-corner">
@@ -1729,6 +2077,14 @@
   "The pitch. Autocomplete vs. fleet is the whole frame. Most people use AI one prompt at a time; operators run many agents. Hold the contrast.",
   "What today is. Three cards: one repo, leave with it on a schedule, hands-on. Emphasize 'not a talk' — you drive.",
   "The arc. Walk the four blocks left to right: voice, loops & goals, gates, schedules. Each builds on the last on the same repo.",
+  "Orientation divider — what we're doing today. The plan, your tools, where to start. Short.",
+  "Today in one screen. Four moves, one repo, one hour. Let the chips cascade. We show you, then you try it — you leave with all four running on your machine.",
+  "Your three resources. Point at each QR: these slides, the live board, the glossary. Tell them to open all three on their phone now.",
+  "Meet your coach. An opt-in companion in your terminal that interviews you, can score how AI-native your setup is, and guides you block to block. It's for fun — and it quietly powers the board.",
+  "How the coach works. Two check-ins: opening (role, biggest time-sink, what to automate) and closing (what you wired up, what's next). Only what you type and confirm is ever sent — skip it and still do every exercise.",
+  "The live board. Your check-ins light it up: where the room's toil is, the top hooks and scheduled tasks worth building, hours/week we'll reclaim. The before→after at the close is the payoff.",
+  "The glossary. No dumb questions — every term behind today, plus the fundamentals. A chat on the page answers in plain language.",
+  "Where to start. Three moves: trust the repo in Claude Code, say 'set me up for the workshop,' say 'run my workshop check-in.' Then we begin Block 1.",
   "The board. Opt-in, anonymous, volunteered answers only — nothing is ever scanned off your machine. Say it plainly; it earns trust. They'll watch the room's toil light up as we go; by the end the board shows the hours/week this room reclaimed. We revisit it at the close.",
   "Divider — Block 01, Voice coding. Short. Your mouth is faster than your hands.",
   "Problem with hands. You think faster than you can type. Your hands cap you at 40–80 words a minute; your ideas don't run that slow — the keyboard is the bottleneck, not your ideas.",
@@ -1741,6 +2097,7 @@
   "Not dictating code. Address the objection: you say what you want in plain language; the agent writes the syntax, the symbols, the punctuation. Talk to it like a sharp colleague who happens to type for you.",
   "The move. Let the three tabs land. Fix a bug by voice, then drive three agents at once. Volume comes from your voice.",
   "Good driving. Say the outcome, not the keystrokes. Contrast the muted keystroke list against the clean intent.",
+  "What good voice prompts sound like. Three real examples — fix, refactor, non-code. State the outcome; let the agent choose the keystrokes.",
   "The unlock. Big line. 180 wpm; manufacture work in parallel. Capstone of the voice teaching.",
   "Now you try it — Voice. Hands off the keyboard. Signal it's time to practice.",
   "Activity — get voice working. Give them ~5 minutes; walk the room.",
@@ -1753,6 +2110,7 @@
   "Goals. 'Done' is a checklist, not a vibe. Watch the boxes tick. The agent isn't done until every box is checked.",
   "Why it works. Agents declare victory early — left vague, an agent stops at 'looks done.' A checklist makes 'done' unskippable: it has to tick every box before it can stop.",
   "Loops. Compare: goal/checklist is one bounded job; /loop is unknown-size or recurring. Footnote: parallel agents on git worktrees.",
+  "/loop in the wild. Three examples: until the suite is green, processing each file in a list, every 30s until the deploy is healthy. 'Done' is a condition, not a count.",
   "Scale it. Many agents, zero collisions. Each agent on its own git worktree — isolated checkouts, no stepping on each other. Three jobs run in parallel while you direct.",
   "Now you try it — Loops & goals. Hand over a job and walk away.",
   "Activity — work a checklist issue. Give them several minutes; walk the room. Not done until every box is checked.",
@@ -1762,6 +2120,7 @@
   "Trust problem. 'Done' isn't the same as done. An agent will tell you it finished — but belief is not a build. Operators wrap the agent in checks it cannot skip.",
   "The cheapest gate. A hook that lints, typechecks, and tests on every change. The agent can't hand you code that doesn't build — red turns green, or the work isn't done.",
   "Why hooks work. It can't hand you broken code. A hook runs on every change; red fails the step, the agent sees the failure and fixes itself — before it ever reaches you.",
+  "Hooks worth stealing. Lint+typecheck+test on every edit; block commits that don't build; auto-format on save; security linter pre-push. Steal one today.",
   "The adversarial gate. Fan out to Codex for a second opinion, then fix everything it finds.",
   "Why a second model. One model rationalizes; two argue. A fresh model with no stake in the first one's choices catches the bugs the author talked itself past.",
   "Definition of done. Big line. Operators trust the gates, not the model's confidence. Let it sit.",
@@ -1776,6 +2135,17 @@
   "Activity — schedule your work. Give them several minutes; walk the room. Help them phrase the recurring job.",
   "Activity — close the loop. Give them a minute; walk the room. Then watch the room migrate from toil to leverage.",
   "The payoff. Mirror the board: toil migrates to leverage. The +168 is a placeholder — call out the real number from the live board.",
+  "Questions divider. Dead-air insurance — skip if you're on time; rich if you're not.",
+  "Q — slower than typing? You're not dictating syntax; you state the outcome and the agent writes it. Speed of thought, ~150 wpm, not ~60.",
+  "Q — talk the whole time? No. Voice is for direction; read, click, type when faster. Operators switch fluidly.",
+  "Q — agent goes off the rails? That's what gates are for: a hook that must pass and a second model that reviews. It can't ship past them.",
+  "Q — data collected? Only the check-in answers you type and confirm. Anonymous, no scanning. Skip it and lose nothing.",
+  "Q — don't finish a block? Fine. The repo is yours to keep; finish later. Today is about feeling each move once.",
+  "Q — my language / codebase? The moves are general — voice, loops, gates, schedules apply to any stack. The repo is just the sandbox.",
+  "Q — vs autocomplete / Copilot? Autocomplete finishes your line. This is operating: directing several agents through whole jobs, with guardrails, on a schedule.",
+  "Q — need to be a strong engineer? No. The skill is describing outcomes and setting up gates — leverage for any level.",
+  "Q — after today? Keep the repo, the scheduled task, the glossary. Re-run a check-in next week to see your before→after.",
+  "Keep building. You keep all of it: the repo and skills, your scheduled task (still running Monday), the glossary, your before→after on the board.",
   "Close. You're an operator now. Recap the four ticked items. Keep the repo, keep the scheduled task.",
   "PLACEHOLDER — the fun artifact, TBD. Swap in the real take-home before presenting.",
   "PLACEHOLDER — post-workshop: keep building. Add the real links/QRs before presenting."
