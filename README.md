@@ -16,6 +16,14 @@ leave with it **running by itself**.
 
 <sub>Your guides: <strong>Zack Proser</strong> · <strong>Nick Nisi</strong></sub>
 
+<br/>
+
+### 🔗 Live links
+
+**📊 Live board → https://aie-board.workos-internal.workers.dev**
+&nbsp;·&nbsp;
+**🖥️ Slides → https://aie-deck.workos-internal.workers.dev**
+
 </div>
 
 ---
