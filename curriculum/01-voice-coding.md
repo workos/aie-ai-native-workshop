@@ -7,7 +7,7 @@
 1. **Set up Handy (5 min, capped).** Each attendee points Claude at the repo:
    > "Set up Handy for me."
 
-   That fires the [`setup-handy`](../skills/setup-handy/) skill — install, model download, mic + accessibility permissions, hotkey, and a live dictation test. Handy is **free and fully local** (no card, no cloud, works on conference Wi-Fi). Hard cap: 5 minutes. Anyone still stuck pairs with a neighbor and keeps moving.
+   That fires the [`setup-handy`](../.claude/skills/setup-handy/) skill — install, model download, mic + accessibility permissions, hotkey, and a live dictation test. Handy is **free and fully local** (no card, no cloud, works on conference Wi-Fi). Hard cap: 5 minutes. Anyone still stuck pairs with a neighbor and keeps moving.
 
 2. **First voice loop.** With Handy live, fix a real bug in a repo you bring (or this one) entirely by voice. Goal: feel how fast intent → change is when you talk at ~180 wpm instead of typing.
 

@@ -1,5 +1,5 @@
 {
-  "$comment": "Trusting this repo wires up the workshop automatically. Nick Nisi's `ideation` skill installs as a plugin from GitHub; the coach check-in + setup-handy skills live in skills/ and load from the repo.",
+  "$comment": "Trusting this repo wires up the workshop: the SKILL.md files in .claude/skills/ (setup-workshop, setup-handy, coach-checkin) auto-load, Nick Nisi's `ideation` skill installs as a plugin from GitHub, and the aie-coach MCP server is defined in ../.mcp.json (approve it once on first trust, or run /mcp). The coach-checkin scripts live in the repo's skills/coach-checkin/ (imported by native/).",
   "extraKnownMarketplaces": {
     "ideation": {
       "source": {
@@ -11,17 +11,11 @@
   "enabledPlugins": {
     "ideation@ideation": true
   },
-  "mcpServers": {
-    "aie-coach": {
-      "command": "bun",
-      "args": ["${CLAUDE_PROJECT_DIR}/native/src/cli.ts", "--mcp"],
-      "cwd": "${CLAUDE_PROJECT_DIR}"
-    }
-  },
   "permissions": {
     "allow": [
       "Bash(node:*)",
       "Bash(npm:*)",
+      "Bash(bun:*)",
       "Bash(npx wrangler:*)",
       "Bash(git:*)"
     ]

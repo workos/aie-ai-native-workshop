@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "aie-coach": {
+      "command": "bun",
+      "args": ["native/src/cli.ts", "--mcp"]
+    }
+  }
+}

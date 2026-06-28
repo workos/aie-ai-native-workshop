@@ -67,5 +67,5 @@ The skill auto-detects which check-in to run using a marker file (`.aie-coach-st
 
 - All commands run from the workshop repo root; the marker (`.aie-coach-state.json`) and any outbox files land there.
 - The board URL and auth token are baked into `scripts/submit.ts`; set the `WORKER_URL` / `WORKER_TOKEN` environment variables to override them (the facilitator sets these once the board is deployed).
-- The payload contract is defined in `scripts/feedback-contract.schema.json` and described in [`CONTRACT.md`](CONTRACT.md).
+- The scripts live in the repo's `skills/coach-checkin/` (this `SKILL.md` lives in `.claude/skills/` so Claude Code auto-loads it; commands run from the repo root, so the `bun skills/coach-checkin/...` paths resolve). The payload contract is in `skills/coach-checkin/scripts/feedback-contract.schema.json`, described in [`CONTRACT.md`](../../../skills/coach-checkin/CONTRACT.md).
 - Never **send** anything the participant didn't confirm. The AI-Native score is read by a **local** scan (`coach_scan`) of their Claude setup, but only the derived score numbers leave the machine — never file contents, `git log`, or transcripts. Interview answers are volunteered-only.
