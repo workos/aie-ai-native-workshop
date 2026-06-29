@@ -944,6 +944,38 @@
   .lm-arrow { font-size: 42px; color: var(--t-faint); }
   .lm-caption { margin-top: 12px; }
 
+  /* ---- Verification loop — animated try▸check▸fix (Loops · how a loop runs).
+     Reuses the .loopmotif/.lm-* geometry (460px) at three new node angles,
+     adds a center PASS target + ✗/✓ stamps. Motion lives in deck-animations.js. */
+  .art-split .art-panel.vl-panel {
+    aspect-ratio: auto; max-height: none; height: 100%; min-height: 600px;
+    overflow: visible; display: grid; place-items: center; padding: 48px;
+  }
+  .art-split .art-panel.vl-panel::after { display: none; }   /* drop the image vignette */
+  section[data-deck-active].art-split .art-panel.vl-panel {
+    animation: art-panel-in 900ms cubic-bezier(0.16,1,0.3,1) 300ms both;  /* entrance only, no float */
+  }
+  .vl-motif { margin: 0; }
+  .vl-n-try   { top: 0;    left: 50%;   transform: translate(-50%,-50%); }
+  .vl-n-check { top: 75%;  left: 93.3%; transform: translate(-50%,-50%); }
+  .vl-n-fix   { top: 75%;  left: 6.7%;  transform: translate(-50%,-50%); }
+  .vl-stamp {
+    position: absolute; top: 57%; left: 101%;
+    transform: translate(-50%,-50%) scale(.6); opacity: 0;
+    font-size: 72px; font-weight: 800; line-height: 1; pointer-events: none;
+  }
+  .vl-stamp-fail { color: var(--red);  text-shadow: 0 0 24px rgba(239,106,90,.5); }
+  .vl-stamp-pass { color: var(--teal); text-shadow: 0 0 24px rgba(22,195,145,.55); }
+  .vl-pass { opacity: 0; gap: 6px; }
+  .vl-pass-glyph {
+    font-family: var(--font-serif); font-size: 64px; font-weight: 800;
+    color: var(--teal); line-height: 1; text-shadow: 0 0 30px rgba(22,195,145,.5);
+  }
+  .vl-pass-label {
+    font-family: var(--font-mono); font-size: 22px; letter-spacing: .2em;
+    text-transform: uppercase; color: var(--t-mute);
+  }
+
   @keyframes lm-spin { to { transform: rotate(360deg); } }
   @media (prefers-reduced-motion: reduce) {
     .lm-spin-glyph, .lm-feed { animation: none !important; }
@@ -1423,7 +1455,21 @@
   <section data-label="Loops · how a loop runs" class="grain art-split text-right">
     <div class="frame">
       <div class="art-cols">
-        <div class="art-panel" aria-hidden="true"><img src="img/art/loop-cycle.jpg" alt="The loop cycle: try, check, fail, fix, repeat, until it passes" /></div>
+        <div class="art-panel vl-panel" aria-hidden="true">
+          <div class="loopmotif vl-motif">
+            <div class="lm-ring"></div>
+            <div class="lm-orbit"><span class="lm-dot"></span></div>
+            <div class="lm-node vl-n-try"><span class="lm-chip">try</span></div>
+            <div class="lm-node vl-n-check"><span class="lm-chip">check</span></div>
+            <div class="lm-node vl-n-fix"><span class="lm-chip">fix</span></div>
+            <span class="vl-stamp vl-stamp-fail">&#10007;</span>
+            <span class="vl-stamp vl-stamp-pass">&#10003;</span>
+            <div class="lm-core vl-pass">
+              <span class="vl-pass-glyph">&#10003;</span>
+              <span class="vl-pass-label">pass</span>
+            </div>
+          </div>
+        </div>
         <div class="art-text">
           <div class="eyebrow" style="margin-bottom: 26px;">Iterate until it passes</div>
           <h2 class="deck-h2" style="font-size: 70px; margin-bottom: 26px;">Try &rarr; check &rarr; fix &rarr; <span class="underline-accent">repeat</span>.</h2>

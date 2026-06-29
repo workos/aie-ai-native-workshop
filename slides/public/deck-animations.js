@@ -286,6 +286,120 @@
       }
     },
     {
+      // How a loop runs: the verification loop, animated. The dot laps Try▸Check▸Fix;
+      // the check stamps RED twice (each lap tighter/faster — the feedback loop closing),
+      // then GREEN, and the run resolves into the center PASS. Plays once, settles passed.
+      // One shared timeline, ONE animation per element → replay-safe (clearAnims re-runs it)
+      // and no same-property overlap fights.
+      match: /Loops · how a loop runs/i,
+      run(slide) {
+        const eyebrow = slide.querySelector('.eyebrow');
+        const h2 = slide.querySelector('.deck-h2');
+        const code = slide.querySelector('.codeblock');
+        const body = slide.querySelector('.art-text .body');
+        const ring = slide.querySelector('.lm-ring');
+        const tryC = slide.querySelector('.vl-n-try .lm-chip');
+        const checkC = slide.querySelector('.vl-n-check .lm-chip');
+        const fixC = slide.querySelector('.vl-n-fix .lm-chip');
+        const orbit = slide.querySelector('.lm-orbit');
+        const dot = slide.querySelector('.lm-dot');
+        const sFail = slide.querySelector('.vl-stamp-fail');
+        const sPass = slide.querySelector('.vl-stamp-pass');
+        const pass = slide.querySelector('.vl-pass');
+
+        // text panel entrance
+        rise(eyebrow, { duration: 420 });
+        rise(h2, { delay: 140, duration: 560 });
+        paintAllAccents(slide, 360);
+        rise(code, { delay: 320, duration: 480 });
+        rise(body, { delay: 460, duration: 520 });
+
+        // diagram entrance
+        if (ring) ring.animate([{ opacity: 0 }, { opacity: 0.42 }], { duration: 640, delay: 520, easing: EASE_OUT_EXPO, fill: 'both' });
+        [tryC, checkC, fixC].forEach((c, i) => pop(c, { delay: 640 + i * 130 }));
+
+        const DIM = { backgroundColor: '#122723', borderColor: 'rgba(22,195,145,.16)', color: '#f3faf7', boxShadow: '0 0 0 0 rgba(0,0,0,0)' };
+        const RED = { backgroundColor: 'rgba(239,106,90,.14)', borderColor: 'rgba(239,106,90,.75)', color: '#ef6a5a', boxShadow: '0 0 30px 2px rgba(239,106,90,.45)' };
+        const GRN = { backgroundColor: '#16c391', borderColor: '#16c391', color: '#0a1614', boxShadow: '0 0 34px 3px rgba(22,195,145,.65)' };
+        const WRK = { backgroundColor: 'rgba(246,183,60,.10)', borderColor: 'rgba(246,183,60,.7)', color: '#f6b73c', boxShadow: '0 0 26px 2px rgba(246,183,60,.4)' };
+
+        if (reducedMotion) {
+          if (checkC) Object.assign(checkC.style, { backgroundColor: GRN.backgroundColor, borderColor: GRN.borderColor, color: GRN.color, boxShadow: GRN.boxShadow });
+          if (dot) dot.style.opacity = '0';
+          if (sPass) sPass.style.opacity = '1';
+          if (pass) pass.style.opacity = '1';
+          return;
+        }
+
+        // ---- shared timeline ----
+        const START = 1000, TOTAL = 4200, DUR = START + TOTAL + 300;
+        const KEYS = [[0, 0], [360, 0.5], [720, 0.85], [840, 1]]; // cumulative deg -> offset of TOTAL (laps tighten)
+        const tAt = (deg) => {
+          for (let i = 1; i < KEYS.length; i++) {
+            if (deg <= KEYS[i][0]) {
+              const a0 = KEYS[i - 1][0], o0 = KEYS[i - 1][1], a1 = KEYS[i][0], o1 = KEYS[i][1];
+              return START + (o0 + (o1 - o0) * ((deg - a0) / (a1 - a0))) * TOTAL;
+            }
+          }
+          return START + TOTAL;
+        };
+        const off = (t) => Math.max(0, Math.min(1, t / DUR));
+        const kf = (stops) => stops.map(([t, p]) => Object.assign({ offset: off(t) }, p));
+        const play = (el, stops, easing) => el && el.animate(kf(stops), { duration: DUR, easing: easing || EASE_OUT_CUBIC, fill: 'both' });
+
+        const cHit1 = tAt(120), cHit2 = tAt(480), cPass = tAt(840), fHit1 = tAt(240), fHit2 = tAt(600);
+
+        // orbit: the dot laps Try▸Check▸Fix, each lap faster (the loop tightening)
+        if (orbit) orbit.animate(
+          KEYS.map(([deg, o]) => ({ transform: `rotate(${deg}deg)`, offset: o, easing: 'linear' })),
+          { duration: TOTAL, delay: START, fill: 'both' }
+        );
+
+        // check: red ✗, red ✗, then green ✓ (held)
+        play(checkC, [
+          [0, DIM], [cHit1 - 160, DIM], [cHit1, RED], [cHit1 + 240, DIM],
+          [cHit2 - 160, DIM], [cHit2, RED], [cHit2 + 240, DIM],
+          [cPass - 200, DIM], [cPass, GRN], [DUR, GRN],
+        ]);
+        // fix: amber "working" pulse as the dot passes (no transform — leaves the entrance pop alone)
+        play(fixC, [
+          [0, DIM], [fHit1 - 150, DIM], [fHit1, WRK], [fHit1 + 220, DIM],
+          [fHit2 - 150, DIM], [fHit2, WRK], [fHit2 + 220, DIM], [DUR, DIM],
+        ]);
+        // the orbiting dot fades as the gate goes green (resolves into the center)
+        play(dot, [[0, { opacity: 1 }], [cPass - 150, { opacity: 1 }], [cPass, { opacity: 0 }], [DUR, { opacity: 0 }]]);
+        // ✗ stamps on the red passes
+        play(sFail, [
+          [0, { opacity: 0, transform: 'translate(-50%,-50%) scale(.5)' }],
+          [cHit1 - 120, { opacity: 0, transform: 'translate(-50%,-50%) scale(.5)' }],
+          [cHit1, { opacity: 1, transform: 'translate(-50%,-50%) scale(1)' }],
+          [cHit1 + 360, { opacity: 0, transform: 'translate(-50%,-50%) scale(.7)' }],
+          [cHit2 - 120, { opacity: 0, transform: 'translate(-50%,-50%) scale(.5)' }],
+          [cHit2, { opacity: 1, transform: 'translate(-50%,-50%) scale(1)' }],
+          [cHit2 + 360, { opacity: 0, transform: 'translate(-50%,-50%) scale(.7)' }],
+          [DUR, { opacity: 0, transform: 'translate(-50%,-50%) scale(.7)' }],
+        ]);
+        // ✓ stamp on the green pass (held)
+        play(sPass, [
+          [0, { opacity: 0, transform: 'translate(-50%,-50%) scale(.5)' }],
+          [cPass - 150, { opacity: 0, transform: 'translate(-50%,-50%) scale(.5)' }],
+          [cPass, { opacity: 1, transform: 'translate(-50%,-50%) scale(1.12)' }],
+          [cPass + 220, { opacity: 1, transform: 'translate(-50%,-50%) scale(1)' }],
+          [DUR, { opacity: 1, transform: 'translate(-50%,-50%) scale(1)' }],
+        ], EASE_SPRING);
+        // center PASS: dims in early, ignites at green
+        play(pass, [
+          [0, { opacity: 0, transform: 'scale(1)' }],
+          [900, { opacity: 0, transform: 'scale(1)' }],
+          [1400, { opacity: 0.22, transform: 'scale(1)' }],
+          [cPass - 150, { opacity: 0.22, transform: 'scale(1)' }],
+          [cPass, { opacity: 1, transform: 'scale(1.08)' }],
+          [cPass + 260, { opacity: 1, transform: 'scale(1)' }],
+          [DUR, { opacity: 1, transform: 'scale(1)' }],
+        ], EASE_SPRING);
+      }
+    },
+    {
       // Loops all the way down: rings bloom outward; core glyph spins (CSS).
       match: /Loops · all the way down/i,
       run(slide) {
