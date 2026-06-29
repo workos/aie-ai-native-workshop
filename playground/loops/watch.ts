@@ -1,5 +1,5 @@
 // Watch mode for the slugify exercise — made to be LOOPED on a timer:
-//   /loop 30s bun playground/loops/watch.ts
+//   /loop 1m bun playground/loops/watch.ts
 // It re-runs the same checks as check.ts but NEVER fails (always exits 0) and
 // prints one clean status line per tick. Loop it and watch the count hold at
 // ✅ (or climb as a fix lands). Contrast with the goal command:
