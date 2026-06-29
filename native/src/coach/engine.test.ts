@@ -4,10 +4,10 @@ import { GATE_THRESHOLD, PILLAR_IDS, coachScan, nextStep, gateResult } from './e
 import type { ScoreInput, Signals } from '../types.ts';
 
 // Signals where ONLY verification is present (lint/test hook). Everything else 0.
-const weakSignals = (): Signals => ({ hooks: { any: true, lintTest: true } }) as Signals;
+const weakSignals = (): Signals => ({ hooks: { any: true } }) as Signals;
 // Signals where every pillar clears the bar -> no recommendations, gate passes.
 const strongSignals = (): Signals => ({
-  hooks: { any: true, lintTest: true },
+  hooks: { any: true },
   claudeMd: true, skills: 4, mcpServers: 2,
   worktrees: 2, scheduledJobs: 2, reusableDelegationPattern: true,
 }) as Signals;
@@ -94,7 +94,7 @@ describe('gateResult', () => {
     let installed = false;
     const scanFn = (): ScoreInput => (installed
       ? { worktrees: 2 }              // after "installing" parallel worktrees
-      : { hooks: { lintTest: true } }); // before
+      : { hooks: { any: true } }); // before
     expect(gateResult('orchestration', { scanFn }).passed).toBe(false);
     installed = true; // the attendee actually set it up; disk changed
     expect(gateResult('orchestration', { scanFn }).passed).toBe(true);

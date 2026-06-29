@@ -15,22 +15,13 @@ function fakeHome(setup: (claude: string) => void): string {
 }
 
 describe('detectHooks', () => {
-  test('flags lint/test commands anywhere in hooks', () => {
-    const r = detectHooks({ hooks: { PostToolUse: [{ hooks: [{ command: 'npm run lint && npm test' }] }] } });
-    expect(r.any).toBe(true);
-    expect(r.lintTest).toBe(true);
+  test('any hook configured -> any true (structural; no command-text matching)', () => {
+    expect(detectHooks({ hooks: { PostToolUse: [{ hooks: [{ command: 'anything at all' }] }] } }).any).toBe(true);
+    expect(detectHooks({ hooks: { Stop: [{ hooks: [{ command: 'echo done' }] }] } }).any).toBe(true);
   });
 
-  test('hooks present but no lint/test -> any true, lintTest false', () => {
-    const r = detectHooks({ hooks: { Stop: [{ hooks: [{ command: 'echo done' }] }] } });
-    expect(r.any).toBe(true);
-    expect(r.lintTest).toBe(false);
-  });
-
-  test('no hooks -> all false', () => {
-    const r = detectHooks({});
-    expect(r.any).toBe(false);
-    expect(r.lintTest).toBe(false);
+  test('no hooks -> any false', () => {
+    expect(detectHooks({}).any).toBe(false);
   });
 });
 
@@ -46,7 +37,7 @@ describe('scan', () => {
     });
     const cwd = mkdtempSync(join(tmpdir(), 'aie-cwd-'));
     const s = scan({ home, cwd });
-    expect(s.hooks.lintTest).toBe(true);
+    expect(s.hooks.any).toBe(true);
     expect(s.skills).toBe(2);
     expect(s.mcpServers).toBe(2);
     expect(s.claudeMd).toBe(false);

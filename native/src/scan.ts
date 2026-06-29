@@ -20,13 +20,13 @@ function readJSON(path: string): unknown {
   }
 }
 
-// True if any hook command looks like it lints/typechecks/tests.
+// Verification credit is STRUCTURAL: do you have hooks wired at all? We do not
+// grep hook command text for keywords — that only matches whatever words happen
+// to be in one machine's config. "You have a gate" is the honest, robust signal;
+// what the gate runs is up to you.
 export function detectHooks(settings: { hooks?: Record<string, unknown> } | null | undefined): Hooks {
   const groups = settings?.hooks ?? {};
-  const any = Object.keys(groups).length > 0;
-  const blob = JSON.stringify(groups).toLowerCase();
-  const lintTest = /\b(lint|tsc|typecheck|type-check|test|vitest|jest|pytest)\b/.test(blob);
-  return { any, lintTest };
+  return { any: Object.keys(groups).length > 0 };
 }
 
 function countDirs(path: string): number {

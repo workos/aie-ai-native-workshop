@@ -50,7 +50,7 @@ export function run(
     // matching the coach engine. The corpus is read with the real homedir default.
     let observations: Observation[] = [];
     try {
-      observations = observeFn({ hasVerifyHook: signals?.hooks?.lintTest === true }) ?? [];
+      observations = observeFn({ hasVerifyHook: signals?.hooks?.any === true }) ?? [];
     } catch {
       observations = [];
     }

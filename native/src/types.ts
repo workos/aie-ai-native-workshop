@@ -25,7 +25,6 @@ export interface Pillar {
 
 export interface Hooks {
   any: boolean;
-  lintTest: boolean;
 }
 
 // Non-scoring behavioral facts: they JUSTIFY recommendations, never the score.

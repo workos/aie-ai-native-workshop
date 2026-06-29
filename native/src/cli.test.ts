@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { run } from './cli.ts';
 import type { CoachReport, Signals } from './types.ts';
 
-const fakeScan = (): Signals => ({ hooks: { lintTest: true } }) as Signals; // -> total 22
+const fakeScan = (): Signals => ({ hooks: { any: true } }) as Signals; // -> total 22
 
 describe('run', () => {
   test('scan returns score + recommendations from injected signals', () => {

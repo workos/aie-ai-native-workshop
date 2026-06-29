@@ -69,7 +69,7 @@ function observeSafely(
 // observations. The exact composition native/src/cli.ts prints, but returned.
 export function coachScan({ scanFn = scan, observeFn = collectObservations, home, cwd }: EngineDeps = {}): CoachScanResult {
   const signals = scanFn({ home, cwd });
-  const observations = observeSafely(observeFn, { home, hasVerifyHook: signals?.hooks?.lintTest === true });
+  const observations = observeSafely(observeFn, { home, hasVerifyHook: signals?.hooks?.any === true });
   return {
     signals,
     ...score(signals),
@@ -85,7 +85,7 @@ export function coachScan({ scanFn = scan, observeFn = collectObservations, home
 // pillar already clears the bar ("you're good here").
 export function nextStep({ scanFn = scan, observeFn = collectObservations, home, cwd }: EngineDeps = {}): NextStep | null {
   const signals = scanFn({ home, cwd });
-  const observations = observeSafely(observeFn, { home, hasVerifyHook: signals?.hooks?.lintTest === true });
+  const observations = observeSafely(observeFn, { home, hasVerifyHook: signals?.hooks?.any === true });
   const recs = recommend(signals, { threshold: GATE_THRESHOLD, observations });
   const top = recs.find((r) => isGateable(r.pillar));
   if (!top) return null;

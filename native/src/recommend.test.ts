@@ -4,7 +4,7 @@ import { recommend } from './recommend.ts';
 
 describe('recommend', () => {
   test('omits a pillar that is already strong', () => {
-    const recs = recommend({ hooks: { lintTest: true } }); // verification = 1
+    const recs = recommend({ hooks: { any: true } }); // verification = 1
     expect(!recs.some((r) => r.pillar === 'verification')).toBeTruthy();
   });
 
@@ -16,7 +16,7 @@ describe('recommend', () => {
 
   test('all pillars strong -> no recommendations', () => {
     const strong = {
-      hooks: { lintTest: true }, claudeMd: true, skills: 4, mcpServers: 2,
+      hooks: { any: true }, claudeMd: true, skills: 4, mcpServers: 2,
       worktrees: 2, scheduledJobs: 2, reusableDelegationPattern: true,
     };
     expect(recommend(strong)).toEqual([]);
@@ -61,7 +61,7 @@ describe('recommend with evidence', () => {
 
   test('strong pillars are still omitted even if an observation exists for them', () => {
     const observations = [buildObservation('thrash-loop', 4, { windowDays: 30, now: 0 })!];
-    const recs = recommend({ hooks: { lintTest: true } }, { observations }); // verification strong -> dropped
+    const recs = recommend({ hooks: { any: true } }, { observations }); // verification strong -> dropped
     expect(!recs.some((r) => r.pillar === 'verification')).toBeTruthy();
   });
 

@@ -13,7 +13,7 @@ export function subScores(signals: ScoreInput): SubScores {
   const scheduled = s.scheduledJobs ?? 0;
   const worktrees = s.worktrees ?? 0;
   return {
-    verification: s.hooks?.lintTest ? 1 : (s.hooks?.any ? 0.4 : 0),
+    verification: s.hooks?.any ? 1 : 0,
     automation: scheduled >= 2 ? 1 : (scheduled === 1 ? 0.6 : 0),
     context: clamp01(
       (s.claudeMd ? 0.4 : 0) +

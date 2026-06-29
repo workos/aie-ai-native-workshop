@@ -12,8 +12,8 @@ describe('subScores', () => {
     expect(s.delegation).toBe(0);
   });
 
-  test('lint/test hook -> verification 1', () => {
-    expect(subScores({ hooks: { lintTest: true } }).verification).toBe(1);
+  test('any hook -> verification 1', () => {
+    expect(subScores({ hooks: { any: true } }).verification).toBe(1);
   });
 
   test('context combines claudeMd + skills + mcp to a full 1', () => {
@@ -26,12 +26,12 @@ describe('score', () => {
     expect(score({}).total).toBe(0);
   });
 
-  test('only a lint/test hook -> 22 (verification weight)', () => {
-    expect(score({ hooks: { lintTest: true } }).total).toBe(22);
+  test('only a hook -> 22 (verification weight)', () => {
+    expect(score({ hooks: { any: true } }).total).toBe(22);
   });
 
   test('total is always a 0..100 integer', () => {
-    const t = score({ hooks: { lintTest: true }, claudeMd: true, skills: 4, mcpServers: 2, worktrees: 2 }).total;
+    const t = score({ hooks: { any: true }, claudeMd: true, skills: 4, mcpServers: 2, worktrees: 2 }).total;
     expect(Number.isInteger(t) && t >= 0 && t <= 100).toBe(true);
   });
 });
