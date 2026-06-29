@@ -909,7 +909,7 @@
       </div>
       <div class="right">
         <b>Live board + repo &rarr;</b>
-        <span>The room is the content.</span>
+        <span>Built live, from this room.</span>
       </div>
     </div>
   </section>
@@ -1088,7 +1088,7 @@
       <img src="img/qr-board.png" alt="Live board QR" class="qr-img" />
     </div>
     <div class="frame" style="justify-content: center;">
-      <div class="eyebrow" style="margin-bottom: 28px;">The room is the content</div>
+      <div class="eyebrow" style="margin-bottom: 28px;">Built live, from this room</div>
       <h2 class="deck-h2" style="font-size: 92px; margin-bottom: 40px; max-width: 1640px;">Your check-ins light up the <span class="underline-accent">board</span>.</h2>
       <p class="lead" style="max-width: 1660px;">
         It shows where the room's toil is, the top hooks and scheduled tasks worth building, and the engineering-hours a week we're about to reclaim. The <b class="lev">before&rarr;after</b> at the close is the payoff.
@@ -1131,17 +1131,22 @@
   </section>
 
   <!-- ============ 05 THE BOARD ============ -->
-  <section data-label="The board" class="grain">
+  <section data-label="The board" class="grain art-split text-right">
     <div class="qr-corner">
       <span>The live board &middot; open it on your phone</span>
       <img src="img/qr-board.png" alt="Live board QR" class="qr-img" />
     </div>
-    <div class="frame" style="justify-content: center;">
-      <div class="eyebrow" style="margin-bottom: 28px;">One promise before we start</div>
-      <h2 class="deck-h2" style="font-size: 116px; margin-bottom: 36px;">The room is the <span class="underline-accent">content</span>.</h2>
-      <p class="lead" style="max-width: 1620px;">
-        Opt-in. Anonymous. <b class="lev">Nothing leaves your machine but the answers you confirm &mdash; and your score.</b>
-      </p>
+    <div class="frame">
+      <div class="art-cols">
+        <div class="art-panel" aria-hidden="true"><img src="img/art/board-shot.jpg" alt="The live board: where the room walked in, manual to automated, top hooks and scheduled tasks" loading="lazy" /></div>
+        <div class="art-text">
+          <div class="eyebrow" style="margin-bottom: 26px;">One promise before we start</div>
+          <h2 class="deck-h2" style="font-size: 72px; margin-bottom: 28px;">We graph this room &mdash; only what you <span class="underline-accent">share</span>.</h2>
+          <p class="body" style="font-size: 34px; max-width: 760px;">
+            Opt-in and anonymous. <b class="lev">Nothing leaves your machine but the answers you confirm &mdash; and your score.</b> The board turns that into the room's picture: where the toil is, and the hours/week we reclaim by the close.
+          </p>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -1360,22 +1365,29 @@
   </section>
 
   <!-- ============ WHY HANDY ============ -->
-  <section data-label="Buffer pattern · Why Handy" class="grain">
+  <section data-label="Buffer pattern · Why Handy" class="grain art-split text-right">
     <div class="frame">
-      <div class="eyebrow" style="margin-bottom: 22px;">The voice layer</div>
-      <h2 class="deck-h2" style="margin-bottom: 18px;">Why <span class="underline-accent">Handy</span> &mdash; and where the others fit.</h2>
-      <p class="lead muted" style="margin-bottom: 40px; max-width: 1620px; font-size: 38px;">Lots of good dictation tools. For a room of developers, one trait wins: it runs <b class="lev">on your machine</b>.</p>
-      <div class="res-cards">
-        <div class="res-card" style="border-color: #16c391;">
-          <span class="res-name" style="color:#16c391;">Handy &mdash; local</span>
-          <span class="res-desc">Free &amp; open-source. Transcribes <b>on-device</b> (Whisper / Parakeet) &mdash; no cloud, no account, no subscription. Private by default, works offline on conference Wi-Fi, high accuracy, configurable hotkey + model.</span>
-        </div>
-        <div class="res-card">
-          <span class="res-name">Cloud dictation</span>
-          <span class="res-desc">WisprFlow, Superwhisper &amp; co. &mdash; polished, cross-app, quick to start, often a touch faster. Cloud-routed and subscription-based. Great tools &mdash; reach for them when you want managed convenience.</span>
+      <div class="art-cols">
+        <div class="art-panel" aria-hidden="true"><img src="img/art/local-vs-cloud.jpg" alt="On-device voice stays local and private; cloud dictation routes away" loading="lazy" /></div>
+        <div class="art-text">
+          <div class="eyebrow" style="margin-bottom: 22px;">The voice layer</div>
+          <h2 class="deck-h2" style="font-size: 60px; margin-bottom: 22px;">Pick the one that runs <span class="underline-accent">on your machine</span>.</h2>
+          <p class="body" style="font-size: 31px; max-width: 780px; margin-bottom: 24px;">
+            Lots of good dictation tools. For a room of 100 laptops, one trait wins.
+          </p>
+          <div class="mini-cards" style="grid-template-columns: 1fr; gap: 20px; margin-top: 0;">
+            <div class="mini-card" style="padding: 26px 30px; gap: 10px; border-color:#16c391;">
+              <span class="mlabel" style="color:#16c391;">Local &middot; on-device</span>
+              <p class="mdesc" style="font-size: 28px; font-family: var(--font-sans); font-weight: 400; line-height: 1.35;">Free, open-source, transcribes on-device (Whisper / Parakeet). No cloud, no account, no subscription. Private by default &mdash; works offline on conference Wi-Fi.</p>
+            </div>
+            <div class="mini-card" style="padding: 26px 30px; gap: 10px;">
+              <span class="mlabel" style="color: var(--t-mute);">Cloud dictation</span>
+              <p class="mdesc" style="font-size: 28px; font-family: var(--font-sans); font-weight: 400; line-height: 1.35; color: var(--t-mute);">Polished, cross-app, quick to start, sometimes faster &mdash; but cloud-routed and subscription-based. Great tools; reach for them when you want managed convenience.</p>
+            </div>
+          </div>
+          <p class="body muted" style="margin-top: 22px; font-size: 26px; max-width: 780px;">Today we pick <b class="lev">private, free, local-only</b> &mdash; setup in five minutes, no card, no sign-up.</p>
         </div>
       </div>
-      <p class="body muted" style="margin-top: 36px; font-size: 30px;">They all have their place. Today we pick <b class="lev">private, free, local-only</b> &mdash; so 100 laptops can set up in five minutes with no card and no sign-up.</p>
     </div>
   </section>
 
@@ -1510,11 +1522,43 @@
     </div>
   </section>
 
-  <!-- ============ 26 GOALS ============ -->
-  <section data-label="15 This months answer · Goals" class="grain">
+  <!-- ============ 25b HOW A LOOP RUNS (art-split) ============ -->
+  <section data-label="Loops · how a loop runs" class="grain art-split text-right">
     <div class="frame">
-      <div class="eyebrow" style="margin-bottom: 24px;">Goals</div>
-      <h2 class="deck-h2" style="font-size: 92px; margin-bottom: 40px;">&ldquo;Done&rdquo; is a checklist, not a <span class="underline-accent">vibe</span>.</h2>
+      <div class="art-cols">
+        <div class="art-panel" aria-hidden="true"><img src="img/art/loop-cycle.jpg" alt="The loop cycle: try, check, fail, fix, repeat, until it passes" loading="lazy" /></div>
+        <div class="art-text">
+          <div class="eyebrow" style="margin-bottom: 26px;">How a loop runs</div>
+          <h2 class="deck-h2" style="font-size: 70px; margin-bottom: 28px;">Try &rarr; check &rarr; fix &rarr; <span class="underline-accent">repeat</span>.</h2>
+          <p class="body" style="font-size: 33px; max-width: 760px;">
+            You hand the agent a <b class="lev">check command</b> and one instruction: keep iterating until it passes. It tries, runs the check, and on a red it reads the failure, fixes, and goes again &mdash; <b class="lev">no re-prompting from you</b>. The loop ends when the check is green.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 26 GOALS ============ -->
+  <section data-label="15 This months answer · Goals" class="grain art-split text-right">
+    <div class="frame">
+      <div class="art-cols">
+        <div class="art-panel" aria-hidden="true"><img src="img/art/goals-checklist.jpg" alt="A robot checking off a definition-of-done checklist" loading="lazy" /></div>
+        <div class="art-text">
+          <div class="eyebrow" style="margin-bottom: 22px;">Goals</div>
+          <h2 class="deck-h2" style="font-size: 64px; margin-bottom: 26px;">&ldquo;Done&rdquo; is a checklist, not a <span class="underline-accent">vibe</span>.</h2>
+          <p class="body" style="font-size: 32px; max-width: 760px; margin-bottom: 0;">
+            A goal is a <b class="lev">definition of done</b> &mdash; a list of boxes. Reproduce the bug with a failing test &middot; implement the fix &middot; lint, typecheck &amp; tests green &middot; open the PR. The agent decomposes the work and <b class="lev">isn't done until every box is checked</b> &mdash; no victory declared on a hunch.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 26b GOALS · WORKED EXAMPLE ============ -->
+  <section data-label="Goals · worked example" class="grain">
+    <div class="frame">
+      <div class="eyebrow" style="margin-bottom: 24px;">A goal, made concrete</div>
+      <h2 class="deck-h2" style="font-size: 84px; margin-bottom: 40px;">Four boxes. None of them <span class="underline-accent">optional</span>.</h2>
       <div class="worked-example">
         <div class="step"><span class="arrow">&#10003;</span><span class="text">Reproduce the bug with a failing test<small>The agent proves the problem exists before touching anything.</small></span></div>
         <div class="step"><span class="arrow">&#10003;</span><span class="text">Implement the fix<small>Smallest change that makes the test pass.</small></span></div>
@@ -1612,9 +1656,10 @@
       <div class="say-cards">
         <div class="say-card">
           <span class="say-tag"><span class="mic">&#127908;</span> Say this</span>
-          <p class="say-text">&ldquo;Work this issue. You're not done until every checkbox is checked.&rdquo;</p>
+          <p class="say-text">&ldquo;Work through <code class="mono">playground/goals/TASK.md</code> until <code class="mono">bun playground/goals/check.ts</code> shows 5/5.&rdquo;</p>
         </div>
       </div>
+      <p class="act-hint">Not done until <b>every box</b> is checked &mdash; the check script is the judge.</p>
     </div>
   </section>
 
@@ -1628,10 +1673,10 @@
       <div class="say-cards">
         <div class="say-card">
           <span class="say-tag"><span class="mic">&#127908;</span> Say this</span>
-          <p class="say-text">&ldquo;/loop until the whole test suite is green.&rdquo;</p>
+          <p class="say-text">&ldquo;Run <code class="mono">bun playground/loops/check.ts</code> in a loop, fixing the module until it passes.&rdquo;</p>
         </div>
       </div>
-      <p class="act-hint"><b>Walk away.</b> Come back to green.</p>
+      <p class="act-hint"><b>Walk away.</b> Come back to green &mdash; the agent re-runs the check and fixes until it passes.</p>
     </div>
   </section>
 
@@ -1866,6 +1911,41 @@
     </div>
   </section>
 
+  <!-- ============ 47b IT RUNS UNATTENDED (art-split) ============ -->
+  <section data-label="Schedule · runs unattended" class="grain art-split text-right">
+    <div class="frame">
+      <div class="art-cols">
+        <div class="art-panel" aria-hidden="true"><img src="img/art/scheduled-clock.jpg" alt="A scheduled job running on a conveyor at night beside an empty chair" loading="lazy" /></div>
+        <div class="art-text">
+          <div class="eyebrow" style="margin-bottom: 26px;">It runs without you</div>
+          <h2 class="deck-h2" style="font-size: 66px; margin-bottom: 26px;">Set the interval. Walk <span class="underline-accent">away</span>.</h2>
+          <p class="body" style="font-size: 32px; max-width: 760px;">
+            A scheduled task is a command on a recurring timer &mdash; it fires on its interval, runs <b class="lev">unattended</b>, and leaves its output for you to review later. The loop you ran by hand now runs <b class="lev">while you sleep</b>. The empty chair is the point.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 47c LIST & CANCEL ============ -->
+  <section data-label="Schedule · list and cancel" class="grain">
+    <div class="frame" style="justify-content: center;">
+      <div class="eyebrow" style="margin-bottom: 28px;">You stay in control</div>
+      <h2 class="deck-h2" style="font-size: 84px; margin-bottom: 48px; max-width: 1720px;">List what's running. <span class="underline-accent">Cancel</span> what's not.</h2>
+      <div class="mini-cards">
+        <div class="mini-card">
+          <span class="mlabel">List</span>
+          <p class="mdesc">Ask what scheduled tasks you have &mdash; see every job, its interval, and when it last fired.</p>
+        </div>
+        <div class="mini-card">
+          <span class="mlabel">Cancel</span>
+          <p class="mdesc">One word stops a job for good. Nothing keeps running that you didn't choose to keep.</p>
+        </div>
+      </div>
+      <p class="body muted" style="margin-top: 40px; font-size: 30px; max-width: 1660px;">Scheduling is reversible &mdash; you can always see the list and tear one down.</p>
+    </div>
+  </section>
+
   <!-- ============ 48 NOW YOU TRY · SCHEDULED TASKS (divider) ============ -->
   <section data-label="Now you try it · Scheduled" class="try-divider">
     <div class="ghost" aria-hidden="true">&#128197;</div>
@@ -1886,9 +1966,10 @@
       <div class="say-cards">
         <div class="say-card">
           <span class="say-tag"><span class="mic">&#127908;</span> Say this</span>
-          <p class="say-text">&ldquo;Schedule this every Monday at 6am: pull the latest, fix the top lint issues, run the gates, and draft a short post about what changed.&rdquo;</p>
+          <p class="say-text">&ldquo;Schedule <code class="mono">bun playground/scheduled/report.ts</code> on a short interval. Let's watch <code class="mono">playground/scheduled/log.txt</code> grow &mdash; then cancel it.&rdquo;</p>
         </div>
       </div>
+      <p class="act-hint">See it <b>fire</b> on a short interval, watch the log grow, then <b>list</b> and <b>cancel</b> it &mdash; you stay in control.</p>
     </div>
   </section>
 
@@ -1923,114 +2004,6 @@
         <div>+<span data-count-to="168" data-count-from="0">0</span></div>
         <div class="unit">hours / week reclaimed &mdash; across the room</div>
       </div>
-    </div>
-  </section>
-
-  <!-- ============ Q DIVIDER · QUESTIONS THE ROOM ALWAYS ASKS ============ -->
-  <section data-label="Section divider · Questions" class="section-divider">
-    <div class="ghost" aria-hidden="true">Q</div>
-    <div class="frame">
-      <div class="num">Q</div>
-      <h2>Questions the room always asks.</h2>
-    </div>
-  </section>
-
-  <!-- ============ Q1 ============ -->
-  <section data-label="Q&amp;A · slower than typing" class="grain">
-    <div class="frame" style="justify-content: center;">
-      <div class="eyebrow" style="margin-bottom: 36px;">Q</div>
-      <h3 class="deck-h3" style="font-size: 72px; margin-bottom: 40px; max-width: 1700px;">Isn't talking slower than typing for code?</h3>
-      <p class="body" style="font-size: 40px; max-width: 1680px;">
-        You're not dictating syntax &mdash; you state the outcome and the agent writes it. You move at the speed of thought, <b class="lev">184+ wpm</b>, not ~60.
-      </p>
-    </div>
-  </section>
-
-  <!-- ============ Q2 ============ -->
-  <section data-label="Q&amp;A · talk whole time" class="grain">
-    <div class="frame" style="justify-content: center;">
-      <div class="eyebrow" style="margin-bottom: 36px;">Q</div>
-      <h3 class="deck-h3" style="font-size: 72px; margin-bottom: 40px; max-width: 1700px;">Do I have to talk the whole time?</h3>
-      <p class="body" style="font-size: 40px; max-width: 1680px;">
-        No. Voice is for <b class="lev">direction</b>; you still read, click, and type when that's faster. Most operators switch fluidly.
-      </p>
-    </div>
-  </section>
-
-  <!-- ============ Q3 ============ -->
-  <section data-label="Q&amp;A · off the rails" class="grain">
-    <div class="frame" style="justify-content: center;">
-      <div class="eyebrow" style="margin-bottom: 36px;">Q</div>
-      <h3 class="deck-h3" style="font-size: 72px; margin-bottom: 40px; max-width: 1700px;">What if the agent goes off the rails?</h3>
-      <p class="body" style="font-size: 40px; max-width: 1680px;">
-        That's what gates are for &mdash; a hook that must pass and a second model that reviews. The agent <b class="lev">can't ship past them</b>.
-      </p>
-    </div>
-  </section>
-
-  <!-- ============ Q4 ============ -->
-  <section data-label="Q&amp;A · data collected" class="grain">
-    <div class="frame" style="justify-content: center;">
-      <div class="eyebrow" style="margin-bottom: 36px;">Q</div>
-      <h3 class="deck-h3" style="font-size: 72px; margin-bottom: 40px; max-width: 1700px;">Is my data being collected?</h3>
-      <p class="body" style="font-size: 40px; max-width: 1680px;">
-        Anonymous, and opt-in. Your AI-Native score is read by a <b>local</b> scan of your own setup &mdash; only the score <b>numbers</b> and the answers you confirm ever leave your machine. <b class="lev">No files, git log, or transcripts. Skip it and lose nothing.</b>
-      </p>
-    </div>
-  </section>
-
-  <!-- ============ Q5 ============ -->
-  <section data-label="Q&amp;A · finish a block" class="grain">
-    <div class="frame" style="justify-content: center;">
-      <div class="eyebrow" style="margin-bottom: 36px;">Q</div>
-      <h3 class="deck-h3" style="font-size: 72px; margin-bottom: 40px; max-width: 1700px;">What if I don't finish a block?</h3>
-      <p class="body" style="font-size: 40px; max-width: 1680px;">
-        Totally fine. The repo is <b class="lev">yours to keep</b> &mdash; finish later. Today is about feeling each move once.
-      </p>
-    </div>
-  </section>
-
-  <!-- ============ Q6 ============ -->
-  <section data-label="Q&amp;A · my language codebase" class="grain">
-    <div class="frame" style="justify-content: center;">
-      <div class="eyebrow" style="margin-bottom: 36px;">Q</div>
-      <h3 class="deck-h3" style="font-size: 72px; margin-bottom: 40px; max-width: 1700px;">Will this work in my language / codebase?</h3>
-      <p class="body" style="font-size: 40px; max-width: 1680px;">
-        The moves are general &mdash; voice, loops, gates, schedules apply to <b class="lev">any stack</b>. Today's repo is just the sandbox.
-      </p>
-    </div>
-  </section>
-
-  <!-- ============ Q7 ============ -->
-  <section data-label="Q&amp;A · vs autocomplete" class="grain">
-    <div class="frame" style="justify-content: center;">
-      <div class="eyebrow" style="margin-bottom: 36px;">Q</div>
-      <h3 class="deck-h3" style="font-size: 72px; margin-bottom: 40px; max-width: 1700px;">How is this different from autocomplete / Copilot?</h3>
-      <p class="body" style="font-size: 40px; max-width: 1680px;">
-        Autocomplete finishes your line. This is <b class="lev">operating</b>: you direct several agents through whole jobs, with guardrails, on a schedule.
-      </p>
-    </div>
-  </section>
-
-  <!-- ============ Q8 ============ -->
-  <section data-label="Q&amp;A · strong engineer" class="grain">
-    <div class="frame" style="justify-content: center;">
-      <div class="eyebrow" style="margin-bottom: 36px;">Q</div>
-      <h3 class="deck-h3" style="font-size: 72px; margin-bottom: 40px; max-width: 1700px;">Do I need to be a strong engineer for this?</h3>
-      <p class="body" style="font-size: 40px; max-width: 1680px;">
-        No. The operator skill is describing outcomes and setting up gates &mdash; that's <b class="lev">leverage for any level</b>.
-      </p>
-    </div>
-  </section>
-
-  <!-- ============ Q9 ============ -->
-  <section data-label="Q&amp;A · after today" class="grain">
-    <div class="frame" style="justify-content: center;">
-      <div class="eyebrow" style="margin-bottom: 36px;">Q</div>
-      <h3 class="deck-h3" style="font-size: 72px; margin-bottom: 40px; max-width: 1700px;">What do I do after today?</h3>
-      <p class="body" style="font-size: 40px; max-width: 1680px;">
-        Keep the repo, keep the scheduled task running, keep the glossary. Re-run a check-in next week to see your <b class="lev">before&rarr;after</b>.
-      </p>
     </div>
   </section>
 
@@ -2088,7 +2061,7 @@
   "The live board. Your check-ins light it up: where the room's toil is, the top hooks and scheduled tasks worth building, hours/week we'll reclaim. The before→after at the close is the payoff.",
   "The glossary. No dumb questions — every term behind today, plus the fundamentals. A chat on the page answers in plain language.",
   "Where to start. Three moves: trust the repo in Claude Code, say 'set me up for the workshop,' say 'run my workshop check-in.' Then we begin Block 1.",
-  "The board. Opt-in, anonymous: your answers are volunteered and your AI-Native score is a local scan — only the numbers leave, never files or transcripts. Say it plainly; it earns trust. They'll watch the room's toil light up as we go; by the end the board shows the hours/week this room reclaimed. We revisit it at the close.",
+  "The board. Show them the real screenshot. Opt-in, anonymous: your answers are volunteered and your AI-Native score is a local scan — only the numbers leave, never files or transcripts. Say it plainly; it earns trust. We graph this room from what people share — they'll watch the toil light up as we go; by the end the board shows the hours/week this room reclaimed. We revisit it at the close.",
   "Divider — Block 01, Voice coding. Short. Your mouth is faster than your hands.",
   "Problem with hands. You think faster than you can type. Your hands cap you at 40–80 words a minute; your ideas don't run that slow — the keyboard is the bottleneck, not your ideas.",
   "Bandwidth gap. Let the two bars grow. Speaking is ~2× typing. Same brain, double the bandwidth to the agent.",
@@ -2111,14 +2084,16 @@
   "Divider — Block 02, Loops & goals. Stop babysitting prompts.",
   "Next ceiling. You can talk fast now, but driving one agent in real time still pins you to the chair. The next unlock is handing off whole jobs and walking away.",
   "Two ways to hand off. A goal has a finish line you define; a loop keeps going until a condition is met.",
-  "Goals. 'Done' is a checklist, not a vibe. Watch the boxes tick. The agent isn't done until every box is checked.",
+  "How a loop runs. The whole mechanic on one image: you give the agent a check command and say keep going until it passes. Try, run the check, red → read the failure and fix → go again, no re-prompting — the loop ends on green. This is the /loop idea.",
+  "Goals. A goal is a definition-of-done — a list of boxes, not a vibe. The agent decomposes the work and isn't done until every box is checked; it can't declare victory on a hunch.",
+  "Goals worked example. Four concrete boxes — failing test, the fix, gates green, PR — none optional. The checklist IS the spec; encode 'done' explicitly and the agent stops quitting early.",
   "Why it works. Agents declare victory early — left vague, an agent stops at 'looks done.' A checklist makes 'done' unskippable: it has to tick every box before it can stop.",
   "Loops. Compare: goal/checklist is one bounded job; /loop is unknown-size or recurring. Footnote: parallel agents on git worktrees.",
   "/loop in the wild. Three examples: until the suite is green, processing each file in a list, every 30s until the deploy is healthy. 'Done' is a condition, not a count.",
   "Scale it. Many agents, zero collisions. Each agent on its own git worktree — isolated checkouts, no stepping on each other. Three jobs run in parallel while you direct.",
   "Now you try it — Loops & goals. Hand over a job and walk away.",
-  "Activity — work a checklist issue. Give them several minutes; walk the room. Not done until every box is checked.",
-  "Activity — let it loop. Give them several minutes; walk the room. Tell them to actually walk away and come back to green.",
+  "Activity — work a checklist issue. They work through playground/goals/TASK.md until bun playground/goals/check.ts shows 5/5. Give them several minutes; walk the room. Not done until every box is checked — the check script is the judge.",
+  "Activity — let it loop. They say: run bun playground/loops/check.ts in a loop, fixing the module until it passes. Give them several minutes; walk the room. Tell them to actually walk away and come back to green.",
   "Activity (stretch) — two worktrees. For those ahead. Walk the room; help anyone spinning up the second agent.",
   "Divider — Block 03, Verification gates. Trust the gates.",
   "Trust problem. 'Done' isn't the same as done. An agent will tell you it finished — but belief is not a build. Operators wrap the agent in checks it cannot skip.",
@@ -2135,20 +2110,12 @@
   "The last cord. Everything so far — voice, loops, gates — ran because you were there in the chair. The last move cuts that cord.",
   "What to schedule. The recurring toil: dependency bumps, status reports, eval runs, the thing you just built. If it recurs, it shouldn't need you.",
   "Schedule it. Every Monday while you sleep: pull, fix, run the gates, draft the write-up. Watch the calendar ticks. 0 6 * * 1.",
+  "It runs unattended. A scheduled task is a command on a recurring timer: it fires on its interval, runs with nobody watching, and leaves output you review later. The hand-run loop now runs while you sleep — the empty chair is the whole point.",
+  "List and cancel. You stay in control: ask what scheduled tasks you have to see every job and its interval; one word cancels any of them. Scheduling is reversible — nothing keeps running that you didn't choose to keep.",
   "Now you try it — Scheduled tasks. Set it once; let it run without you.",
-  "Activity — schedule your work. Give them several minutes; walk the room. Help them phrase the recurring job.",
+  "Activity — schedule your work. They schedule bun playground/scheduled/report.ts on a short interval, watch playground/scheduled/log.txt grow, then list and cancel it. Give them several minutes; walk the room. Help them phrase the recurring job and confirm they can tear it down.",
   "Activity — close the loop. Give them a minute; walk the room. Then watch the room migrate from toil to leverage.",
   "The payoff. Mirror the board: toil migrates to leverage. The +168 is illustrative — call out the real number from the live board.",
-  "Questions divider. Dead-air insurance — skip if you're on time; rich if you're not.",
-  "Q — slower than typing? You're not dictating syntax; you state the outcome and the agent writes it. Speed of thought, 184+ wpm, not ~60.",
-  "Q — talk the whole time? No. Voice is for direction; read, click, type when faster. Operators switch fluidly.",
-  "Q — agent goes off the rails? That's what gates are for: a hook that must pass and a second model that reviews. It can't ship past them.",
-  "Q — data collected? Anonymous, opt-in. Your answers are volunteered; your AI-Native score is a local scan — only the numbers and confirmed answers leave, never files/git log/transcripts. Skip it and lose nothing.",
-  "Q — don't finish a block? Fine. The repo is yours to keep; finish later. Today is about feeling each move once.",
-  "Q — my language / codebase? The moves are general — voice, loops, gates, schedules apply to any stack. The repo is just the sandbox.",
-  "Q — vs autocomplete / Copilot? Autocomplete finishes your line. This is operating: directing several agents through whole jobs, with guardrails, on a schedule.",
-  "Q — need to be a strong engineer? No. The skill is describing outcomes and setting up gates — leverage for any level.",
-  "Q — after today? Keep the repo, the scheduled task, the glossary. Re-run a check-in next week to see your before→after.",
   "Keep building. You keep all of it: the repo and skills, your scheduled task (still running Monday), the glossary, your before→after on the board.",
   "Close. You're an operator now. Recap the four ticked items. Keep the repo, keep the scheduled task."
 ]
