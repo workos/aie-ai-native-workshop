@@ -101,6 +101,8 @@ An **opt-in** coach rides along in your terminal:
 - 📈 **Feeds the [live board](https://aie-board.workos-internal.workers.dev)** — your arc, next to the whole room's.
 - 🎈 **For fun** — and it quietly powers the data viz.
 
+> Under the hood it's a **local MCP server** (`aie-coach`) — 7 tools, in [`native/`](native/). Full tool list + scoring → **[native/README.md](native/README.md)**.
+
 **🔒 Your privacy, plainly:**
 
 - The score is a **local scan** of your own Claude setup (hooks? a `CLAUDE.md`? worktrees?).
