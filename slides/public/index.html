@@ -959,7 +959,7 @@
 <deck-stage width="1920" height="1080">
 
   <!-- ============ 01 COVER ============ -->
-  <section data-label="01 Cover" class="grain cover">
+  <section data-label="Cover" class="grain cover">
     <div class="cover-bg" aria-hidden="true"><img src="img/art/hero.jpg" alt="" /></div>
     <div class="qr-corner">
       <span>The live board &middot; scan to join</span>
@@ -1024,7 +1024,7 @@
   </section>
 
   <!-- ============ 04 THE ARC ============ -->
-  <section data-label="09 Anatomy of a loop · The arc" class="grain">
+  <section data-label="The arc" class="grain">
     <div class="frame">
       <div class="eyebrow" style="margin-bottom: 28px;">The arc &middot; four blocks</div>
       <h2 class="deck-h2" style="margin-bottom: 14px;">One repo. Each block builds on the&nbsp;last.</h2>
@@ -1212,7 +1212,7 @@
         </div>
       </div>
       <p class="hood-punch" style="font-size: 36px; margin-top: 34px; max-width: 1700px;">
-        One refactor, one fix, one non-code task &mdash; all in flight, all driven by your voice.
+        One refactor, one fix, one non-code task &mdash; all in flight, all driven by your voice. You&rsquo;re not the typist anymore &mdash; you&rsquo;re the <b class="lev">director</b>.
       </p>
     </div>
   </section>
@@ -2003,7 +2003,7 @@
   </section>
 
   <!-- ============ 51 THE PAYOFF ============ -->
-  <section data-label="05 1000 hours · The payoff" class="grain has-art-bg">
+  <section data-label="The payoff" class="grain has-art-bg">
     <div class="payoff-bg" aria-hidden="true"><img src="img/art/payoff.jpg" alt="" /></div>
     <div class="frame" style="justify-content: center;">
       <div class="eyebrow" style="margin-bottom: 28px;">The payoff &middot; mirror the board</div>
@@ -2063,6 +2063,7 @@
 [
   "Cover. Land the title and the tagline, then straight in. This is a workshop, not a talk — say it. Point at the QR: live board + repo, scan now.",
   "The pitch. Autocomplete vs. fleet is the whole frame. Most people use AI one prompt at a time; operators run many agents. Hold the contrast.",
+  "Your facilitators. Quick intros — Zack and Nick, who's driving and why. Keep it short; the room came to build, not to hear bios.",
   "The arc. Walk the four blocks left to right: voice, loops & goals, gates, schedules. Each builds on the last on the same repo.",
   "Orientation divider — what we're doing today. The plan, your tools, where to start. Short.",
   "Your three resources. Point at each QR: these slides, the live board, the glossary. Tell them to open all three on their phone now.",
@@ -2071,7 +2072,7 @@
   "Where to start. Three moves: trust the repo in Claude Code, say 'set me up for the workshop,' say 'run my workshop check-in.' Then we begin Block 1.",
   "Divider — Block 01, Voice coding. Short. Your mouth is faster than your hands.",
   "Bandwidth gap. Let the two bars grow. Speaking is ~2× typing. Same brain, double the bandwidth to the agent.",
-  "The move. Let the three tabs land. Fix a bug by voice, then drive three agents at once. Volume comes from your voice.",
+  "The move. Let the three tabs land. Fix a bug by voice, then drive three agents at once. Volume comes from your voice. You stop being the typist; you become the director.",
   "Good driving. Say the outcome, not the keystrokes. Contrast the muted keystroke list against the clean intent.",
   "Why Handy. Free, local, private, on-device — versus cloud dictation like WisprFlow (which has its place). For a room of 100 laptops, local + free + no sign-up wins.",
   "Now you try it — Voice. Hands off the keyboard. Signal it's time to practice.",
@@ -2081,6 +2082,7 @@
   "Activity — put yourself on the board. Give them a minute; walk the room. Anonymous, opt-in, only what they confirm.",
   "Divider — Block 02, Loops & goals. Stop babysitting prompts.",
   "Next ceiling. You can talk fast now, but driving one agent in real time still pins you to the chair. The next unlock is handing off whole jobs and walking away.",
+  "The atom. An agent is a model in a loop — it thinks, acts, observes, decides, and repeats until it decides it's done. Everything today is this one loop; /goal and /loop just run it unattended.",
   "Two ways to hand off. /goal runs until a condition holds — no timer; that's today's hand-offs. /loop repeats a task — on a timer, or self-paced if you omit the interval — recurring; we use it in the scheduled block. Two different commands.",
   "How a loop runs. The iterate-until-green mechanic IS the /goal command: /goal bun <check> passes. Try, run the check, red → read the failure and fix → go again, no re-prompting — it stops on its own when the condition holds.",
   "Goals. A goal is a definition-of-done — a list of boxes, not a vibe. The agent decomposes the work and isn't done until every box is checked; it can't declare victory on a hunch.",
@@ -2089,11 +2091,13 @@
   "Goal vs. loop. Two commands, accurately: /goal is bounded — iterate until a condition, then stop, no timer. /loop is recurring — repeat a task on a timer (e.g. every minute), or self-paced if you omit the interval, this session. Footnote: parallel goals on git worktrees.",
   "Goal vs. loop, in the wild. /goal (until a condition, then stops): /goal the test suite is green; /goal every file in src/ is under 200 lines. /loop (repeats — on a timer, or self-paced if you omit the interval): /loop 1m bun test; /loop 5m check the deploy and ping me when it's healthy; /loop process the next item in the backlog. Goal stops on green; loop keeps repeating till you stop it.",
   "Scale it. Many agents, zero collisions. Each agent on its own git worktree — isolated checkouts, no stepping on each other. Three jobs run in parallel while you direct.",
+  "All the way down. Same loop at every altitude — voice feeds it, loops & goals run it, gates make it trustworthy, schedules run it without you. The atom scales to the whole workshop.",
   "Now you try it — Loops & goals. Hand over a job and walk away.",
   "Activity — work a checklist issue. They type the real command: /goal bun playground/goals/check.ts shows 5/5. It works the cart checklist in playground/goals/TASK.md, iterating until 5/5. Give them several minutes; walk the room. Not done until every box is checked — the check script is the judge.",
   "Activity — set a goal, walk away. They type the real command: /goal bun playground/loops/check.ts passes. The agent reads each failing case, fixes playground/loops/slugify.ts, re-runs, and stops when all 6 checks pass. Give them several minutes; walk the room. Tell them to actually walk away and come back to green.",
   "Activity — now loop it. First real /loop, right here in the loops block: /loop 1m bun playground/loops/watch.ts. watch.ts re-runs the same checks but never errors (always exit 0) — so the loop is clean. It re-runs every minute and prints one status line per tick; once /goal made it green they watch it hold at ✅ all 6 green. Esc stops it. The teaching beat: same exercise, two commands — /goal fixes UNTIL DONE, /loop just re-runs ON A TIMER. (We don't point /loop at check.ts because that exits 1 when red — a failing check on repeat is the confusing version.)",
   "Activity (stretch) — two worktrees. For those ahead. Walk the room; help anyone spinning up the second agent.",
+  "Failure is a system bug. When the loop fails, don't just retry — it's a missing gate, gotcha, or step. Fix the system and the next run inherits it. That's the cue for Block 3: verification gates.",
   "Divider — Block 03, Verification gates. Trust the gates.",
   "Trust problem. 'Done' isn't the same as done. An agent will tell you it finished — but belief is not a build. Operators wrap the agent in checks it cannot skip.",
   "The cheapest gate. A hook that lints, typechecks, and tests on every change. The agent can't hand you code that doesn't build — red turns green, or the work isn't done.",

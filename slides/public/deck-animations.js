@@ -345,7 +345,7 @@
       }
     },
     {
-      match: /01 Cover/i,
+      match: /Cover/i,
       run(slide) {
         const stripe = slide.querySelector('.stripe');
         const lines = slide.querySelectorAll('.cover-line');
@@ -526,7 +526,7 @@
       }
     },
     {
-      match: /05 1000 hours/i,
+      match: /The payoff/i,
       run(slide) {
         const eyebrow = slide.querySelector('.eyebrow');
         const numEl = slide.querySelector('[data-count-to]');
@@ -573,7 +573,7 @@
       }
     },
     {
-      match: /09 Anatomy of a loop/i,
+      match: /The arc/i,
       run(slide) {
         const eyebrow = slide.querySelector('.eyebrow');
         const h2 = slide.querySelector('.deck-h2');
