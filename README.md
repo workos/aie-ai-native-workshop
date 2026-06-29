@@ -18,7 +18,7 @@
 
 <img src="docs/images/sec-what-you-do.png" alt="What you'll do today — four moves, one repo: voice coding, loops & goals, verification gates, scheduled tasks. Each builds on the last." width="100%" />
 
-<p align="center"><sub>Your check-ins light up the <b><a href="https://aie-board.workos-internal.workers.dev">live board</a></b> — where the room's toil is, the hooks &amp; scheduled tasks worth building, and the engineering-hours a week we're about to reclaim.</sub></p>
+<p align="center"><b>Your check-ins light up the <a href="https://aie-board.workos-internal.workers.dev">live board</a></b> &nbsp;—&nbsp; the room's toil &nbsp;·&nbsp; what to automate &nbsp;·&nbsp; hours/week reclaimed</p>
 
 ---
 
@@ -88,15 +88,25 @@ Then **open this repo in Claude Code and trust it** — that auto-loads the work
   <a href="curriculum/04-scheduled-tasks.md">Block 4 · Schedules</a>
 </p>
 
-> 🛠️ **The hands-on runs on a repo you bring** — a side project or work repo (no good one handy? clone any small project you like). The patterns apply to any stack; today's repo is just the launchpad.
+> 🛠️ **Bring a repo to work in** — a side project or work repo (no good one handy? clone any small project). The moves apply to any stack.
 
 ---
 
 ## 🤖 Meet your coach — the room is the content
 
-An **opt-in** coach rides along in your terminal. It runs a short [**check-in**](skills/coach-checkin/) and reads your **AI-Native score** — once walking in, once at the close — so the [**live board**](https://aie-board.workos-internal.workers.dev) shows your *before → after* alongside the whole room's. It's for fun, and it quietly powers the data viz.
+An **opt-in** coach rides along in your terminal:
 
-> 🔒 **Privacy.** The score comes from a **local** scan of your *own* Claude setup (hooks? a `CLAUDE.md`? worktrees? scheduled jobs?). Only the score **numbers** and the answers you **confirm** ever leave your machine — never your files, `git log`, or transcripts. Skip it entirely and still do every block.
+- 💬 **Interviews you** — a few quick questions, walking in and at the close.
+- 📊 **Scores your setup** — how AI-native are you? One number, **before → after**.
+- 📈 **Feeds the [live board](https://aie-board.workos-internal.workers.dev)** — your arc, next to the whole room's.
+- 🎈 **For fun** — and it quietly powers the data viz.
+
+**🔒 Your privacy, plainly:**
+
+- The score is a **local scan** of your own Claude setup (hooks? a `CLAUDE.md`? worktrees?).
+- Only the **score numbers** and the **answers you confirm** leave your machine.
+- **Never** your files, `git log`, or transcripts.
+- Skip it entirely and still do every block.
 
 ---
 
