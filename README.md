@@ -22,19 +22,44 @@
 
 ---
 
-<img src="docs/images/sec-setup.png" alt="Setup, ~5 min — fast path: open the repo in Claude Code, trust it, say 'set me up for the workshop'. Tools: Claude Code, Bun, Codex CLI, Handy, Git." width="100%" />
+<img src="docs/images/sec-setup.png" alt="Setup, ~5 min — clone the repo, open Claude Code in it, say 'set me up for the workshop'. Tools: Claude Code, Bun, Codex CLI, Handy, Git." width="100%" />
 
-<p align="center">
-  <b>Get each tool →</b>
-  <a href="https://claude.com/claude-code">Claude Code</a> &nbsp;·&nbsp;
-  <a href="https://bun.sh">Bun</a> &nbsp;·&nbsp;
-  <a href="https://github.com/openai/codex">Codex CLI</a> &nbsp;·&nbsp;
-  <a href="https://handy.computer">Handy</a>
-  &nbsp; — or just say <b><em>"set me up for the workshop"</em></b> and Claude installs what's missing.
-</p>
+You need **[Claude Code](https://claude.com/claude-code)** installed and signed in. Everything else, let Claude install.
+
+<details open>
+<summary><b>✅ Recommended — clone it and let Claude set you up</b></summary>
+
+<br/>
+
+**1. Clone the repo and launch Claude Code inside it:**
+
+```bash
+git clone https://github.com/workos/aie-ai-native-workshop.git
+cd aie-ai-native-workshop
+claude          # starts Claude Code in the repo
+```
+
+**2. On first launch, you'll see three prompts (once each):**
+- **Trust** the workspace → accept (loads the workshop skills + permissions).
+- **`aie-coach` MCP server** → choose **"Use this and all future MCP servers in this project."**
+- **Tool calls** → approve them as they appear.
+
+> ⚡ Want it hands-off? Launch with **`claude --dangerously-skip-permissions`** instead — you trust this repo, so it skips every prompt.
+
+**3. Then just say:**
+
+> *"set me up for the workshop"*
+
+The `setup-workshop` skill installs and verifies **Bun, the Codex CLI, Handy, and git**, confirms the repo is wired, and prints a status report. *(If it just installed Bun, quit and re-run `claude` once so the coach can launch.)* Then say **"run my workshop check-in"** and you're in.
+
+</details>
 
 <details>
-<summary><b>Prefer to install by hand?</b></summary>
+<summary>🔧 Prefer to install by hand?</summary>
+
+<br/>
+
+Get each tool: **[Bun](https://bun.sh)** · **[Codex CLI](https://github.com/openai/codex)** · **[Handy](https://handy.computer)** · git. Or run:
 
 ```bash
 # Bun — the check-in tool + skills run on it (blocks 1 & 4)
@@ -43,15 +68,13 @@ curl -fsSL https://bun.sh/install | bash
 # Codex CLI — the Block 3 adversarial-review gate
 npm i -g @openai/codex && codex login
 
-# Handy (voice) — just ask Claude in the repo:  "set up Handy for me"
+# Handy (voice) — or just ask Claude in the repo:  "set up Handy for me"
 # Git — check you have it:  git --version
 ```
 
-Then **trust this repo in Claude Code** — that auto-loads the workshop skills, the `ideation` plugin, and the coach.
+Then **open this repo in Claude Code and trust it** — that auto-loads the workshop skills, the `ideation` plugin, and the `aie-coach` coach (approve it when prompted).
 
 </details>
-
-> 🔐 **First-run prompts (expect these once).** When you start Claude Code here you'll: **(1)** accept the **workspace trust** dialog (so the repo's skills/permissions load), **(2)** approve the **`aie-coach` MCP server** — choose *"Use this and all future MCP servers in this project"* — and **(3)** approve tool calls as they come. Want to skip the clicking? You trust this repo, so just launch with **`claude --dangerously-skip-permissions`** and it runs hands-off. *(If you just installed Bun, quit and re-run `claude` once so the coach can launch.)*
 
 ---
 
