@@ -1585,7 +1585,7 @@
             <code class="mono">/goal</code> &mdash; <b class="lev">bounded</b>: iterate until a condition holds, then stop. No timer.
           </p>
           <p class="body" style="font-size: 30px; max-width: 760px; margin-bottom: 18px;">
-            <code class="mono">/loop</code> &mdash; <b class="lev">recurring</b>: re-run a task on a timer (e.g. every 30s), this session.
+            <code class="mono">/loop</code> &mdash; <b class="lev">recurring</b>: re-run a task on a timer (e.g. every minute), this session.
           </p>
           <p class="body muted" style="font-size: 25px; max-width: 760px; margin-bottom: 0;">Run parallel goals on git worktrees &mdash; isolated checkouts, no collisions.</p>
         </div>
@@ -1603,7 +1603,7 @@
         <div><span class="prompt">/goal</span> the test suite is green</div>
         <div style="margin-bottom: 14px;"><span class="prompt">/goal</span> every file in src/ is under 200 lines</div>
         <div class="com">/loop &mdash; on a timer</div>
-        <div><span class="prompt">/loop</span> 30s bun test</div>
+        <div><span class="prompt">/loop</span> 1m bun test</div>
         <div><span class="prompt">/loop</span> 5m check the deploy and ping me when it's healthy</div>
       </div>
       <p class="body muted" style="margin-top: 36px; font-size: 32px; max-width: 1660px;"><code class="mono">/goal</code> stops on green; <code class="mono">/loop</code> keeps firing on the clock.</p>
@@ -1667,6 +1667,23 @@
         </div>
       </div>
       <p class="act-hint"><b>Walk away.</b> The agent reads each failing case, fixes <code class="mono">playground/loops/slugify.ts</code>, re-runs, and stops when all <b>6 checks</b> pass.</p>
+    </div>
+  </section>
+
+  <!-- ============ NEW · ACTIVITY · LOOP IT ON A TIMER ============ -->
+  <section data-label="Buffer pattern · activity loop it" class="grain activity">
+    <div class="frame">
+      <div class="act-eyebrow">&#9655; Now you try &middot; Loops</div>
+      <div class="act-head">
+        <h2 class="act-title">Now loop it.</h2>
+      </div>
+      <div class="say-cards">
+        <div class="say-card">
+          <span class="say-tag"><span class="mic">&#9000;&#65039;</span> Type this</span>
+          <p class="say-text"><span class="prompt">/loop</span> 1m bun playground/loops/watch.ts</p>
+        </div>
+      </div>
+      <p class="act-hint">Re-runs the check <b>every minute</b> and prints one clean status line per tick &mdash; watch it hold at <b class="lev">&#9989; all 6 green</b>. <code class="mono">Esc</code> to stop. That&rsquo;s <code class="mono">/loop</code>: <b>repeat on a timer</b> &mdash; where <code class="mono">/goal</code> fixed it <b>until done</b>.</p>
     </div>
   </section>
 
@@ -1948,7 +1965,7 @@
           <div class="eyebrow" style="margin-bottom: 26px;">It runs without you</div>
           <h2 class="deck-h2" style="font-size: 66px; margin-bottom: 24px;">Set the interval. Walk <span class="underline-accent">away</span>.</h2>
           <p class="body" style="font-size: 30px; max-width: 760px; margin-bottom: 16px;">
-            <code class="mono">/loop [interval] &lt;cmd&gt;</code> &mdash; re-runs locally this session, e.g. <code class="mono">/loop 2m bun playground/scheduled/report.ts</code>.
+            <code class="mono">/loop [interval] &lt;cmd&gt;</code> &mdash; re-runs locally this session, e.g. <code class="mono">/loop 1m bun playground/scheduled/report.ts</code>.
           </p>
           <p class="body" style="font-size: 30px; max-width: 760px;">
             <code class="mono">/schedule &hellip;</code> &mdash; a persistent <b class="lev">cloud</b> routine that runs even when you're offline. The empty chair is the point.
@@ -2000,7 +2017,7 @@
       <div class="say-cards" style="gap: 22px; margin-top: 4px;">
         <div class="say-card" style="padding: 20px 30px; gap: 8px;">
           <span class="say-tag"><span class="mic">&#9000;&#65039;</span> Type this</span>
-          <p class="say-text" style="font-size: 31px;"><span class="prompt">/loop</span> 2m bun playground/scheduled/report.ts</p>
+          <p class="say-text" style="font-size: 31px;"><span class="prompt">/loop</span> 1m bun playground/scheduled/report.ts</p>
         </div>
         <div class="say-card" style="padding: 20px 30px; gap: 8px;">
           <span class="say-tag"><span class="mic">&#9000;&#65039;</span> Then the real version</span>
@@ -2126,12 +2143,13 @@
   "Goals. A goal is a definition-of-done — a list of boxes, not a vibe. The agent decomposes the work and isn't done until every box is checked; it can't declare victory on a hunch.",
   "Goals worked example. Four concrete boxes — failing test, the fix, gates green, PR — none optional. The checklist IS the spec; encode 'done' explicitly and the agent stops quitting early.",
   "Why it works. Agents declare victory early — left vague, an agent stops at 'looks done.' A checklist makes 'done' unskippable: it has to tick every box before it can stop.",
-  "Goal vs. loop. Two commands, accurately: /goal is bounded — iterate until a condition, then stop, no timer. /loop is recurring — re-run a task on a timer (e.g. every 30s), this session. Footnote: parallel goals on git worktrees.",
-  "Goal vs. loop, in the wild. /goal (until a condition): /goal the test suite is green; /goal every file in src/ is under 200 lines. /loop (on a timer): /loop 30s bun test; /loop 5m check the deploy and ping me when it's healthy. Goal stops on green; loop keeps firing on the clock.",
+  "Goal vs. loop. Two commands, accurately: /goal is bounded — iterate until a condition, then stop, no timer. /loop is recurring — re-run a task on a timer (e.g. every minute), this session. Footnote: parallel goals on git worktrees.",
+  "Goal vs. loop, in the wild. /goal (until a condition): /goal the test suite is green; /goal every file in src/ is under 200 lines. /loop (on a timer): /loop 1m bun test; /loop 5m check the deploy and ping me when it's healthy. Goal stops on green; loop keeps firing on the clock.",
   "Scale it. Many agents, zero collisions. Each agent on its own git worktree — isolated checkouts, no stepping on each other. Three jobs run in parallel while you direct.",
   "Now you try it — Loops & goals. Hand over a job and walk away.",
   "Activity — work a checklist issue. They type the real command: /goal bun playground/goals/check.ts shows 5/5. It works the cart checklist in playground/goals/TASK.md, iterating until 5/5. Give them several minutes; walk the room. Not done until every box is checked — the check script is the judge.",
   "Activity — set a goal, walk away. They type the real command: /goal bun playground/loops/check.ts passes. The agent reads each failing case, fixes playground/loops/slugify.ts, re-runs, and stops when all 6 checks pass. Give them several minutes; walk the room. Tell them to actually walk away and come back to green.",
+  "Activity — now loop it. First real /loop, right here in the loops block: /loop 1m bun playground/loops/watch.ts. watch.ts re-runs the same checks but never errors (always exit 0) — so the loop is clean. It re-runs every minute and prints one status line per tick; once /goal made it green they watch it hold at ✅ all 6 green. Esc stops it. The teaching beat: same exercise, two commands — /goal fixes UNTIL DONE, /loop just re-runs ON A TIMER. (We don't point /loop at check.ts because that exits 1 when red — a failing check on repeat is the confusing version.)",
   "Activity (stretch) — two worktrees. For those ahead. Walk the room; help anyone spinning up the second agent.",
   "Divider — Block 03, Verification gates. Trust the gates.",
   "Trust problem. 'Done' isn't the same as done. An agent will tell you it finished — but belief is not a build. Operators wrap the agent in checks it cannot skip.",
@@ -2149,10 +2167,10 @@
   "Which trigger? Four ways work runs without you, separated by what FIRES them. A hook is automatic — runs on every change, no command, you set it once; that's the verification gate (lint/typecheck/tests). /goal runs until a condition holds, then stops — one bounded job. /loop re-runs on a timer in this session. /schedule is a persistent cloud routine that fires even when you're offline. Rule of thumb: always-on guardrail → hook; finish one job → /goal; repeat while you work → /loop; repeat while you're gone → /schedule.",
   "What to schedule. The recurring toil: dependency bumps, status reports, eval runs, the thing you just built. If it recurs, it shouldn't need you.",
   "Schedule it. The real command: /schedule every Monday 6am, pull, fix, run the gates, and draft the write-up. A persistent cloud routine. 0 6 * * 1 — every Monday, 6am, while you sleep.",
-  "It runs unattended. Two mechanisms: /loop [interval] <cmd> re-runs locally this session (e.g. /loop 2m bun playground/scheduled/report.ts); /schedule … is a persistent cloud routine that runs even when you're offline. The empty chair is the point.",
+  "It runs unattended. Two mechanisms: /loop [interval] <cmd> re-runs locally this session (e.g. /loop 1m bun playground/scheduled/report.ts); /schedule … is a persistent cloud routine that runs even when you're offline. The empty chair is the point.",
   "List and cancel. /schedule list shows every cloud routine. Cancel one by asking Claude or at claude.ai/code/routines. A local /loop stops with Esc. Reversible — nothing runs that you didn't choose to keep.",
   "Now you try it — Scheduled tasks. Set it once; let it run without you.",
-  "Activity — schedule your work. They type /loop 2m bun playground/scheduled/report.ts and watch playground/scheduled/log.txt grow a line each run (run #1, #2, …); Esc to stop. Then the real version: /schedule every weekday 9am, run bun playground/scheduled/report.ts and summarize, then /schedule list. Give them several minutes; walk the room.",
+  "Activity — schedule your work. They type /loop 1m bun playground/scheduled/report.ts and watch playground/scheduled/log.txt grow a line each run (run #1, #2, …); Esc to stop. Then the real version: /schedule every weekday 9am, run bun playground/scheduled/report.ts and summarize, then /schedule list. Give them several minutes; walk the room.",
   "Activity — close the loop. Give them a minute; walk the room. Then watch the room migrate from toil to leverage.",
   "The payoff. Toil migrates to leverage — point at the projector: that's this room's real hours/week, live on the board. Read out the actual number and a couple of the top automations people named.",
   "Keep building. You keep all of it: the repo and skills, your scheduled task (still running Monday), the glossary, your before→after on the board.",
