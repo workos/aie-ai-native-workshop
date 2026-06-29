@@ -51,6 +51,8 @@ Then **trust this repo in Claude Code** — that auto-loads the workshop skills,
 
 </details>
 
+> 🔐 **First-run prompts (expect these once).** When you start Claude Code here you'll: **(1)** accept the **workspace trust** dialog (so the repo's skills/permissions load), **(2)** approve the **`aie-coach` MCP server** — choose *"Use this and all future MCP servers in this project"* — and **(3)** approve tool calls as they come. Want to skip the clicking? You trust this repo, so just launch with **`claude --dangerously-skip-permissions`** and it runs hands-off. *(If you just installed Bun, quit and re-run `claude` once so the coach can launch.)*
+
 ---
 
 <img src="docs/images/sec-journey.png" alt="Your journey — Block 01 Voice coding, Block 02 Loops & goals, Block 03 Verification gates, Block 04 Scheduled tasks, each with the exact prompts to say to Claude." width="100%" />

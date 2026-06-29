@@ -7,7 +7,7 @@ description: One-shot setup for The AI-Native Engineer workshop. Installs and ve
 
 The fast path. This gets an attendee from a freshly-cloned repo to **ready for Block 1** in about five minutes: every tool installed, every tool verified, nothing left to discover mid-exercise. Work top to bottom; **check before installing**, install only what's missing, and **verify each item** before moving on. Report a clean checklist at the end.
 
-> The attendee should already be running Claude Code **inside this repo** (trusting it auto-loads the workshop skills, the `ideation` plugin, and the `aie-coach` MCP server). If they're not in the repo, stop and tell them to open it and trust it first — that's step 0.
+> The attendee should already be running Claude Code **inside this repo** (trusting it auto-loads the workshop skills, the `ideation` plugin, and the `aie-coach` MCP server). If they're not in the repo, stop and tell them to open it and trust it first — that's step 0. Expect first-run prompts: the **trust dialog**, the **`aie-coach` MCP approval** ("Use this and all future MCP servers in this project"), and per-tool-call approvals. To run hands-off, they can relaunch with **`claude --dangerously-skip-permissions`** (fine — they trust this repo).
 
 ## Procedure
 
