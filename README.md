@@ -92,7 +92,7 @@ Then **open this repo in Claude Code and trust it** — that auto-loads the work
 
 ---
 
-## 🤖 Meet your coach — the room is the content
+## 🤖 Meet your coach
 
 An **opt-in** coach rides along in your terminal:
 

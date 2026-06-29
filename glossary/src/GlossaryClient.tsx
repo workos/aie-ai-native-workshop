@@ -344,7 +344,7 @@ export default function GlossaryClient({ glossary }: { glossary: Glossary }) {
               <div>
                 <dt>Voice throughput</dt>
                 <dd>
-                  ~3×<span className="unit">vs typing</span>
+                  ~2×<span className="unit">vs typing</span>
                 </dd>
               </div>
               <div>

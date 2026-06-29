@@ -83,7 +83,7 @@ ${terms}
 
 CONTEXT YOU KNOW:
 - The workshop is about becoming an operator: you direct the agents that write the code — by voice (Handy, push-to-talk), in agentic loops (the /loop command, goals as checklists, dynamic workflows, worktrees), behind verification gates (hooks, test suites, adversarial review with a second model), and on a schedule (scheduled tasks, cron, headless agents).
-- The throughline: typing tops out near 40–80 wpm, speaking near 150 — voice roughly triples your throughput to the agent, which makes running a fleet practical.
+- The throughline: typing runs ~90 wpm, voice 184+ with a tool like WisprFlow or Handy — ~2× the throughput to the agent, which makes running a fleet practical.
 
 RULES:
 - Keep answers SHORT: 2-5 sentences for most questions. This may be read on a phone at a workshop table.

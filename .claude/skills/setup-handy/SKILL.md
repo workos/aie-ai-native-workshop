@@ -7,7 +7,7 @@ description: Install and configure Handy, the free, local, open-source push-to-t
 
 [Handy](https://handy.computer) is a **free, open-source, fully-local** push-to-talk dictation app. Transcription runs on-device (Whisper / Parakeet) — nothing leaves the machine, and there's no subscription. That makes it the right pick for a room of developers: no card, no cloud, works offline on conference Wi-Fi. This skill gets the user dictating in **under five minutes**, then proves it works.
 
-> Voice coding is the on-ramp for the whole workshop: hands off the keyboard, talk at ~180 wpm, and drive several agents at once. Handy is just the dictation layer — Claude Code is what listens.
+> Voice coding is the on-ramp for the whole workshop: hands off the keyboard, talk at 184+ wpm, and drive several agents at once. Handy is just the dictation layer — Claude Code is what listens.
 
 ## Procedure
 

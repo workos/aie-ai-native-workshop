@@ -81,7 +81,7 @@
         },
         {
           "term": "Bandwidth (words per minute)",
-          "definition": "How fast you get an idea out of your head and into the agent. Typing tops out near 40–80 wpm; speaking runs near 150. Same brain, roughly triple the throughput. That gap is the whole case for voice.",
+          "definition": "How fast you get an idea out of your head and into the agent. Typing runs ~90 wpm in text and code; with caffeine and a voice-to-text tool (WisprFlow, Handy) you hit 184+. Same brain, ~2× the throughput. That gap is the whole case for voice.",
           "added": "2026-06-24"
         },
         {

@@ -16,7 +16,7 @@ talking-at-people, every time.**
    built now running on a schedule. One presenter drives the canonical path so the
    recording is a clean, re-watchable reproduction.
 
-3. **The room is the content.** The [board](../board/) shows the room its own data —
+3. **Built from this room — you choose what's shared.** The [board](../board/) shows the room its own data —
    where the toil is, what to automate, hours/week reclaimed. People feel seen, and
    the before→after is the emotional payload. (This is the same insight that made the
    GHX glossary/RAG work: surface what people *volunteer*, beautifully.)
