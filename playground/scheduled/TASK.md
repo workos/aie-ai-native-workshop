@@ -11,10 +11,10 @@
 2. **Loop it locally — fast, for the demo.** Re-runs on a timer in this session:
 
    ```
-   /loop 2m bun playground/scheduled/report.ts
+   /loop 1m bun playground/scheduled/report.ts
    ```
 
-   Watch `log.txt` gain a line every couple of minutes (`run #1`, `run #2`, …). Press **`Esc`** to stop the loop.
+   Watch `log.txt` gain a line each run (`run #1`, `run #2`, …). Press **`Esc`** to stop the loop.
 
 3. **Or schedule it for real — persistent, runs even when you're offline:**
 
