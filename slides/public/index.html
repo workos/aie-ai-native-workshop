@@ -1946,9 +1946,10 @@
           <div class="eyebrow" style="margin-bottom: 22px;">The adversarial gate</div>
           <h2 class="deck-h2" style="font-size: 54px; margin-bottom: 22px;">Fan out for a <span class="underline-accent">second opinion</span>.</h2>
           <div class="codeblock" style="width: 100%; font-size: 26px; margin-bottom: 24px;">
-            <div><span class="prompt">$</span> codex exec <span class="str">"adversarially review this diff"</span></div>
-            <div class="com"># fresh eyes, no stake in being right</div>
+            <div><span class="prompt">&rsaquo;</span> /codex:adversarial-review</div>
+            <div class="com"># second model, no stake in being right</div>
             <div><span class="kw">found</span> 3 issues &middot; <span class="kw">fix</span> all &middot; re-run gates</div>
+            <div class="com"># fallback: codex exec "adversarially review this diff"</div>
           </div>
           <p class="body" style="font-size: 28px; max-width: 760px; margin-bottom: 0;">
             Two models <b class="lev">disagreeing</b> is cheaper than one model being confidently wrong.
@@ -2023,7 +2024,7 @@
           <p class="say-text">&ldquo;Fan this diff out to Codex for an adversarial review, then fix everything it finds.&rdquo;</p>
         </div>
       </div>
-      <p class="act-mono">codex exec "adversarially review this diff"</p>
+      <p class="act-mono">/codex:adversarial-review &middot; or: codex exec "adversarially review this diff"</p>
     </div>
   </section>
 
@@ -2326,7 +2327,7 @@
   "Definition of done. Big line. Operators trust the gates, not the model's confidence. Let it sit.",
   "Now you try it — Verification gates. Make 'done' something the agent has to prove.",
   "Activity — add a gate. Give them several minutes; walk the room. Have them add the hook and fix what it flags.",
-  "Activity — get a second opinion. Give them several minutes; walk the room. codex exec the diff and fix the findings.",
+  "Activity — get a second opinion. Give them several minutes; walk the room. Run /codex:adversarial-review on the diff (or codex exec as fallback) and fix the findings.",
   "Divider — Block 04, Scheduled tasks. The work runs without you.",
   "The last cord. Everything so far — voice, loops, gates — ran because you were there in the chair. The last move cuts that cord.",
   "Which trigger? Four ways work runs without you, separated by what FIRES them. A hook is automatic — runs on every change, no command, you set it once; that's the verification gate (lint/typecheck/tests). /goal runs until a condition holds, then stops — one bounded job. /loop repeats in this session — on a timer, or self-paced if you omit the interval. /schedule is a persistent cloud routine that fires even when you're offline. Rule of thumb: always-on guardrail → hook; finish one job → /goal; repeat while you work → /loop; repeat while you're gone → /schedule.",

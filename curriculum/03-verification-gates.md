@@ -9,7 +9,7 @@
 
    They watch a green/red gate appear in the loop and change the agent's behavior instantly.
 
-2. **The adversarial gate: fan out to Codex.** For any change that's complex or sensitive enough, the agent should — by its own decision point — fan out to the **Codex CLI** for an independent, adversarial review, then fix everything that review surfaces.
+2. **The adversarial gate: fan out to Codex.** For any change that's complex or sensitive enough, the agent should — by its own decision point — fan out to **Codex** for an independent, adversarial review, then fix everything that review surfaces. With the `codex` plugin loaded (it auto-installs when the repo is trusted), that's `/codex:adversarial-review` — a non-blocking, steerable review you pull results from. Under the hood it's still a Codex CLI call, which is the fallback if the plugin hasn't loaded:
 
    ```bash
    # default model is gpt-5.5 (NOT gpt-5.5-codex) when invoking the codex CLI

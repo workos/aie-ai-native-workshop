@@ -1,6 +1,6 @@
 ---
 name: setup-workshop
-description: One-shot setup for Lifestyles of the AI-Native workshop. Installs and verifies the dev tools an attendee needs — Bun (the check-in tool), the Codex CLI (Block 3 adversarial review), and git — then confirms the repo is wired up and hands off to the opening check-in. (Voice/Handy is NOT installed here — it's the first hands-on moment of Block 1.) Triggers on "set me up for the workshop", "get me set up", "workshop setup", "set up the workshop", or starting the workshop.
+description: One-shot setup for Lifestyles of the AI-Native workshop. Installs and verifies the dev tools an attendee needs — Bun (the check-in tool), the Codex CLI + plugin (Block 3 adversarial review), and git — then confirms the repo is wired up and hands off to the opening check-in. (Voice/Handy is NOT installed here — it's the first hands-on moment of Block 1.) Triggers on "set me up for the workshop", "get me set up", "workshop setup", "set up the workshop", or starting the workshop.
 ---
 
 # Set up the workshop
@@ -19,17 +19,18 @@ The fast path. This gets an attendee from a freshly-cloned repo to **ready for B
    - Install (Windows PowerShell): `powershell -c "irm bun.sh/install.ps1 | iex"`
    - After installing, Bun is on `~/.bun/bin`; if `bun --version` still isn't found in this shell, tell the attendee to open a new terminal (or `export PATH="$HOME/.bun/bin:$PATH"`).
 
-3. **Codex CLI** — the adversarial-review gate in Block 3.
+3. **Codex CLI + plugin** — the adversarial-review gate in Block 3.
    - Check: `codex --version`. If present, skip.
    - Install: `npm i -g @openai/codex` (needs Node/npm — check `node --version` first; if missing, point them to <https://nodejs.org>).
    - **Auth is interactive — do not run it for them.** Tell the attendee to run `codex login` themselves once (it opens a browser / prompts for an OpenAI sign-in). Note it can wait until Block 3.
+   - The **`codex` plugin** (the `/codex:*` commands) auto-installs from GitHub when the repo is trusted — same as `ideation`, no action needed (it may need the step-6 restart to finish loading). Once `codex login` is done, verify the whole chain with **`/codex:setup`**. Raw `codex exec "…"` still works as a fallback if the plugin hasn't loaded.
 
 4. **Voice (Handy) — not in setup.** Don't install Handy here. Getting voice working is the **first hands-on moment of Block 1** (the attendee says *"Set up Handy for me"* then, which runs the [`setup-handy`](../setup-handy/) skill). Mention it in the hand-off so they know it's coming; do not run it now.
 
 5. **Git** — worktrees for parallel agents in Block 2.
    - Check: `git --version`. Almost always present. If missing: macOS `xcode-select --install`; Windows <https://git-scm.com>.
 
-6. **Confirm the repo wiring — and the coach MCP.** Trusting the repo loads the `.claude/skills/` skills and the `ideation` plugin. The **`aie-coach` MCP server** (defined in `.mcp.json`) needs a **one-time approval**: on first trust Claude Code prompts to enable it — approve it, or run `/mcp` and enable `aie-coach`. It launches with `bun`, so **if you just installed Bun in this session, restart Claude Code** (or reopen the repo) so the server can start; then approve it. Without the coach MCP loaded, the AI-Native score in the check-in won't work (the plain check-in still does, via `bun skills/coach-checkin/scripts/submit.ts`). Report the coach as `[✓]` only if its tools are actually available this session; otherwise `[!]` with "approve via /mcp (restart if you just installed Bun)".
+6. **Confirm the repo wiring — and the coach MCP.** Trusting the repo loads the `.claude/skills/` skills and the `ideation` + `codex` plugins. The **`aie-coach` MCP server** (defined in `.mcp.json`) needs a **one-time approval**: on first trust Claude Code prompts to enable it — approve it, or run `/mcp` and enable `aie-coach`. It launches with `bun`, so **if you just installed Bun in this session, restart Claude Code** (or reopen the repo) so the server can start; then approve it. Without the coach MCP loaded, the AI-Native score in the check-in won't work (the plain check-in still does, via `bun skills/coach-checkin/scripts/submit.ts`). Report the coach as `[✓]` only if its tools are actually available this session; otherwise `[!]` with "approve via /mcp (restart if you just installed Bun)".
 
 7. **Always end with the uniform status report** — print this exact block, **every run, success or failure**, so it's instantly clear what's ready and what isn't. One row per item, fixed-width name column, a status glyph, and a detail (version on success; the **reason** on failure). Then a summary line.
 
@@ -47,7 +48,7 @@ The fast path. This gets an attendee from a freshly-cloned repo to **ready for B
     [✓] Codex CLI   0.x installed
     [!] Codex login required → run:  codex login   (before Block 3)
     [✓] Git         2.43.0
-    [✓] Repo        trusted · skills + ideation + aie-coach MCP loaded
+    [✓] Repo        trusted · skills + ideation/codex plugins + aie-coach MCP
    ──────────────────────────────────────────────────────────
     READY: 3/4   ·   NEEDS YOU: Codex login   ·   FAILED: none
    ══════════════════════════════════════════════════════════
