@@ -1496,12 +1496,12 @@
       <h2 class="deck-h2" style="margin-bottom: 56px;">A goal, or a <span class="underline-accent">loop</span>.</h2>
       <div class="mini-cards">
         <div class="mini-card">
-          <span class="mlabel">Goal</span>
-          <p class="mdesc">A job with a finish line you define.</p>
+          <span class="mlabel"><code class="mono">/goal</code></span>
+          <p class="mdesc">Run until a condition is met &mdash; no timer. Today's hand-offs.</p>
         </div>
         <div class="mini-card">
-          <span class="mlabel">Loop</span>
-          <p class="mdesc">Keep going until a condition is met.</p>
+          <span class="mlabel"><code class="mono">/loop</code></span>
+          <p class="mdesc">Re-run on a timer. Recurring &mdash; you'll use it in the scheduled block.</p>
         </div>
       </div>
     </div>
@@ -1513,10 +1513,11 @@
       <div class="art-cols">
         <div class="art-panel" aria-hidden="true"><img src="img/art/loop-cycle.jpg" alt="The loop cycle: try, check, fail, fix, repeat, until it passes" loading="lazy" /></div>
         <div class="art-text">
-          <div class="eyebrow" style="margin-bottom: 26px;">How a loop runs</div>
-          <h2 class="deck-h2" style="font-size: 70px; margin-bottom: 28px;">Try &rarr; check &rarr; fix &rarr; <span class="underline-accent">repeat</span>.</h2>
-          <p class="body" style="font-size: 33px; max-width: 760px;">
-            You hand the agent a <b class="lev">check command</b> and one instruction: keep iterating until it passes. It tries, runs the check, and on a red it reads the failure, fixes, and goes again &mdash; <b class="lev">no re-prompting from you</b>. The loop ends when the check is green.
+          <div class="eyebrow" style="margin-bottom: 26px;">Iterate until it passes</div>
+          <h2 class="deck-h2" style="font-size: 70px; margin-bottom: 26px;">Try &rarr; check &rarr; fix &rarr; <span class="underline-accent">repeat</span>.</h2>
+          <div class="codeblock" style="font-size: 27px; padding: 22px 28px; margin-bottom: 22px; max-width: 760px;"><span class="prompt">/goal</span> bun &lt;check&gt; passes</div>
+          <p class="body" style="font-size: 30px; max-width: 760px;">
+            This is the <code class="mono">/goal</code> command. You hand it a <b class="lev">check</b> and a condition; it tries, runs the check, and on a red it reads the failure, fixes, and goes again &mdash; <b class="lev">no re-prompting</b>. It stops on its own when the condition holds.
           </p>
         </div>
       </div>
@@ -1524,7 +1525,7 @@
   </section>
 
   <!-- ============ 26 GOALS ============ -->
-  <section data-label="15 This months answer · Goals" class="grain art-split text-right">
+  <section data-label="Loops · goals" class="grain art-split text-right">
     <div class="frame">
       <div class="art-cols">
         <div class="art-panel" aria-hidden="true"><img src="img/art/goals-checklist.jpg" alt="A robot checking off a definition-of-done checklist" loading="lazy" /></div>
@@ -1578,15 +1579,15 @@
       <div class="art-cols">
         <div class="art-panel" aria-hidden="true"><img src="img/art/goal-vs-loop.jpg" alt="A goal is a straight track to a finish flag; a loop is a circular track cycling until a condition turns green" loading="lazy" /></div>
         <div class="art-text">
-          <div class="eyebrow" style="margin-bottom: 22px;"><code class="mono">/loop</code> &mdash; self-paced, recurring work</div>
+          <div class="eyebrow" style="margin-bottom: 22px;">Two commands</div>
           <h2 class="deck-h2" style="font-size: 60px; margin-bottom: 26px;">Goal vs. <span class="underline-accent">loop</span>.</h2>
           <p class="body" style="font-size: 30px; max-width: 760px; margin-bottom: 18px;">
-            A <b class="lev">goal</b> is one bounded job &mdash; known steps, a clear definition of done. The agent runs the checklist and stops.
+            <code class="mono">/goal</code> &mdash; <b class="lev">bounded</b>: iterate until a condition holds, then stop. No timer.
           </p>
           <p class="body" style="font-size: 30px; max-width: 760px; margin-bottom: 18px;">
-            A <b class="lev">loop</b> keeps going &mdash; triaging a backlog, sweeping a codebase, polling for new work. Best when "done" is a condition, not a count.
+            <code class="mono">/loop</code> &mdash; <b class="lev">recurring</b>: re-run a task on a timer (e.g. every 30s), this session.
           </p>
-          <p class="body muted" style="font-size: 25px; max-width: 760px; margin-bottom: 0;">Run parallel loops on git worktrees &mdash; isolated checkouts, no collisions.</p>
+          <p class="body muted" style="font-size: 25px; max-width: 760px; margin-bottom: 0;">Run parallel goals on git worktrees &mdash; isolated checkouts, no collisions.</p>
         </div>
       </div>
     </div>
@@ -1595,14 +1596,17 @@
   <!-- ============ DEPTH · /loop IN THE WILD ============ -->
   <section data-label="Loops · loop in the wild" class="grain">
     <div class="frame" style="justify-content: center;">
-      <div class="eyebrow" style="margin-bottom: 28px;"><code class="mono">/loop</code> in the wild</div>
-      <h2 class="deck-h2" style="font-size: 84px; margin-bottom: 48px; max-width: 1720px;">Keep going until a <span class="underline-accent">condition</span> is met.</h2>
+      <div class="eyebrow" style="margin-bottom: 28px;">In the wild</div>
+      <h2 class="deck-h2" style="font-size: 84px; margin-bottom: 44px; max-width: 1720px;">Goal vs. loop, <span class="underline-accent">in the wild</span>.</h2>
       <div class="codeblock" style="max-width: 1560px;">
-        <div><span class="prompt">/loop</span> until the suite is green</div>
-        <div><span class="prompt">/loop</span> processing each file in this list</div>
-        <div><span class="prompt">/loop</span> every 30s until the deploy is healthy</div>
+        <div class="com">/goal &mdash; until a condition</div>
+        <div><span class="prompt">/goal</span> the test suite is green</div>
+        <div style="margin-bottom: 14px;"><span class="prompt">/goal</span> every file in src/ is under 200 lines</div>
+        <div class="com">/loop &mdash; on a timer</div>
+        <div><span class="prompt">/loop</span> 30s bun test</div>
+        <div><span class="prompt">/loop</span> 5m check the deploy and ping me when it's healthy</div>
       </div>
-      <p class="body muted" style="margin-top: 40px; font-size: 32px; max-width: 1660px;">&ldquo;Done&rdquo; is a condition, not a count.</p>
+      <p class="body muted" style="margin-top: 36px; font-size: 32px; max-width: 1660px;"><code class="mono">/goal</code> stops on green; <code class="mono">/loop</code> keeps firing on the clock.</p>
     </div>
   </section>
 
@@ -1641,11 +1645,11 @@
       </div>
       <div class="say-cards">
         <div class="say-card">
-          <span class="say-tag"><span class="mic">&#127908;</span> Say this</span>
-          <p class="say-text">&ldquo;Work through <code class="mono">playground/goals/TASK.md</code> until <code class="mono">bun playground/goals/check.ts</code> shows 5/5.&rdquo;</p>
+          <span class="say-tag"><span class="mic">&#9000;&#65039;</span> Type this</span>
+          <p class="say-text"><span class="prompt">/goal</span> bun playground/goals/check.ts shows 5/5</p>
         </div>
       </div>
-      <p class="act-hint">Not done until <b>every box</b> is checked &mdash; the check script is the judge.</p>
+      <p class="act-hint">Works the cart checklist in <code class="mono">playground/goals/TASK.md</code>, iterating until <b>5/5</b> &mdash; the check script is the judge.</p>
     </div>
   </section>
 
@@ -1654,15 +1658,15 @@
     <div class="frame">
       <div class="act-eyebrow">&#9655; Now you try &middot; Loops</div>
       <div class="act-head">
-        <h2 class="act-title">Let it loop.</h2>
+        <h2 class="act-title">Set a goal, walk away.</h2>
       </div>
       <div class="say-cards">
         <div class="say-card">
-          <span class="say-tag"><span class="mic">&#127908;</span> Say this</span>
-          <p class="say-text">&ldquo;Run <code class="mono">bun playground/loops/check.ts</code> in a loop, fixing the module until it passes.&rdquo;</p>
+          <span class="say-tag"><span class="mic">&#9000;&#65039;</span> Type this</span>
+          <p class="say-text"><span class="prompt">/goal</span> bun playground/loops/check.ts passes</p>
         </div>
       </div>
-      <p class="act-hint"><b>Walk away.</b> Come back to green &mdash; the agent re-runs the check and fixes until it passes.</p>
+      <p class="act-hint"><b>Walk away.</b> The agent reads each failing case, fixes <code class="mono">playground/loops/slugify.ts</code>, re-runs, and stops when all <b>6 checks</b> pass.</p>
     </div>
   </section>
 
@@ -1901,7 +1905,8 @@
           <div aria-hidden="true" style="position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 18px; overflow: hidden; border: 1.5px solid rgba(22,195,145,.32); box-shadow: 0 30px 60px -34px rgba(0,0,0,.7), 0 0 50px -10px rgba(22,195,145,.12); background: var(--ink-900);">
             <img src="img/art/schedule-pipeline.jpg" alt="A morning clock triggers a conveyor: sync the repo, run the loop, pass the gates, deliver the report to an inbox, beside an empty chair" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
           </div>
-          <p class="mono" style="font-size: 26px; color: var(--teal); margin-top: 22px; text-align: center;">0 6 * * 1 &nbsp;&middot;&nbsp; every Monday, 6am</p>
+          <div class="codeblock" style="font-size: 24px; padding: 20px 24px; margin-top: 22px;"><span class="prompt">/schedule</span> every Monday 6am, pull, fix, run the gates, and draft the write-up</div>
+          <p class="mono" style="font-size: 26px; color: var(--teal); margin-top: 16px; text-align: center;">0 6 * * 1 &nbsp;&middot;&nbsp; every Monday, 6am</p>
         </div>
       </div>
     </div>
@@ -1914,9 +1919,12 @@
         <div class="art-panel" aria-hidden="true"><img src="img/art/scheduled-clock.jpg" alt="A scheduled job running on a conveyor at night beside an empty chair" loading="lazy" /></div>
         <div class="art-text">
           <div class="eyebrow" style="margin-bottom: 26px;">It runs without you</div>
-          <h2 class="deck-h2" style="font-size: 66px; margin-bottom: 26px;">Set the interval. Walk <span class="underline-accent">away</span>.</h2>
-          <p class="body" style="font-size: 32px; max-width: 760px;">
-            A scheduled task is a command on a recurring timer &mdash; it fires on its interval, runs <b class="lev">unattended</b>, and leaves its output for you to review later. The loop you ran by hand now runs <b class="lev">while you sleep</b>. The empty chair is the point.
+          <h2 class="deck-h2" style="font-size: 66px; margin-bottom: 24px;">Set the interval. Walk <span class="underline-accent">away</span>.</h2>
+          <p class="body" style="font-size: 30px; max-width: 760px; margin-bottom: 16px;">
+            <code class="mono">/loop [interval] &lt;cmd&gt;</code> &mdash; re-runs locally this session, e.g. <code class="mono">/loop 2m bun playground/scheduled/report.ts</code>.
+          </p>
+          <p class="body" style="font-size: 30px; max-width: 760px;">
+            <code class="mono">/schedule &hellip;</code> &mdash; a persistent <b class="lev">cloud</b> routine that runs even when you're offline. The empty chair is the point.
           </p>
         </div>
       </div>
@@ -1931,11 +1939,14 @@
         <div class="art-text">
           <div class="eyebrow" style="margin-bottom: 24px;">You stay in control</div>
           <h2 class="deck-h2" style="font-size: 56px; margin-bottom: 28px;">List what's running. <span class="underline-accent">Cancel</span> what's not.</h2>
-          <p class="body" style="font-size: 31px; max-width: 760px; margin-bottom: 18px;">
-            <b class="lev">List</b> shows every job &mdash; its interval and when it last fired. <b class="lev">Cancel</b> stops one for good in a single word.
+          <p class="body" style="font-size: 30px; max-width: 760px; margin-bottom: 14px;">
+            <code class="mono">/schedule list</code> &mdash; see every cloud routine. Cancel one by asking Claude or at <code class="mono">claude.ai/code/routines</code>.
+          </p>
+          <p class="body" style="font-size: 30px; max-width: 760px; margin-bottom: 14px;">
+            A local <code class="mono">/loop</code>? Stop it with <code class="mono">Esc</code>.
           </p>
           <p class="body muted" style="font-size: 27px; max-width: 760px; margin-bottom: 0;">
-            Scheduling is reversible &mdash; nothing runs that you didn't choose to keep.
+            Reversible &mdash; nothing runs that you didn't choose to keep.
           </p>
         </div>
       </div>
@@ -1959,13 +1970,18 @@
       <div class="act-head">
         <h2 class="act-title">Schedule your work.</h2>
       </div>
-      <div class="say-cards">
-        <div class="say-card">
-          <span class="say-tag"><span class="mic">&#127908;</span> Say this</span>
-          <p class="say-text">&ldquo;Schedule <code class="mono">bun playground/scheduled/report.ts</code> on a short interval. Let's watch <code class="mono">playground/scheduled/log.txt</code> grow &mdash; then cancel it.&rdquo;</p>
+      <div class="say-cards" style="gap: 22px; margin-top: 4px;">
+        <div class="say-card" style="padding: 20px 30px; gap: 8px;">
+          <span class="say-tag"><span class="mic">&#9000;&#65039;</span> Type this</span>
+          <p class="say-text" style="font-size: 31px;"><span class="prompt">/loop</span> 2m bun playground/scheduled/report.ts</p>
+        </div>
+        <div class="say-card" style="padding: 20px 30px; gap: 8px;">
+          <span class="say-tag"><span class="mic">&#9000;&#65039;</span> Then the real version</span>
+          <p class="say-text" style="font-size: 29px; margin: 0;"><span class="prompt">/schedule</span> every weekday 9am, run bun playground/scheduled/report.ts and summarize</p>
+          <p class="say-text" style="font-size: 29px; margin: 0;"><span class="prompt">/schedule</span> list</p>
         </div>
       </div>
-      <p class="act-hint">See it <b>fire</b> on a short interval, watch the log grow, then <b>list</b> and <b>cancel</b> it &mdash; you stay in control.</p>
+      <p class="act-hint" style="margin-top: 20px;">Watch <code class="mono">playground/scheduled/log.txt</code> grow a line each run (run #1, #2, &hellip;) &mdash; <code class="mono">Esc</code> to stop the loop.</p>
     </div>
   </section>
 
@@ -2078,17 +2094,17 @@
   "Activity — put yourself on the board. Give them a minute; walk the room. Anonymous, opt-in, only what they confirm.",
   "Divider — Block 02, Loops & goals. Stop babysitting prompts.",
   "Next ceiling. You can talk fast now, but driving one agent in real time still pins you to the chair. The next unlock is handing off whole jobs and walking away.",
-  "Two ways to hand off. A goal has a finish line you define; a loop keeps going until a condition is met.",
-  "How a loop runs. The whole mechanic on one image: you give the agent a check command and say keep going until it passes. Try, run the check, red → read the failure and fix → go again, no re-prompting — the loop ends on green. This is the /loop idea.",
+  "Two ways to hand off. /goal runs until a condition holds — no timer; that's today's hand-offs. /loop re-runs a task on a timer — recurring, we use it in the scheduled block. Two different commands.",
+  "How a loop runs. The iterate-until-green mechanic IS the /goal command: /goal bun <check> passes. Try, run the check, red → read the failure and fix → go again, no re-prompting — it stops on its own when the condition holds.",
   "Goals. A goal is a definition-of-done — a list of boxes, not a vibe. The agent decomposes the work and isn't done until every box is checked; it can't declare victory on a hunch.",
   "Goals worked example. Four concrete boxes — failing test, the fix, gates green, PR — none optional. The checklist IS the spec; encode 'done' explicitly and the agent stops quitting early.",
   "Why it works. Agents declare victory early — left vague, an agent stops at 'looks done.' A checklist makes 'done' unskippable: it has to tick every box before it can stop.",
-  "Loops. Compare: goal/checklist is one bounded job; /loop is unknown-size or recurring. Footnote: parallel agents on git worktrees.",
-  "/loop in the wild. Three examples: until the suite is green, processing each file in a list, every 30s until the deploy is healthy. 'Done' is a condition, not a count.",
+  "Goal vs. loop. Two commands, accurately: /goal is bounded — iterate until a condition, then stop, no timer. /loop is recurring — re-run a task on a timer (e.g. every 30s), this session. Footnote: parallel goals on git worktrees.",
+  "Goal vs. loop, in the wild. /goal (until a condition): /goal the test suite is green; /goal every file in src/ is under 200 lines. /loop (on a timer): /loop 30s bun test; /loop 5m check the deploy and ping me when it's healthy. Goal stops on green; loop keeps firing on the clock.",
   "Scale it. Many agents, zero collisions. Each agent on its own git worktree — isolated checkouts, no stepping on each other. Three jobs run in parallel while you direct.",
   "Now you try it — Loops & goals. Hand over a job and walk away.",
-  "Activity — work a checklist issue. They work through playground/goals/TASK.md until bun playground/goals/check.ts shows 5/5. Give them several minutes; walk the room. Not done until every box is checked — the check script is the judge.",
-  "Activity — let it loop. They say: run bun playground/loops/check.ts in a loop, fixing the module until it passes. Give them several minutes; walk the room. Tell them to actually walk away and come back to green.",
+  "Activity — work a checklist issue. They type the real command: /goal bun playground/goals/check.ts shows 5/5. It works the cart checklist in playground/goals/TASK.md, iterating until 5/5. Give them several minutes; walk the room. Not done until every box is checked — the check script is the judge.",
+  "Activity — set a goal, walk away. They type the real command: /goal bun playground/loops/check.ts passes. The agent reads each failing case, fixes playground/loops/slugify.ts, re-runs, and stops when all 6 checks pass. Give them several minutes; walk the room. Tell them to actually walk away and come back to green.",
   "Activity (stretch) — two worktrees. For those ahead. Walk the room; help anyone spinning up the second agent.",
   "Divider — Block 03, Verification gates. Trust the gates.",
   "Trust problem. 'Done' isn't the same as done. An agent will tell you it finished — but belief is not a build. Operators wrap the agent in checks it cannot skip.",
@@ -2104,11 +2120,11 @@
   "Divider — Block 04, Scheduled tasks. The work runs without you.",
   "The last cord. Everything so far — voice, loops, gates — ran because you were there in the chair. The last move cuts that cord.",
   "What to schedule. The recurring toil: dependency bumps, status reports, eval runs, the thing you just built. If it recurs, it shouldn't need you.",
-  "Schedule it. Every Monday while you sleep: pull, fix, run the gates, draft the write-up. Watch the calendar ticks. 0 6 * * 1.",
-  "It runs unattended. A scheduled task is a command on a recurring timer: it fires on its interval, runs with nobody watching, and leaves output you review later. The hand-run loop now runs while you sleep — the empty chair is the whole point.",
-  "List and cancel. You stay in control: ask what scheduled tasks you have to see every job and its interval; one word cancels any of them. Scheduling is reversible — nothing keeps running that you didn't choose to keep.",
+  "Schedule it. The real command: /schedule every Monday 6am, pull, fix, run the gates, and draft the write-up. A persistent cloud routine. 0 6 * * 1 — every Monday, 6am, while you sleep.",
+  "It runs unattended. Two mechanisms: /loop [interval] <cmd> re-runs locally this session (e.g. /loop 2m bun playground/scheduled/report.ts); /schedule … is a persistent cloud routine that runs even when you're offline. The empty chair is the point.",
+  "List and cancel. /schedule list shows every cloud routine. Cancel one by asking Claude or at claude.ai/code/routines. A local /loop stops with Esc. Reversible — nothing runs that you didn't choose to keep.",
   "Now you try it — Scheduled tasks. Set it once; let it run without you.",
-  "Activity — schedule your work. They schedule bun playground/scheduled/report.ts on a short interval, watch playground/scheduled/log.txt grow, then list and cancel it. Give them several minutes; walk the room. Help them phrase the recurring job and confirm they can tear it down.",
+  "Activity — schedule your work. They type /loop 2m bun playground/scheduled/report.ts and watch playground/scheduled/log.txt grow a line each run (run #1, #2, …); Esc to stop. Then the real version: /schedule every weekday 9am, run bun playground/scheduled/report.ts and summarize, then /schedule list. Give them several minutes; walk the room.",
   "Activity — close the loop. Give them a minute; walk the room. Then watch the room migrate from toil to leverage.",
   "The payoff. Toil migrates to leverage — point at the projector: that's this room's real hours/week, live on the board. Read out the actual number and a couple of the top automations people named.",
   "Keep building. You keep all of it: the repo and skills, your scheduled task (still running Monday), the glossary, your before→after on the board.",

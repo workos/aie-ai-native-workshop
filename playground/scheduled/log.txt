@@ -1,1 +1,1 @@
-timestamp | files | lines | open | done
+# workshop-report log — one line per run (watch this grow)
