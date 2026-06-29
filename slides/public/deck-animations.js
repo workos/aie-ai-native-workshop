@@ -230,6 +230,121 @@
   //
   const animators = [
     {
+      // The atom: nodes pop in; then the dot steps through each state and that node ignites (WAAPI loop).
+      match: /Loops · the atom/i,
+      run(slide) {
+        const eyebrow = slide.querySelector('.eyebrow');
+        const h2 = slide.querySelector('.deck-h2');
+        const lead = slide.querySelector('.lead');
+        const ring = slide.querySelector('.lm-ring');
+        const chips = slide.querySelectorAll('.lm-chip');
+        const core = slide.querySelector('.lm-core');
+        const cap = slide.querySelector('.lm-caption');
+        rise(eyebrow, { duration: 420 });
+        rise(h2, { delay: 140, duration: 560 });
+        paintAllAccents(slide, 360);
+        rise(lead, { delay: 300, duration: 520 });
+        if (ring) ring.animate(
+          [{ opacity: 0 }, { opacity: 0.42 }],
+          { duration: 720, delay: 560, easing: EASE_OUT_EXPO, fill: 'both' }
+        );
+        chips.forEach((c, i) => pop(c, { delay: 800 + i * 150 }));
+        if (core) rise(core, { delay: 800 + chips.length * 150, duration: 520, dy: 0 });
+        rise(cap, { delay: 1600, duration: 480 });
+        // Continuous loop: the dot dwells on each state in turn (think→act→observe→decide),
+        // and that node ignites while the dot is on it. Driven here (not CSS) so clearAnims
+        // re-creates it on every slide entry instead of leaving it cancelled.
+        if (!reducedMotion) {
+          // Even cadence: each of the 4 states gets a quarter of the loop — a steady
+          // dwell (dot rests, node lit) then a quick hop to the next. No end-of-loop slowdown.
+          const CYCLE = 6000;            // full loop (1.5s per state)
+          const STEP = CYCLE / 4;        // per-node highlight offset
+          const HOP = 'cubic-bezier(.45,0,.25,1)'; // brief, decisive move between states
+          const orbit = slide.querySelector('.lm-orbit');
+          if (orbit) orbit.animate([
+            { transform: 'rotate(0deg)',   offset: 0     },
+            { transform: 'rotate(0deg)',   offset: 0.175 },
+            { transform: 'rotate(90deg)',  offset: 0.25  },
+            { transform: 'rotate(90deg)',  offset: 0.425 },
+            { transform: 'rotate(180deg)', offset: 0.50  },
+            { transform: 'rotate(180deg)', offset: 0.675 },
+            { transform: 'rotate(270deg)', offset: 0.75  },
+            { transform: 'rotate(270deg)', offset: 0.925 },
+            { transform: 'rotate(360deg)', offset: 1     },
+          ], { duration: CYCLE, iterations: Infinity, easing: HOP });
+          const DIM = { backgroundColor: '#122723', borderColor: 'rgba(22,195,145,.16)', color: '#f3faf7', boxShadow: '0 4px 10px -2px rgba(0,0,0,.5)' };
+          const LIT = { backgroundColor: '#16c391', borderColor: '#16c391', color: '#0a1614', boxShadow: '0 0 32px 2px rgba(22,195,145,.6)' };
+          // each node stays lit for the whole time the dot rests on it (coupled to the dwell)
+          ['.lm-n-think', '.lm-n-act', '.lm-n-observe', '.lm-n-decide'].forEach((sel, i) => {
+            const chip = slide.querySelector(sel + ' .lm-chip');
+            if (chip) chip.animate([
+              { ...DIM, offset: 0 }, { ...LIT, offset: 0.03 }, { ...LIT, offset: 0.155 },
+              { ...DIM, offset: 0.20 }, { ...DIM, offset: 1 },
+            ], { duration: CYCLE, iterations: Infinity, delay: i * STEP });
+          });
+        }
+      }
+    },
+    {
+      // Loops all the way down: rings bloom outward; core glyph spins (CSS).
+      match: /Loops · all the way down/i,
+      run(slide) {
+        const eyebrow = slide.querySelector('.eyebrow');
+        const h2 = slide.querySelector('.deck-h2');
+        const lead = slide.querySelector('.lead');
+        const core = slide.querySelector('.lm-core');
+        const rings = slide.querySelectorAll('.lm-r');
+        const cap = slide.querySelector('.lm-caption');
+        rise(eyebrow, { duration: 420 });
+        rise(h2, { delay: 140, duration: 560 });
+        paintAllAccents(slide, 360);
+        rise(lead, { delay: 300, duration: 520 });
+        if (core) pop(core, { delay: 560, duration: 560 });
+        rings.forEach((r, i) => {
+          const op = r.classList.contains('lm-r2') ? 0.9
+            : r.classList.contains('lm-r3') ? 0.6 : 0.35;
+          r.animate(
+            [{ opacity: 0, transform: 'translate(-50%,-50%) scale(0.72)' },
+             { opacity: op, transform: 'translate(-50%,-50%) scale(1)' }],
+            { duration: 660, delay: 820 + i * 240, easing: EASE_SPRING, fill: 'both' }
+          );
+        });
+        rise(cap, { delay: 820 + rings.length * 240 + 220, duration: 480 });
+      }
+    },
+    {
+      // Self-repair bridge: links pop in, the fail chip shakes, green glows.
+      match: /Loops · failure is a system bug/i,
+      run(slide) {
+        const eyebrow = slide.querySelector('.eyebrow');
+        const h2 = slide.querySelector('.deck-h2');
+        const lead = slide.querySelector('.lead');
+        const chips = slide.querySelectorAll('.lm-link, .lm-arrow');
+        const feed = slide.querySelector('.lm-feed');
+        const fail = slide.querySelector('.lm-link-fail');
+        const pass = slide.querySelector('.lm-link-pass');
+        const cap = slide.querySelector('.lm-caption');
+        rise(eyebrow, { duration: 420 });
+        rise(h2, { delay: 140, duration: 560 });
+        paintAllAccents(slide, 360);
+        rise(lead, { delay: 300, duration: 520 });
+        chips.forEach((el, i) => pop(el, { delay: 640 + i * 150 }));
+        if (feed) feed.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500, delay: 820, fill: 'both' });
+        if (fail) fail.animate(
+          [{ transform: 'translateX(0)' }, { transform: 'translateX(-7px)' },
+           { transform: 'translateX(7px)' }, { transform: 'translateX(-4px)' }, { transform: 'translateX(0)' }],
+          { duration: 440, delay: 1320, easing: EASE_STANDARD }
+        );
+        if (pass) pass.animate(
+          [{ boxShadow: '0 0 0 rgba(22,195,145,0)' },
+           { boxShadow: '0 0 34px rgba(22,195,145,.5)', offset: 0.6 },
+           { boxShadow: '0 0 26px rgba(22,195,145,.26)' }],
+          { duration: 1000, delay: 1500, easing: EASE_OUT_CUBIC, fill: 'both' }
+        );
+        rise(cap, { delay: 1700, duration: 480 });
+      }
+    },
+    {
       match: /01 Cover/i,
       run(slide) {
         const stripe = slide.querySelector('.stripe');

@@ -888,6 +888,67 @@
   }
   .has-art-bg .frame { z-index: 2; }
 
+  /* ---- Loop motif (atom · nested altitudes · self-repair) -----------
+     One "agentic loop" visual reused at three altitudes. Continuous
+     motion lives here in CSS; per-slide entry beats are WAAPI in
+     deck-animations.js, matched by data-label. */
+  .loopmotif { position: relative; width: 460px; height: 460px; margin: 24px auto 48px; flex: none; }
+  .lm-ring { position: absolute; inset: 0; border-radius: 50%; border: 3px dashed var(--teal); opacity: .42; }
+  /* the dot (driven by WAAPI in deck-animations.js) rides an inner track so it stays visible when a node lights */
+  .lm-orbit { position: absolute; inset: 0; }
+  .lm-dot {
+    position: absolute; top: 90px; left: 50%; margin-left: -16px;
+    width: 32px; height: 32px; border-radius: 50%; background: var(--teal);
+    box-shadow: 0 0 34px 7px rgba(22,195,145,.75);
+  }
+  .lm-node { position: absolute; }
+  .lm-n-think   { top: 0;    left: 50%;  transform: translate(-50%,-50%); }
+  .lm-n-act     { top: 50%;  left: 100%; transform: translate(-50%,-50%); }
+  .lm-n-observe { top: 100%; left: 50%;  transform: translate(-50%,-50%); }
+  .lm-n-decide  { top: 50%;  left: 0;    transform: translate(-50%,-50%); }
+  .lm-chip {
+    display: inline-block; padding: 15px 26px; border-radius: var(--radius-lg);
+    background: var(--ink-600); border: 1px solid var(--line); color: var(--t-hi);
+    font-family: var(--font-mono); font-size: 31px; font-weight: 600;
+    white-space: nowrap; box-shadow: var(--shadow-md);
+  }
+  /* node highlights are driven by WAAPI (see deck-animations.js) so they survive slide re-entry */
+  .lm-core { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .lm-core-k { font-family: var(--font-mono); font-size: 22px; letter-spacing: .18em; text-transform: uppercase; color: var(--t-faint); }
+  .lm-core-v { font-family: var(--font-serif); font-size: 40px; font-weight: 700; color: var(--teal); line-height: 1.08; margin-top: 6px; }
+
+  /* nested altitudes — loops all the way down */
+  .lm-nest { position: relative; width: 660px; height: 660px; margin: 18px auto 4px; flex: none; }
+  .lm-r { position: absolute; left: 50%; top: 50%; border-radius: 50%; transform: translate(-50%,-50%); }
+  .lm-r2 { width: 250px; height: 250px; border: 2.5px solid var(--teal); opacity: .9; }
+  .lm-r3 { width: 440px; height: 440px; border: 2.5px dashed var(--teal); opacity: .6; }
+  .lm-r4 { width: 640px; height: 640px; border: 2.5px dashed var(--teal); opacity: .35; }
+  .lm-r-tag {
+    position: absolute; top: -19px; left: 50%; transform: translateX(-50%);
+    padding: 6px 18px; border-radius: var(--radius-pill); background: var(--ink-700);
+    border: 1px solid var(--line); color: var(--t-base);
+    font-family: var(--font-mono); font-size: 21px; font-weight: 600; white-space: nowrap;
+  }
+  .lm-spin-glyph { font-size: 84px; color: var(--teal); line-height: 1; animation: lm-spin 6s linear infinite; text-shadow: 0 0 28px rgba(22,195,145,.5); }
+
+  /* self-repair chain — every failure is a system bug */
+  .lm-chain { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 24px; margin: 48px auto 8px; max-width: 1560px; }
+  .lm-link {
+    padding: 20px 32px; border-radius: var(--radius-lg); background: var(--ink-600);
+    border: 1px solid var(--line); font-family: var(--font-mono); font-size: 36px; font-weight: 600;
+    color: var(--t-hi); white-space: nowrap; box-shadow: var(--shadow-md);
+  }
+  .lm-link-fail { color: var(--red); border-color: rgba(239,106,90,.5); }
+  .lm-link-pass { color: var(--teal); border-color: rgba(22,195,145,.55); }
+  .lm-feed { font-size: 50px; color: var(--teal); line-height: 1; animation: lm-spin 4s linear infinite; }
+  .lm-arrow { font-size: 42px; color: var(--t-faint); }
+  .lm-caption { margin-top: 12px; }
+
+  @keyframes lm-spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) {
+    .lm-spin-glyph, .lm-feed { animation: none !important; }
+  }
+
   @media print { deck-stage > section { background: var(--ink-800); } }
 </style>
 </head>
@@ -1524,6 +1585,32 @@
     </div>
   </section>
 
+  <!-- ============ 24b THE ATOM · AN AGENT IS A MODEL IN A LOOP ============ -->
+  <section data-label="Loops · the atom" class="grain">
+    <div class="frame" style="justify-content: center; align-items: center; text-align: center;">
+      <div class="eyebrow" style="margin-bottom: 22px;">The atom</div>
+      <h2 class="deck-h2" style="font-size: 76px; margin-bottom: 20px; max-width: 1640px;">An agent is a model in a <span class="underline-accent">loop</span>.</h2>
+      <p class="lead" style="max-width: 1280px; margin-bottom: 6px;">
+        The model <b class="lev">drives</b> it &mdash; thinks, acts, reads the result, picks the next step &mdash; until <b class="lev">it</b> decides it&rsquo;s done.
+      </p>
+      <div class="loopmotif">
+        <div class="lm-ring" aria-hidden="true"></div>
+        <div class="lm-orbit" aria-hidden="true"><span class="lm-dot"></span></div>
+        <div class="lm-node lm-n-think"><span class="lm-chip">think</span></div>
+        <div class="lm-node lm-n-act"><span class="lm-chip">act</span></div>
+        <div class="lm-node lm-n-observe"><span class="lm-chip">observe</span></div>
+        <div class="lm-node lm-n-decide"><span class="lm-chip">decide</span></div>
+        <div class="lm-core">
+          <span class="lm-core-k">&#8635; until</span>
+          <span class="lm-core-v">it&rsquo;s done</span>
+        </div>
+      </div>
+      <p class="body muted lm-caption" style="font-size: 30px; max-width: 1400px;">
+        <code class="mono">/goal</code> and <code class="mono">/loop</code> are two ways to run <b class="lev">this</b> loop unattended.
+      </p>
+    </div>
+  </section>
+
   <!-- ============ 25 TWO WAYS TO HAND OFF ============ -->
   <section data-label="Loops · two ways" class="grain">
     <div class="frame" style="justify-content: center;">
@@ -1536,7 +1623,7 @@
         </div>
         <div class="mini-card">
           <span class="mlabel"><code class="mono">/loop</code></span>
-          <p class="mdesc">Re-run on a timer. Recurring &mdash; you'll use it in the scheduled block.</p>
+          <p class="mdesc">Repeat a task &mdash; on a timer, or self-paced. Recurring; you'll use it in the scheduled block.</p>
         </div>
       </div>
     </div>
@@ -1620,7 +1707,7 @@
             <code class="mono">/goal</code> &mdash; <b class="lev">bounded</b>: iterate until a condition holds, then stop. No timer.
           </p>
           <p class="body" style="font-size: 30px; max-width: 760px; margin-bottom: 18px;">
-            <code class="mono">/loop</code> &mdash; <b class="lev">recurring</b>: re-run a task on a timer (e.g. every minute), this session.
+            <code class="mono">/loop</code> &mdash; <b class="lev">recurring</b>: repeat a task &mdash; on a timer (e.g. every minute), or self-paced &mdash; this session.
           </p>
           <p class="body muted" style="font-size: 25px; max-width: 760px; margin-bottom: 0;">Run parallel goals on git worktrees &mdash; isolated checkouts, no collisions.</p>
         </div>
@@ -1634,14 +1721,16 @@
       <div class="eyebrow" style="margin-bottom: 28px;">In the wild</div>
       <h2 class="deck-h2" style="font-size: 84px; margin-bottom: 44px; max-width: 1720px;">Goal vs. loop, <span class="underline-accent">in the wild</span>.</h2>
       <div class="codeblock" style="max-width: 1560px;">
-        <div class="com">/goal &mdash; until a condition</div>
+        <div class="com">/goal &mdash; until a condition, then stops</div>
         <div><span class="prompt">/goal</span> the test suite is green</div>
         <div style="margin-bottom: 14px;"><span class="prompt">/goal</span> every file in src/ is under 200 lines</div>
-        <div class="com">/loop &mdash; on a timer</div>
+        <div class="com">/loop &mdash; repeats: on a timer&hellip;</div>
         <div><span class="prompt">/loop</span> 1m bun test</div>
-        <div><span class="prompt">/loop</span> 5m check the deploy and ping me when it's healthy</div>
+        <div style="margin-bottom: 14px;"><span class="prompt">/loop</span> 5m check the deploy and ping me when it's healthy</div>
+        <div class="com">&hellip;or self-paced &mdash; omit the interval</div>
+        <div><span class="prompt">/loop</span> process the next item in the backlog</div>
       </div>
-      <p class="body muted" style="margin-top: 36px; font-size: 32px; max-width: 1660px;"><code class="mono">/goal</code> stops on green; <code class="mono">/loop</code> keeps firing on the clock.</p>
+      <p class="body muted" style="margin-top: 36px; font-size: 32px; max-width: 1660px;"><code class="mono">/goal</code> stops on green; <code class="mono">/loop</code> keeps repeating &mdash; on the clock or self-paced &mdash; till you stop it.</p>
     </div>
   </section>
 
@@ -1658,6 +1747,26 @@
           </p>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- ============ 29b LOOPS ALL THE WAY DOWN (capstone) ============ -->
+  <section data-label="Loops · all the way down" class="grain">
+    <div class="frame" style="justify-content: center; align-items: center; text-align: center;">
+      <div class="eyebrow" style="margin-bottom: 18px;">Zoom out</div>
+      <h2 class="deck-h2" style="font-size: 72px; margin-bottom: 16px; max-width: 1640px;">Loops all the way <span class="underline-accent">down</span>.</h2>
+      <p class="lead" style="max-width: 1320px; margin-bottom: 2px;">
+        The agentic loop is the atom. Every block is that same loop at a higher altitude.
+      </p>
+      <div class="lm-nest">
+        <div class="lm-r lm-r2" aria-hidden="true"><span class="lm-r-tag">goal / loop &middot; Block 2</span></div>
+        <div class="lm-r lm-r3" aria-hidden="true"><span class="lm-r-tag">+ gates &middot; Block 3</span></div>
+        <div class="lm-r lm-r4" aria-hidden="true"><span class="lm-r-tag">+ schedule &middot; Block 4</span></div>
+        <div class="lm-core"><span class="lm-spin-glyph">&#8635;</span></div>
+      </div>
+      <p class="body muted lm-caption" style="font-size: 30px; max-width: 1400px;">
+        Voice feeds it &middot; loops &amp; goals run it &middot; gates make it trustworthy &middot; schedules run it without you.
+      </p>
     </div>
   </section>
 
@@ -1735,6 +1844,27 @@
           <p class="say-text">&ldquo;Spin up a git worktree and start a second agent on issue #2 while this one runs.&rdquo;</p>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- ============ 33b BRIDGE · EVERY FAILURE IS A SYSTEM BUG ============ -->
+  <section data-label="Loops · failure is a system bug" class="grain">
+    <div class="frame" style="justify-content: center; align-items: center; text-align: center;">
+      <div class="eyebrow" style="margin-bottom: 20px;">When it fails</div>
+      <h2 class="deck-h2" style="font-size: 80px; margin-bottom: 18px; max-width: 1680px;">A failure isn&rsquo;t &ldquo;try <span class="underline-accent">harder</span>.&rdquo;</h2>
+      <p class="lead" style="max-width: 1360px;">
+        It&rsquo;s a missing gate, gotcha, or step. Fix the <b class="lev">system</b> &mdash; the next run inherits it.
+      </p>
+      <div class="lm-chain">
+        <span class="lm-link lm-link-fail">&#10007; fail</span>
+        <span class="lm-feed" aria-hidden="true">&#8635;</span>
+        <span class="lm-link lm-link-fix">fix the system</span>
+        <span class="lm-arrow" aria-hidden="true">&rarr;</span>
+        <span class="lm-link lm-link-pass">&#10003; the loop compounds</span>
+      </div>
+      <p class="body muted lm-caption" style="font-size: 30px; max-width: 1400px;">
+        Which is the whole point of the next block: <b class="lev">verification gates</b>.
+      </p>
     </div>
   </section>
 
@@ -1934,8 +2064,8 @@
           <p class="mdesc" style="font-size: 26px; font-family: var(--font-sans); font-weight: 400; line-height: 1.32;">Iterates until a condition holds, then stops. One bounded job: a check passes, a checklist completes.</p>
         </div>
         <div class="mini-card" style="padding: 22px 30px; gap: 8px;">
-          <span class="mlabel" style="color:#16c391; font-family: var(--font-mono);">/loop &mdash; on a timer, you&rsquo;re here</span>
-          <p class="mdesc" style="font-size: 26px; font-family: var(--font-sans); font-weight: 400; line-height: 1.32;">Re-runs on an interval, this session (<code class="mono">Esc</code> stops it). Recurring work while you&rsquo;re around: poll, watch, repeat.</p>
+          <span class="mlabel" style="color:#16c391; font-family: var(--font-mono);">/loop &mdash; in-session, you&rsquo;re here</span>
+          <p class="mdesc" style="font-size: 26px; font-family: var(--font-sans); font-weight: 400; line-height: 1.32;">Re-runs on an interval &mdash; or self-paced &mdash; this session (<code class="mono">Esc</code> stops it). Recurring work while you&rsquo;re around: poll, watch, repeat.</p>
         </div>
         <div class="mini-card" style="padding: 22px 30px; gap: 8px;">
           <span class="mlabel" style="color:#16c391; font-family: var(--font-mono);">/schedule &mdash; on a timer, you&rsquo;re gone</span>
@@ -2173,13 +2303,13 @@
   "Activity — put yourself on the board. Give them a minute; walk the room. Anonymous, opt-in, only what they confirm.",
   "Divider — Block 02, Loops & goals. Stop babysitting prompts.",
   "Next ceiling. You can talk fast now, but driving one agent in real time still pins you to the chair. The next unlock is handing off whole jobs and walking away.",
-  "Two ways to hand off. /goal runs until a condition holds — no timer; that's today's hand-offs. /loop re-runs a task on a timer — recurring, we use it in the scheduled block. Two different commands.",
+  "Two ways to hand off. /goal runs until a condition holds — no timer; that's today's hand-offs. /loop repeats a task — on a timer, or self-paced if you omit the interval — recurring; we use it in the scheduled block. Two different commands.",
   "How a loop runs. The iterate-until-green mechanic IS the /goal command: /goal bun <check> passes. Try, run the check, red → read the failure and fix → go again, no re-prompting — it stops on its own when the condition holds.",
   "Goals. A goal is a definition-of-done — a list of boxes, not a vibe. The agent decomposes the work and isn't done until every box is checked; it can't declare victory on a hunch.",
   "Goals worked example. Four concrete boxes — failing test, the fix, gates green, PR — none optional. The checklist IS the spec; encode 'done' explicitly and the agent stops quitting early.",
   "Why it works. Agents declare victory early — left vague, an agent stops at 'looks done.' A checklist makes 'done' unskippable: it has to tick every box before it can stop.",
-  "Goal vs. loop. Two commands, accurately: /goal is bounded — iterate until a condition, then stop, no timer. /loop is recurring — re-run a task on a timer (e.g. every minute), this session. Footnote: parallel goals on git worktrees.",
-  "Goal vs. loop, in the wild. /goal (until a condition): /goal the test suite is green; /goal every file in src/ is under 200 lines. /loop (on a timer): /loop 1m bun test; /loop 5m check the deploy and ping me when it's healthy. Goal stops on green; loop keeps firing on the clock.",
+  "Goal vs. loop. Two commands, accurately: /goal is bounded — iterate until a condition, then stop, no timer. /loop is recurring — repeat a task on a timer (e.g. every minute), or self-paced if you omit the interval, this session. Footnote: parallel goals on git worktrees.",
+  "Goal vs. loop, in the wild. /goal (until a condition, then stops): /goal the test suite is green; /goal every file in src/ is under 200 lines. /loop (repeats — on a timer, or self-paced if you omit the interval): /loop 1m bun test; /loop 5m check the deploy and ping me when it's healthy; /loop process the next item in the backlog. Goal stops on green; loop keeps repeating till you stop it.",
   "Scale it. Many agents, zero collisions. Each agent on its own git worktree — isolated checkouts, no stepping on each other. Three jobs run in parallel while you direct.",
   "Now you try it — Loops & goals. Hand over a job and walk away.",
   "Activity — work a checklist issue. They type the real command: /goal bun playground/goals/check.ts shows 5/5. It works the cart checklist in playground/goals/TASK.md, iterating until 5/5. Give them several minutes; walk the room. Not done until every box is checked — the check script is the judge.",
@@ -2199,7 +2329,7 @@
   "Activity — get a second opinion. Give them several minutes; walk the room. codex exec the diff and fix the findings.",
   "Divider — Block 04, Scheduled tasks. The work runs without you.",
   "The last cord. Everything so far — voice, loops, gates — ran because you were there in the chair. The last move cuts that cord.",
-  "Which trigger? Four ways work runs without you, separated by what FIRES them. A hook is automatic — runs on every change, no command, you set it once; that's the verification gate (lint/typecheck/tests). /goal runs until a condition holds, then stops — one bounded job. /loop re-runs on a timer in this session. /schedule is a persistent cloud routine that fires even when you're offline. Rule of thumb: always-on guardrail → hook; finish one job → /goal; repeat while you work → /loop; repeat while you're gone → /schedule.",
+  "Which trigger? Four ways work runs without you, separated by what FIRES them. A hook is automatic — runs on every change, no command, you set it once; that's the verification gate (lint/typecheck/tests). /goal runs until a condition holds, then stops — one bounded job. /loop repeats in this session — on a timer, or self-paced if you omit the interval. /schedule is a persistent cloud routine that fires even when you're offline. Rule of thumb: always-on guardrail → hook; finish one job → /goal; repeat while you work → /loop; repeat while you're gone → /schedule.",
   "What to schedule. The recurring toil: dependency bumps, status reports, eval runs, the thing you just built. If it recurs, it shouldn't need you.",
   "Schedule it. The real command: /schedule every Monday 6am, pull, fix, run the gates, and draft the write-up. A persistent cloud routine. 0 6 * * 1 — every Monday, 6am, while you sleep.",
   "It runs unattended. Two mechanisms: /loop [interval] <cmd> re-runs locally this session (e.g. /loop 1m bun playground/scheduled/report.ts); /schedule … is a persistent cloud routine that runs even when you're offline. The empty chair is the point.",
