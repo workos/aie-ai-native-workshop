@@ -7,7 +7,7 @@ a target, not a script.
 
 | Offset | Block | What happens | Drives |
 |--------|-------|--------------|--------|
-| 0:00 | **Open** | The pitch in one breath: stop typing, start operating. Trust the repo → say **"set me up for the workshop"** (`setup-workshop` installs Bun/Codex/Handy and approves the coach). | — |
+| 0:00 | **Open** | The pitch in one breath: stop typing, start operating. Trust the repo → say **"set me up for the workshop"** (`setup-workshop` installs the dev tools — Bun/Codex/git — and approves the coach; voice/Handy is the first thing in Block 1, not setup). | — |
 | 0:05 | **Block 1 — Voice coding** | [`setup-handy`](../curriculum/01-voice-coding.md) (5 min cap) → fix a bug by voice in a repo they brought → **opening check-in + AI-Native score baseline** → one voice / many agents across tabs. | Board lights up with the room's toil + each person's starting score |
 | 0:25 | **Block 2 — Loops & goals** | [Goals as checklists + `/loop`](../curriculum/02-loops-and-goals.md); when to use which; parallel agents on worktrees. | — |
 | 0:40 | **Block 3 — Verification gates** | [Lint/typecheck/test hook + adversarial Codex review](../curriculum/03-verification-gates.md); require the gate on the next problem. | — |

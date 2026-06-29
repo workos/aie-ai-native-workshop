@@ -50,7 +50,7 @@ claude          # starts Claude Code in the repo
 
 > *"set me up for the workshop"*
 
-The `setup-workshop` skill installs and verifies **Bun, the Codex CLI, Handy, and git**, confirms the repo is wired, and prints a status report. *(If it just installed Bun, quit and re-run `claude` once so the coach can launch.)* Then say **"run my workshop check-in"** and you're in.
+The `setup-workshop` skill installs and verifies the dev tools — **Bun, the Codex CLI, and git** — confirms the repo is wired, and prints a status report. *(If it just installed Bun, quit and re-run `claude` once so the coach can launch.)* Then say **"run my workshop check-in"** and you're in. *(Getting your voice working — Handy — is the first hands-on moment of Block 1, not setup.)*
 
 </details>
 
