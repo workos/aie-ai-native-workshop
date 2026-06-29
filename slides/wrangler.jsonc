@@ -1,5 +1,5 @@
 {
-  // "The AI-Native Engineer" — workshop deck, animated HTML slides.
+  // "Lifestyles of the AI-Native" — workshop deck, animated HTML slides.
   // Deploys to the WorkOS Internal Cloudflare account (auth via `wrangler login`).
   "name": "aie-deck",
   "account_id": "7e7fcec4d315661895440b439328033d",

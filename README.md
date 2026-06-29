@@ -1,6 +1,6 @@
 <div align="center">
 
-<a href="https://aie-deck.workos-internal.workers.dev"><img src="docs/images/readme-hero.png" alt="The AI-Native Engineer — Stop typing. Start operating. Room leverage 19 → 82." width="100%" /></a>
+<a href="https://aie-deck.workos-internal.workers.dev"><img src="docs/images/readme-hero.png" alt="Lifestyles of the AI-Native — voice-coding, agent skills, hooks, scheduled tasks. Level up your AI-Native score, 19 → 82." width="100%" /></a>
 
 <p>
   <img alt="Hands-on · ~1 hour" src="https://img.shields.io/badge/hands--on-~1_hour-16C391?style=for-the-badge&labelColor=0d1117" />

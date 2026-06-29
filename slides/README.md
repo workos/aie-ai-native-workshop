@@ -1,6 +1,6 @@
-# The AI-Native Engineer — slides
+# Lifestyles of the AI-Native — slides
 
-Animated HTML slide deck for the **"The AI-Native Engineer"** workshop
+Animated HTML slide deck for the **"Lifestyles of the AI-Native"** workshop
 (AI Engineer / AIE, San Francisco). Tagline: *Stop typing. Start operating.*
 Presenters: Zack Proser & Nick Nisi.
 

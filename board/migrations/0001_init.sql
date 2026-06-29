@@ -1,4 +1,4 @@
--- aie-board schema — The AI-Native Engineer live room board.
+-- aie-board schema — Lifestyles of the AI-Native live room board.
 --
 -- One participant per attendee. The id is minted by the coach check-in skill and
 -- persisted to a known durable path so the pre + post submissions link to the same

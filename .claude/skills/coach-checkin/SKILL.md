@@ -1,11 +1,11 @@
 ---
 name: coach-checkin
-description: Run the opt-in AI-Native Engineer workshop check-in. Use at the start of the workshop and again at the close. Auto-detects opening vs closing, runs the short interview, records your AI-Native score from a LOCAL scan at the open, and at the close posts your answers and your before→after score (anonymously) to the live room board. Triggers on "check in", "coach check-in", "workshop check-in", "run my workshop check-in", "closing check-in", or "share my workflow".
+description: Run the opt-in Lifestyles of the AI-Native workshop check-in. Use at the start of the workshop and again at the close. Auto-detects opening vs closing, runs the short interview, records your AI-Native score from a LOCAL scan at the open, and at the close posts your answers and your before→after score (anonymously) to the live room board. Triggers on "check in", "coach check-in", "workshop check-in", "run my workshop check-in", "closing check-in", or "share my workflow".
 ---
 
 # Coach Check-in
 
-A short, **opt-in** check-in for *The AI-Native Engineer* workshop. You run it twice — once walking in, once at the close. Each run does two things: a quick **interview** (what's eating your week → what you built) and an **AI-Native score** read from your local setup. Together they feed the live room board: where the room's toil is, which hooks and scheduled tasks to build, the engineering-hours/week the room reclaims, and the room's **before→after AI-Native score**.
+A short, **opt-in** check-in for *Lifestyles of the AI-Native* workshop. You run it twice — once walking in, once at the close. Each run does two things: a quick **interview** (what's eating your week → what you built) and an **AI-Native score** read from your local setup. Together they feed the live room board: where the room's toil is, which hooks and scheduled tasks to build, the engineering-hours/week the room reclaims, and the room's **before→after AI-Native score**.
 
 **Privacy is the whole point.** The score is computed by a **local** scan of your Claude setup (do you have hooks? a CLAUDE.md? worktrees? scheduled jobs?) that **never leaves your machine** — only the derived score *numbers* and the answers you explicitly confirm are sent. No file contents, no `git log`, no transcripts are ever transmitted. Responses are anonymous: a random participant id plus your role/stack — no name, no email.
 

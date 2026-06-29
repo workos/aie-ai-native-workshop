@@ -2,7 +2,7 @@
   "name": "aie-workshop",
   "version": "1.0.0",
   "private": true,
-  "description": "The AI-Native Engineer — an interactive Claude Code workshop for AIE SF.",
+  "description": "Lifestyles of the AI-Native — an interactive Claude Code workshop for AIE SF.",
   "bin": {
     "native": "native/src/cli.ts"
   },

@@ -1,6 +1,6 @@
 ---
 name: setup-workshop
-description: One-shot setup for The AI-Native Engineer workshop. Installs and verifies everything an attendee needs for the full hour — Bun (the check-in tool), the Codex CLI (Block 3 adversarial review), Handy (Block 1 voice), and git — then confirms the repo is wired up and hands off to the opening check-in. Triggers on "set me up for the workshop", "get me set up", "workshop setup", "set up the workshop", or starting the workshop.
+description: One-shot setup for Lifestyles of the AI-Native workshop. Installs and verifies everything an attendee needs for the full hour — Bun (the check-in tool), the Codex CLI (Block 3 adversarial review), Handy (Block 1 voice), and git — then confirms the repo is wired up and hands off to the opening check-in. Triggers on "set me up for the workshop", "get me set up", "workshop setup", "set up the workshop", or starting the workshop.
 ---
 
 # Set up the workshop
@@ -42,7 +42,7 @@ The fast path. This gets an attendee from a freshly-cloned repo to **ready for B
 
    ```
    ══════════════════════════════════════════════════════════
-    AI-Native Engineer · workshop setup
+    Lifestyles of the AI-Native · workshop setup
    ══════════════════════════════════════════════════════════
     [✓] Bun         1.3.14
     [✓] Codex CLI   0.x installed

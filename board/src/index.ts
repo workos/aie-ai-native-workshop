@@ -1,5 +1,5 @@
 /**
- * aie-board — live room board for "The AI-Native Engineer" workshop (AIE SF).
+ * aie-board — live room board for "Lifestyles of the AI-Native" workshop (AIE SF).
  *
  * The realtime "wow" service. The coach check-in skill interviews each attendee
  * (opt-in, volunteered data only — nothing is ever scanned off their machine) and

@@ -1,6 +1,6 @@
 ---
 name: setup-handy
-description: Install and configure Handy, the free, local, open-source push-to-talk voice dictation app, so the user can voice-code in any terminal. Use when someone wants to set up voice input / dictation / "talk to Claude", asks to "set up Handy" or "set up voice coding", or is starting the AI-Native Engineer workshop. Detects macOS vs. Windows and walks through install, model download, permissions, and a hotkey test.
+description: Install and configure Handy, the free, local, open-source push-to-talk voice dictation app, so the user can voice-code in any terminal. Use when someone wants to set up voice input / dictation / "talk to Claude", asks to "set up Handy" or "set up voice coding", or is starting the Lifestyles of the AI-Native workshop. Detects macOS vs. Windows and walks through install, model download, permissions, and a hotkey test.
 ---
 
 # Set up Handy (voice coding)

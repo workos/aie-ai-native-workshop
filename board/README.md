@@ -1,6 +1,6 @@
 # Board — live room visualization
 
-The realtime "wow" service for *The AI-Native Engineer*. The [`coach-checkin`](../skills/coach-checkin/)
+The realtime "wow" service for *Lifestyles of the AI-Native*. The [`coach-checkin`](../skills/coach-checkin/)
 skill posts each attendee's opt-in answers here; the projector board aggregates the
 room live and reveals the marquee number — **total engineering-hours/week the room
 is about to reclaim.**

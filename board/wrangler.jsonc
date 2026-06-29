@@ -1,5 +1,5 @@
 {
-  // aie-board — live room board for "The AI-Native Engineer" workshop (AIE SF).
+  // aie-board — live room board for "Lifestyles of the AI-Native" workshop (AIE SF).
   //
   // Deploys to the WorkOS Internal Cloudflare account. You are already logged in via
   // `wrangler login` (OAuth, zack@workos.com) — no CLOUDFLARE_API_TOKEN juggling needed.

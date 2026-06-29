@@ -1,6 +1,6 @@
 # Skills
 
-The skills that power *The AI-Native Engineer* workshop. **Claude Code auto-loads
+The skills that power *Lifestyles of the AI-Native* workshop. **Claude Code auto-loads
 skills only from [`.claude/skills/`](../.claude/skills/)** on trust — so the loadable
 `SKILL.md` files live there. This `skills/` directory holds their **supporting scripts**
 (the `coach-checkin` scripts are imported by [`native/`](../native/)) and the planned

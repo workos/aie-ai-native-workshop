@@ -1,7 +1,7 @@
 # The AI-Native Glossary
 
 A standalone, Cloudflare-native version of the "glossary + ask-anything chat"
-page, re-themed for **The AI-Native Engineer** workshop (AI Engineer · San
+page, re-themed for **Lifestyles of the AI-Native** workshop (AI Engineer · San
 Francisco). Every term behind voice workflows, agentic loops, and scheduled
 tasks — from the ground floor up.
 

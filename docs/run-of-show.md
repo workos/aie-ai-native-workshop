@@ -1,4 +1,4 @@
-# Run of show — The AI-Native Engineer (AIE SF)
+# Run of show — Lifestyles of the AI-Native (AIE SF)
 
 A ~1-hour interactive workshop. **Not a talk** — every block is hands-on, one
 presenter drives the exact same repo end-to-end (clean recording), and the room's

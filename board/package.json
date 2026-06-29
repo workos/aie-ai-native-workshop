@@ -2,7 +2,7 @@
   "name": "aie-board",
   "version": "1.0.0",
   "private": true,
-  "description": "Live room board for The AI-Native Engineer workshop — Cloudflare Worker + D1 + AI Gateway.",
+  "description": "Live room board for Lifestyles of the AI-Native workshop — Cloudflare Worker + D1 + AI Gateway.",
   "scripts": {
     "db:create": "npx wrangler d1 create aie-board",
     "migrate:local": "npx wrangler d1 migrations apply aie-board --local",
