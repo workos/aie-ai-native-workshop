@@ -1555,19 +1555,24 @@
   </section>
 
   <!-- ============ 26b GOALS · WORKED EXAMPLE ============ -->
-  <section data-label="Goals · worked example" class="grain">
+  <section data-label="Goals · worked example" class="grain art-split text-right">
     <div class="frame">
-      <div class="eyebrow" style="margin-bottom: 24px;">A goal, made concrete</div>
-      <h2 class="deck-h2" style="font-size: 84px; margin-bottom: 40px;">Four boxes. None of them <span class="underline-accent">optional</span>.</h2>
-      <div class="worked-example">
-        <div class="step"><span class="arrow">&#10003;</span><span class="text">Reproduce the bug with a failing test<small>The agent proves the problem exists before touching anything.</small></span></div>
-        <div class="step"><span class="arrow">&#10003;</span><span class="text">Implement the fix<small>Smallest change that makes the test pass.</small></span></div>
-        <div class="step"><span class="arrow">&#10003;</span><span class="text">Lint &middot; typecheck &middot; full test suite green<small>No box is checked on a hunch.</small></span></div>
-        <div class="step"><span class="arrow">&#10003;</span><span class="text">Open a PR with the plan in the body<small>Evidence, not a vibe.</small></span></div>
+      <div class="art-cols">
+        <div class="art-panel" aria-hidden="true"><img src="img/art/goal-pipeline.jpg" alt="A failing test for a bug becomes a fix at a bench, passes green gates, and ships as a sealed PR" loading="lazy" /></div>
+        <div class="art-text">
+          <div class="eyebrow" style="margin-bottom: 22px;">A goal, made concrete</div>
+          <h2 class="deck-h2" style="font-size: 60px; margin-bottom: 24px;">Four boxes. None <span class="underline-accent">optional</span>.</h2>
+          <div class="worked-example" style="gap: 16px;">
+            <div class="step"><span class="arrow">&#10003;</span><span class="text" style="font-size: 30px;">Reproduce the bug with a failing test</span></div>
+            <div class="step"><span class="arrow">&#10003;</span><span class="text" style="font-size: 30px;">Implement the smallest fix</span></div>
+            <div class="step"><span class="arrow">&#10003;</span><span class="text" style="font-size: 30px;">Lint &middot; typecheck &middot; tests green</span></div>
+            <div class="step"><span class="arrow">&#10003;</span><span class="text" style="font-size: 30px;">Open a PR with the plan in the body</span></div>
+          </div>
+          <p class="body" style="font-size: 27px; max-width: 760px; margin-top: 24px; margin-bottom: 0;">
+            The issue ships a checklist; the agent <b class="lev">isn't done until every box is checked</b>.
+          </p>
+        </div>
       </div>
-      <p class="hood-punch worked-punch" style="font-size: 38px; margin-top: 40px; max-width: 1680px;">
-        The issue ships a checklist; the agent isn't done until every box is checked.
-      </p>
     </div>
   </section>
 
@@ -1583,26 +1588,22 @@
   </section>
 
   <!-- ============ 28 LOOPS COMPARE ============ -->
-  <section data-label="Buffer pattern · Loops" class="grain">
+  <section data-label="Buffer pattern · Loops" class="grain art-split text-right">
     <div class="frame">
-      <div class="eyebrow" style="margin-bottom: 24px;"><code class="mono">/loop</code> &mdash; self-paced, recurring work</div>
-      <h2 class="deck-h2" style="margin-bottom: 40px;">Goal vs. <span class="underline-accent">loop</span>.</h2>
-      <div class="compare">
-        <div class="col">
-          <span class="stamp">Goal / checklist</span>
-          <h3>One bounded job.</h3>
-          <p>Known steps, a clear definition of done. The agent runs the checklist and stops.</p>
-          <p class="muted" style="margin-top: auto; padding-top: 22px; border-top: 1px solid var(--line); font-size: 26px;">Best when you can name every step up front.</p>
-        </div>
-        <div class="arrow">&rarr;</div>
-        <div class="col alt">
-          <span class="stamp">Loop</span>
-          <h3>Unknown-size or recurring.</h3>
-          <p><code class="mono">/loop</code> keeps going &mdash; triaging a backlog, sweeping a codebase, polling for new work.</p>
-          <p class="muted" style="margin-top: auto; padding-top: 22px; border-top: 1px solid var(--line); font-size: 26px;">Best when "done" is a condition, not a count.</p>
+      <div class="art-cols">
+        <div class="art-panel" aria-hidden="true"><img src="img/art/goal-vs-loop.jpg" alt="A goal is a straight track to a finish flag; a loop is a circular track cycling until a condition turns green" loading="lazy" /></div>
+        <div class="art-text">
+          <div class="eyebrow" style="margin-bottom: 22px;"><code class="mono">/loop</code> &mdash; self-paced, recurring work</div>
+          <h2 class="deck-h2" style="font-size: 60px; margin-bottom: 26px;">Goal vs. <span class="underline-accent">loop</span>.</h2>
+          <p class="body" style="font-size: 30px; max-width: 760px; margin-bottom: 18px;">
+            A <b class="lev">goal</b> is one bounded job &mdash; known steps, a clear definition of done. The agent runs the checklist and stops.
+          </p>
+          <p class="body" style="font-size: 30px; max-width: 760px; margin-bottom: 18px;">
+            A <b class="lev">loop</b> keeps going &mdash; triaging a backlog, sweeping a codebase, polling for new work. Best when "done" is a condition, not a count.
+          </p>
+          <p class="body muted" style="font-size: 25px; max-width: 760px; margin-bottom: 0;">Run parallel loops on git worktrees &mdash; isolated checkouts, no collisions.</p>
         </div>
       </div>
-      <p class="body muted" style="margin-top: 30px; font-size: 27px;">Footnote: run parallel agents on git worktrees &mdash; isolated checkouts so loops never collide.</p>
     </div>
   </section>
 
@@ -1735,13 +1736,18 @@
   </section>
 
   <!-- ============ 37 WHY HOOKS WORK ============ -->
-  <section data-label="Gates · why hooks work" class="grain">
-    <div class="frame" style="justify-content: center;">
-      <div class="eyebrow" style="margin-bottom: 40px;">Why hooks work</div>
-      <h2 class="deck-h2" style="font-size: 92px; margin-bottom: 40px; max-width: 1720px;">It can't hand you broken <span class="underline-accent">code</span>.</h2>
-      <p class="body" style="max-width: 1660px; font-size: 40px;">
-        Red fails the step &mdash; the agent <b class="lev">fixes itself</b> before it reaches you.
-      </p>
+  <section data-label="Gates · why hooks work" class="grain art-split text-right">
+    <div class="frame">
+      <div class="art-cols">
+        <div class="art-panel" aria-hidden="true"><img src="img/art/hook-self-repair.jpg" alt="A robot carrying code is stopped by a red gate, repairs it at a bench, then passes a green gate" loading="lazy" /></div>
+        <div class="art-text">
+          <div class="eyebrow" style="margin-bottom: 26px;">Why hooks work</div>
+          <h2 class="deck-h2" style="font-size: 66px; margin-bottom: 28px;">It can't hand you broken <span class="underline-accent">code</span>.</h2>
+          <p class="body" style="font-size: 34px; max-width: 760px;">
+            A red check fails the step &mdash; so the agent <b class="lev">fixes itself</b> and re-runs before the change ever reaches you. Broken code never makes it out the gate.
+          </p>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -1761,21 +1767,23 @@
   </section>
 
   <!-- ============ 38 THE ADVERSARIAL GATE ============ -->
-  <section data-label="The adversarial gate" class="grain">
+  <section data-label="The adversarial gate" class="grain art-split text-right">
     <div class="frame">
-      <div class="eyebrow" style="margin-bottom: 24px;">The adversarial gate</div>
-      <h2 class="deck-h2" style="margin-bottom: 18px;">Fan out to Codex for a <span class="underline-accent">second opinion</span>.</h2>
-      <p class="lead muted" style="margin-bottom: 40px; max-width: 1620px;">
-        On risky changes, spawn an independent review &mdash; then fix everything it finds.
-      </p>
-      <div class="codeblock" style="max-width: 1400px;">
-        <div><span class="prompt">$</span> codex exec <span class="str">"adversarially review this diff"</span></div>
-        <div class="com"># second model, fresh eyes, no stake in being right</div>
-        <div><span class="kw">found</span> 3 issues &middot; <span class="kw">fix</span> all &middot; re-run gates</div>
+      <div class="art-cols">
+        <div class="art-panel" aria-hidden="true"><img src="img/art/adversarial-review-fork.jpg" alt="A diff forks into an independent review lane, returns with issues, then rejoins through a green gate" loading="lazy" /></div>
+        <div class="art-text">
+          <div class="eyebrow" style="margin-bottom: 22px;">The adversarial gate</div>
+          <h2 class="deck-h2" style="font-size: 54px; margin-bottom: 22px;">Fan out for a <span class="underline-accent">second opinion</span>.</h2>
+          <div class="codeblock" style="width: 100%; font-size: 26px; margin-bottom: 24px;">
+            <div><span class="prompt">$</span> codex exec <span class="str">"adversarially review this diff"</span></div>
+            <div class="com"># fresh eyes, no stake in being right</div>
+            <div><span class="kw">found</span> 3 issues &middot; <span class="kw">fix</span> all &middot; re-run gates</div>
+          </div>
+          <p class="body" style="font-size: 28px; max-width: 760px; margin-bottom: 0;">
+            Two models <b class="lev">disagreeing</b> is cheaper than one model being confidently wrong.
+          </p>
+        </div>
       </div>
-      <p class="hood-punch" style="font-size: 34px; margin-top: 36px; max-width: 1640px;">
-        Two models disagreeing is cheaper than one model being confidently wrong.
-      </p>
     </div>
   </section>
 
@@ -1870,17 +1878,22 @@
   </section>
 
   <!-- ============ 46 WHAT TO SCHEDULE ============ -->
-  <section data-label="Schedule · what to schedule" class="grain">
+  <section data-label="Schedule · what to schedule" class="grain art-split text-right">
     <div class="frame">
-      <div class="eyebrow" style="margin-bottom: 28px;">What to schedule</div>
-      <h2 class="deck-h2" style="font-size: 88px; margin-bottom: 48px; max-width: 1720px;">The toil that comes back every <span class="underline-accent">week</span>.</h2>
-      <ul class="pts check" style="gap: 30px;">
-        <li><span class="n">&#10003;</span><span class="t" style="font-size: 54px;">Dependency bumps</span></li>
-        <li><span class="n">&#10003;</span><span class="t" style="font-size: 54px;">Status reports</span></li>
-        <li><span class="n">&#10003;</span><span class="t" style="font-size: 54px;">Eval runs</span></li>
-        <li><span class="n">&#10003;</span><span class="t" style="font-size: 54px;">The thing you just built</span></li>
-      </ul>
-      <p class="body muted" style="margin-top: 44px; font-size: 32px;">If it recurs, it shouldn't need you.</p>
+      <div class="art-cols">
+        <div class="art-panel" aria-hidden="true"><img src="img/art/recurring-toil.jpg" alt="A weekly calendar wheel drops recurring tasks into an automation machine beside an empty chair" loading="lazy" /></div>
+        <div class="art-text">
+          <div class="eyebrow" style="margin-bottom: 24px;">What to schedule</div>
+          <h2 class="deck-h2" style="font-size: 60px; margin-bottom: 30px;">The toil that comes back every <span class="underline-accent">week</span>.</h2>
+          <ul class="pts check" style="gap: 22px;">
+            <li><span class="n">&#10003;</span><span class="t" style="font-size: 38px;">Dependency bumps</span></li>
+            <li><span class="n">&#10003;</span><span class="t" style="font-size: 38px;">Status reports</span></li>
+            <li><span class="n">&#10003;</span><span class="t" style="font-size: 38px;">Eval runs</span></li>
+            <li><span class="n">&#10003;</span><span class="t" style="font-size: 38px;">The thing you just built</span></li>
+          </ul>
+          <p class="body muted" style="margin-top: 28px; font-size: 28px;">If it recurs, it shouldn't need you.</p>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -1900,12 +1913,10 @@
           <li><span class="n">&#9993;</span><span class="t" style="font-size: 44px;">Draft the write-up<small>Waiting in your inbox by morning.</small></span></li>
         </ol>
         <div>
-          <div class="cron-grid" style="grid-template-columns: repeat(7, 1fr); max-width: 620px;">
-            <div class="cron-cell dow">M</div><div class="cron-cell dow">T</div><div class="cron-cell dow">W</div><div class="cron-cell dow">T</div><div class="cron-cell dow">F</div><div class="cron-cell dow">S</div><div class="cron-cell dow">S</div>
-            <div class="cron-cell hit" style="--i:0">&#10003;</div><div class="cron-cell">&middot;</div><div class="cron-cell">&middot;</div><div class="cron-cell">&middot;</div><div class="cron-cell">&middot;</div><div class="cron-cell">&middot;</div><div class="cron-cell">&middot;</div>
-            <div class="cron-cell hit" style="--i:1">&#10003;</div><div class="cron-cell">&middot;</div><div class="cron-cell">&middot;</div><div class="cron-cell">&middot;</div><div class="cron-cell">&middot;</div><div class="cron-cell">&middot;</div><div class="cron-cell">&middot;</div>
+          <div aria-hidden="true" style="position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 18px; overflow: hidden; border: 1.5px solid rgba(22,195,145,.32); box-shadow: 0 30px 60px -34px rgba(0,0,0,.7), 0 0 50px -10px rgba(22,195,145,.12); background: var(--ink-900);">
+            <img src="img/art/schedule-pipeline.jpg" alt="A morning clock triggers a conveyor: sync the repo, run the loop, pass the gates, deliver the report to an inbox, beside an empty chair" loading="lazy" style="width: 100%; height: 100%; object-fit: cover; display: block;" />
           </div>
-          <p class="mono" style="font-size: 26px; color: var(--teal); margin-top: 22px;">0 6 * * 1 &nbsp;&middot;&nbsp; every Monday, 6am</p>
+          <p class="mono" style="font-size: 26px; color: var(--teal); margin-top: 22px; text-align: center;">0 6 * * 1 &nbsp;&middot;&nbsp; every Monday, 6am</p>
         </div>
       </div>
     </div>
@@ -1928,21 +1939,21 @@
   </section>
 
   <!-- ============ 47c LIST & CANCEL ============ -->
-  <section data-label="Schedule · list and cancel" class="grain">
-    <div class="frame" style="justify-content: center;">
-      <div class="eyebrow" style="margin-bottom: 28px;">You stay in control</div>
-      <h2 class="deck-h2" style="font-size: 84px; margin-bottom: 48px; max-width: 1720px;">List what's running. <span class="underline-accent">Cancel</span> what's not.</h2>
-      <div class="mini-cards">
-        <div class="mini-card">
-          <span class="mlabel">List</span>
-          <p class="mdesc">Ask what scheduled tasks you have &mdash; see every job, its interval, and when it last fired.</p>
-        </div>
-        <div class="mini-card">
-          <span class="mlabel">Cancel</span>
-          <p class="mdesc">One word stops a job for good. Nothing keeps running that you didn't choose to keep.</p>
+  <section data-label="Schedule · list and cancel" class="grain art-split text-right">
+    <div class="frame">
+      <div class="art-cols">
+        <div class="art-panel" aria-hidden="true"><img src="img/art/schedule-control-panel.jpg" alt="A calm scheduling console with active job lights and a stop lever switching one job off" loading="lazy" /></div>
+        <div class="art-text">
+          <div class="eyebrow" style="margin-bottom: 24px;">You stay in control</div>
+          <h2 class="deck-h2" style="font-size: 56px; margin-bottom: 28px;">List what's running. <span class="underline-accent">Cancel</span> what's not.</h2>
+          <p class="body" style="font-size: 31px; max-width: 760px; margin-bottom: 18px;">
+            <b class="lev">List</b> shows every job &mdash; its interval and when it last fired. <b class="lev">Cancel</b> stops one for good in a single word.
+          </p>
+          <p class="body muted" style="font-size: 27px; max-width: 760px; margin-bottom: 0;">
+            Scheduling is reversible &mdash; nothing runs that you didn't choose to keep.
+          </p>
         </div>
       </div>
-      <p class="body muted" style="margin-top: 40px; font-size: 30px; max-width: 1660px;">Scheduling is reversible &mdash; you can always see the list and tear one down.</p>
     </div>
   </section>
 
