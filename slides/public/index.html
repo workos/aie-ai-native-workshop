@@ -304,6 +304,16 @@
   .card.dim { background: var(--ink-700); border-color: var(--line-soft); }
   .card.dim .label, .card.dim .verdict { color: var(--t-faint); }
 
+  /* ---- Facilitator bio cards ---- */
+  .card.bio { align-items: center; text-align: center; }
+  .bio-pic {
+    width: 132px; height: 132px; border-radius: 50%;
+    object-fit: cover; object-position: center 20%;
+    border: 1px solid var(--line);
+    box-shadow: 0 18px 36px -18px rgba(0,0,0,.6);
+    margin-bottom: 6px;
+  }
+
   /* ---- Mega number ---- */
   .mega {
     font-family: var(--font-serif);
@@ -924,6 +934,31 @@
       <h2 class="deck-h2" style="font-size: 104px; max-width: 1760px; margin-top: 24px;">
         Operators run a <span class="underline-accent">fleet</span>.
       </h2>
+    </div>
+  </section>
+
+  <!-- ============ YOUR FACILITATORS ============ -->
+  <section data-label="Your facilitators" class="grain">
+    <div class="frame" style="justify-content: center;">
+      <div class="eyebrow" style="margin-bottom: 28px;">Your facilitators</div>
+      <h2 class="deck-h2" style="max-width: 1700px;">Two operators. <span class="underline-accent">AI all day</span>, every&nbsp;day.</h2>
+      <p class="lead muted" style="margin-top: 20px; max-width: 1500px;">
+        We build with Claude &mdash; for WorkOS, for our customers, and for our own projects on the side.
+      </p>
+      <div class="cols" style="flex: none; gap: 64px; max-width: 1500px; margin: 44px auto 0; width: 100%;">
+        <div class="card bio">
+          <img loading="lazy" decoding="async" class="bio-pic" src="img/zack-photo.webp" alt="Headshot of Zack Proser" />
+          <span class="label">Zack Proser</span>
+          <h3 class="deck-h3" style="font-size: 44px;">Applied AI &middot; WorkOS</h3>
+          <p>Ships internal + customer AI systems. Dispatches read by 5,000+ engineers.</p>
+        </div>
+        <div class="card bio">
+          <img loading="lazy" decoding="async" class="bio-pic" src="img/nick-nisi-photo.webp" alt="Headshot of Nick Nisi" />
+          <span class="label">Nick Nisi</span>
+          <h3 class="deck-h3" style="font-size: 44px;">EM, DX/AI &middot; WorkOS</h3>
+          <p>Leads the DX/AI engineering team. Wrote the ideation skill you'll run today.</p>
+        </div>
+      </div>
     </div>
   </section>
 
