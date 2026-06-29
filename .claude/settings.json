@@ -1,15 +1,22 @@
 {
-  "$comment": "Trusting this repo wires up the workshop: the SKILL.md files in .claude/skills/ (setup-workshop, setup-handy, coach-checkin) auto-load, Nick Nisi's `ideation` skill installs as a plugin from GitHub, and the aie-coach MCP server is defined in ../.mcp.json (approve it once on first trust, or run /mcp). The coach-checkin scripts live in the repo's skills/coach-checkin/ (imported by native/).",
+  "$comment": "Trusting this repo wires up the workshop: the SKILL.md files in .claude/skills/ (setup-workshop, setup-handy, coach-checkin) auto-load, Nick Nisi's `ideation` skill installs as a plugin from GitHub, the `codex` plugin (openai/codex-plugin-cc) installs from GitHub for the Block 3 /codex:adversarial-review gate (still needs the codex CLI + `codex login`), and the aie-coach MCP server is defined in ../.mcp.json (approve it once on first trust, or run /mcp). The coach-checkin scripts live in the repo's skills/coach-checkin/ (imported by native/).",
   "extraKnownMarketplaces": {
     "ideation": {
       "source": {
         "source": "github",
         "repo": "nicknisi/ideation"
       }
+    },
+    "openai-codex": {
+      "source": {
+        "source": "github",
+        "repo": "openai/codex-plugin-cc"
+      }
     }
   },
   "enabledPlugins": {
-    "ideation@ideation": true
+    "ideation@ideation": true,
+    "codex@openai-codex": true
   },
   "permissions": {
     "allow": [
