@@ -1,16 +1,35 @@
-# Scheduled Report
+# Scheduled report
 
-This is a guided exercise because the schedule lives in Claude Code, not in this repo. The script itself is fully runnable offline and appends one line to `playground/scheduled/log.txt` every time it runs.
+`report.ts` runs fully offline: it prints a short digest and appends **one line to `log.txt` every run** — so a recurring job is easy to *watch*. The schedule itself lives in Claude Code, not this repo. Two real ways to run it on a timer:
 
-1. Dry run it:
-   `bun playground/scheduled/report.ts`
-2. Ask Claude:
-   "Schedule `bun playground/scheduled/report.ts` to run every 2 minutes. Name it workshop-report."
-3. Watch the log grow:
-   "Show me the last 5 lines of `playground/scheduled/log.txt`."
-4. List schedules:
-   "List my scheduled tasks."
-5. Cancel it before moving on:
-   "Cancel the scheduled task named workshop-report."
+1. **Dry-run it once** (see the output shape):
 
-For a real workflow, use a daily or weekly cadence instead of the short demo interval.
+   ```
+   bun playground/scheduled/report.ts
+   ```
+
+2. **Loop it locally — fast, for the demo.** Re-runs on a timer in this session:
+
+   ```
+   /loop 2m bun playground/scheduled/report.ts
+   ```
+
+   Watch `log.txt` gain a line every couple of minutes (`run #1`, `run #2`, …). Press **`Esc`** to stop the loop.
+
+3. **Or schedule it for real — persistent, runs even when you're offline:**
+
+   ```
+   /schedule every weekday at 9am, run bun playground/scheduled/report.ts and summarize the digest
+   ```
+
+   Cloud routines run from a fresh clone on a ≥1-hour cadence — perfect for real work, too slow to watch live (that's what step 2 is for).
+
+4. **See what's scheduled:**
+
+   ```
+   /schedule list
+   ```
+
+5. **Tear it down before moving on:** for the local loop, press `Esc` (or `CronDelete <id>`); for a cloud routine, ask Claude to cancel it or manage it at `claude.ai/code/routines`.
+
+> `/loop` = re-run on a timer (local, this session). `/schedule` = a persistent routine on Anthropic's cloud. Different tools, same idea: work that runs without you.
