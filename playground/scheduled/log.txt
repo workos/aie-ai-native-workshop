@@ -1,3 +1,4 @@
 # workshop-report log — one line per run (watch this grow)
 2026-06-29 13:04:59 · run #1 · 4 done / 6 open
 2026-06-30 13:05:48 · run #2 · 4 done / 6 open
+2026-07-01 13:02:44 · run #3 · 4 done / 6 open
