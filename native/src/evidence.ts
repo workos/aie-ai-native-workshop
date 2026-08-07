@@ -244,6 +244,10 @@ function preferObservation(a: Observation, b: Observation): Observation {
 
 const DAY_MS = 86_400_000;
 
+// See scan.ts: a multi-GB JSONL OOM-kills the process inside readFileSync. Skip any
+// transcript above this cap; real coding sessions are far smaller.
+const MAX_TRANSCRIPT_BYTES = 100 * 1024 * 1024;
+
 // Recursively list *.jsonl under a dir. Total: unreadable dirs are skipped.
 function listJsonl(dir: string): string[] {
   let out: string[] = [];
@@ -265,6 +269,7 @@ function listJsonl(dir: string): string[] {
 function parseJsonl(path: string): unknown[] {
   let text;
   try {
+    if (statSync(path).size > MAX_TRANSCRIPT_BYTES) return []; // would OOM readFileSync
     text = readFileSync(path, 'utf8');
   } catch {
     return [];
