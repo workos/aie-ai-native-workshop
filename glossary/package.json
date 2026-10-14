@@ -12,9 +12,9 @@
     "cf-dev": "npm run build && wrangler dev"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^1.2.12",
-    "@ai-sdk/react": "^1.2.12",
-    "ai": "^4.3.19",
+    "@ai-sdk/anthropic": "^4.0.49",
+    "@ai-sdk/react": "^4.0.96",
+    "ai": "^7.0.93",
     "framer-motion": "^11.18.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
