@@ -70,6 +70,13 @@ export function countBackgroundJobs(home: string): number {
 
 const DAY_MS = 86_400_000;
 
+// Skip pathologically large transcripts: readFileSync slurps the whole file into a
+// single string, and a multi-GB JSONL (e.g. a long-running observer session) blows
+// past the JS engine's string/buffer limit and OOM-kills the process with no catchable
+// error. Real coding transcripts are well under this; absence of a giant file's signal
+// is a fine tradeoff against crashing the scan.
+const MAX_TRANSCRIPT_BYTES = 100 * 1024 * 1024;
+
 function listSessionFiles(projectsDir: string): string[] {
   let out: string[] = [];
   let slugs;
@@ -107,13 +114,14 @@ export function detectDelegation(
   let delegationSessions = 0;
   let taskCalls = 0;
   for (const file of files) {
-    let mtime;
+    let st;
     try {
-      mtime = statSync(file).mtimeMs;
+      st = statSync(file);
     } catch {
       continue;
     }
-    if (now - mtime > windowDays * DAY_MS) continue;
+    if (now - st.mtimeMs > windowDays * DAY_MS) continue;
+    if (st.size > MAX_TRANSCRIPT_BYTES) continue; // would OOM readFileSync below
     let text;
     try {
       text = readFileSync(file, 'utf8');
